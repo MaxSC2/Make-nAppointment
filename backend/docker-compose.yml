@@ -1,0 +1,51 @@
+# =============================================================================
+# PostgreSQL для проекта PACS-RIS-Queue
+# =============================================================================
+# Запуск: docker compose up -d
+# Данные сохраняются в volume `pgdata` (переживают перезапуск контейнера).
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pacs_ris_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pacs_ris
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: pacs_secret
+      # Локализация — русские текстовые поля корректно сортируются
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=ru_RU.UTF-8"
+      TZ: Europe/Moscow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Автоинициализация схем при первом запуске
+      - ./db/init/01_schemas.sql:/docker-entrypoint-initdb.d/01_schemas.sql:ro
+      - ./db/init/02_roles.sql:/docker-entrypoint-initdb.d/02_roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pacs -d pacs_ris"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # GUI для просмотра БД в браузере (опционально)
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: pacs_ris_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@pacs.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 80
+    ports:
+      - "5050:80"
+    profiles: ["gui"]  # запускать: docker compose --profile gui up -d
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    name: pacs_ris_pgdata

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Вход в систему</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-card h1 { text-align: center; color: #333; margin-bottom: 8px; font-size: 24px; }
+        .login-card p  { text-align: center; color: #888; margin-bottom: 24px; font-size: 13px; }
+        .field { margin-bottom: 16px; }
+        .field label { display: block; color: #555; font-size: 13px; margin-bottom: 4px; }
+        .field input { width: 100%; padding: 10px 14px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .field input:focus { border-color: #667eea; outline: none; }
+        .btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+        .btn:hover { background: #5a6fd6; }
+        .error { color: #dc3545; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .hint { background: #f8f9fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #666; margin-top: 16px; }
+        .hint code { background: #eee; padding: 1px 6px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>🔐 Вход</h1>
+        <p>PACS-RIS-Queue</p>
+        <form id="loginForm">
+            <div class="field">
+                <label for="username">Имя пользователя</label>
+                <input id="username" name="username" required autofocus autocomplete="username">
+            </div>
+            <div class="field">
+                <label for="password">Пароль</label>
+                <input id="password" name="password" type="password" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn">Войти</button>
+            <div class="error" id="error"></div>
+        </form>
+        <div class="hint">
+            Тестовый администратор: <code>admin</code> / <code>admin123</code>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById("loginForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const err = document.getElementById("error");
+        err.textContent = "";
+        const body = {
+            username: document.getElementById("username").value,
+            password: document.getElementById("password").value,
+        };
+        try {
+            const r = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await r.json();
+            if (!r.ok) { err.textContent = data.detail || "Ошибка входа"; return; }
+            localStorage.setItem("access_token",  data.access_token);
+            localStorage.setItem("refresh_token", data.refresh_token);
+            // Возвращаемся на исходную страницу или на главную
+            const back = new URLSearchParams(location.search).get("next") || "/admin";
+            location.href = back;
+        } catch (e) {
+            err.textContent = "Сетевая ошибка: " + e.message;
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Просмотр DICOM — {{ study_uid }}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a14; color: #ccc; padding: 16px; }
+        .layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; }
+        .viewer { background: #000; border-radius: 8px; position: relative; min-height: 600px; }
+        .viewer canvas { display: block; margin: 0 auto; max-width: 100%; }
+        .meta { background: #1a1a2e; padding: 16px; border-radius: 8px; font-size: 13px; }
+        .meta h3 { color: #e94560; margin-bottom: 12px; font-size: 16px; }
+        .meta .row { display: flex; justify-content: space-between; margin-bottom: 6px; padding: 4px 0; border-bottom: 1px solid #2a2a4e; }
+        .meta .row span:last-child { color: #4fc3f7; font-family: monospace; }
+        .controls { margin-top: 16px; }
+        .controls button { width: 100%; padding: 8px; margin-bottom: 6px; background: #16213e; color: white; border: 1px solid #0f3460; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .controls button:hover { background: #1a2a4e; }
+        .nav { margin-bottom: 12px; }
+        .nav a { color: #4fc3f7; text-decoration: none; font-size: 13px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .header h1 { font-size: 18px; color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🖼 DICOM Viewer — {{ study_uid[:24] }}…</h1>
+        <div class="nav"><a href="/studies">← К списку</a></div>
+    </div>
+
+    <div class="layout">
+        <div class="viewer" id="viewer">
+            <canvas id="canvas" width="512" height="512"></canvas>
+        </div>
+        <div class="meta">
+            <h3>📊 Метаданные</h3>
+            <div id="metaBox">⏳ Загрузка…</div>
+            <div class="controls">
+                <h3 style="margin-top:16px;">🎛 Окно</h3>
+                <button onclick="setWindow(400, 40)">CT (400/40)</button>
+                <button onclick="setWindow(1500, -500)">Лёгкие (1500/-500)</button>
+                <button onclick="setWindow(80, 40)">Мозг (80/40)</button>
+                <button onclick="setWindow(350, 50)">Кость (350/50)</button>
+                <h3 style="margin-top:16px;">🔄 Навигация</h3>
+                <button onclick="prevSlice()">← Предыдущий срез</button>
+                <button onclick="nextSlice()">Следующий срез →</button>
+                <p style="color:#888;font-size:11px;margin-top:8px;">Колёсико мыши, ←/→</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const STUDY_UID = "{{ study_uid }}";
+    const api = {
+        async getJson(p) { return (await fetch("/api/orthanc/" + p)).json(); },
+        async getBytes(p) { return (await fetch("/api/orthanc/" + p)).arrayBuffer(); },
+    };
+
+    let instances = [];
+    let currentIndex = 0;
+    let windowCenter = 40, windowWidth = 400;
+    let pixelData = null, rows = 0, cols = 0;
+
+    async function init() {
+        try {
+            // Ищем инстансы через /tools/find
+            const find = await fetch("/api/orthanc/tools/find", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Level: "Instance", Query: { StudyInstanceUID: STUDY_UID } }),
+            }).then(r => r.json());
+            if (!find.length) { document.getElementById("metaBox").innerHTML = "Исследование не найдено в Orthanc"; return; }
+            instances = find;
+            await loadSlice(0);
+        } catch (e) {
+            document.getElementById("metaBox").innerHTML = "Ошибка: " + e.message;
+        }
+    }
+
+    async function loadSlice(i) {
+        currentIndex = i;
+        const id = instances[i];
+        try {
+            const tags = await api.getJson(`instances/${id}/tags?short`);
+            const meta = document.getElementById("metaBox");
+            meta.innerHTML = `
+                <div class="row"><span>Срез</span><span>${i+1} / ${instances.length}</span></div>
+                <div class="row"><span>Patient</span><span>${tags.PatientName || "—"}</span></div>
+                <div class="row"><span>PatientID</span><span>${tags.PatientID || "—"}</span></div>
+                <div class="row"><span>Modality</span><span>${tags.Modality || "—"}</span></div>
+                <div class="row"><span>Rows × Cols</span><span>${tags.Rows || "?"}×${tags.Columns || "?"}</span></div>
+                <div class="row"><span>Bits</span><span>${tags.BitsStored || "?"}</span></div>
+            `;
+            // Подгружаем PNG preview (если есть) или image-uint8
+            const preview = await fetch(`/api/orthanc/instances/${id}/preview`).then(r => {
+                if (!r.ok) throw new Error("no preview");
+                return r.blob();
+            });
+            const url = URL.createObjectURL(preview);
+            const img = new Image();
+            img.onload = () => {
+                const c = document.getElementById("canvas");
+                c.width = img.width; c.height = img.height;
+                const ctx = c.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        } catch (e) {
+            document.getElementById("metaBox").innerHTML = "Ошибка среза: " + e.message;
+        }
+    }
+
+    function setWindow(w, c) { windowWidth = w; windowCenter = c; loadSlice(currentIndex); }
+    function nextSlice() { if (currentIndex < instances.length - 1) loadSlice(currentIndex + 1); }
+    function prevSlice() { if (currentIndex > 0) loadSlice(currentIndex - 1); }
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight") nextSlice();
+        if (e.key === "ArrowLeft")  prevSlice();
+    });
+    document.getElementById("viewer").addEventListener("wheel", e => {
+        e.preventDefault();
+        if (e.deltaY > 0) nextSlice(); else prevSlice();
+    }, { passive: false });
+
+    init();
+    </script>
+</body>
+</html>

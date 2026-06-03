@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PACS — Исследования (RIS)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: white; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .header h1 { font-size: 22px; color: #e94560; }
+        .header .links a { color: #4fc3f7; text-decoration: none; margin-left: 12px; font-size: 13px; }
+        .header .links a:hover { text-decoration: underline; }
+        .header .user { font-size: 13px; }
+        .header .user button { background: none; border: 1px solid #ccc; color: white; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filters input, .filters select { flex: 1; min-width: 150px; padding: 10px 14px; background: #16213e; border: 1px solid #0f3460; border-radius: 6px; color: white; font-size: 14px; }
+        .study-card { background: #16213e; border-radius: 10px; padding: 16px 20px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .study-card:hover { background: #1a2a4e; }
+        .study-info h3 { color: #e94560; font-size: 15px; }
+        .study-info p  { color: #aaa; font-size: 13px; margin-top: 4px; }
+        .study-actions { display: flex; gap: 8px; }
+        .study-actions a, .study-actions button { padding: 8px 16px; background: #e94560; color: white; text-decoration: none; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .study-actions a.alt { background: #0f3460; }
+        .empty { text-align: center; color: #888; padding: 40px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Исследования (RIS)</h1>
+            <div class="links">
+                <a href="/studies">Все</a>
+                <a href="http://localhost:8005">Очередь</a>
+                <a href="http://localhost:8042">Orthanc</a>
+            </div>
+            <div class="user" id="userBox"><a href="/login" style="color:#4fc3f7">🔐 Войти</a></div>
+        </div>
+
+        <div class="filters">
+            <input id="searchInput" placeholder="🔍 Поиск по описанию / ID заказа">
+            <select id="modalityFilter"><option value="">Все модальности</option></select>
+        </div>
+
+        <div id="list"><div class="empty">⏳ Загрузка…</div></div>
+    </div>
+
+    <script>
+    const api = {
+        h() {
+            const t = localStorage.getItem("access_token");
+            return t ? { "Content-Type": "application/json", "Authorization": "Bearer " + t }
+                     : { "Content-Type": "application/json" };
+        },
+        async get(u)  { return (await fetch(u,  { method: "GET",  headers: this.h() })).json(); },
+    };
+
+    function fmt(iso) { return iso ? iso.substring(0, 16).replace("T", " ") : "—"; }
+
+    async function loadModalities() {
+        const data = await api.get("/api/modalities");
+        document.getElementById("modalityFilter").innerHTML +=
+            data.map(m => `<option value="${m.code}">${m.code} — ${m.name}</option>`).join("");
+    }
+
+    async function loadOrders() {
+        const params = new URLSearchParams();
+        const mod = document.getElementById("modalityFilter").value;
+        if (mod) params.set("modality", mod);
+        const data = await api.get("/api/studies?" + params);
+        const q = document.getElementById("searchInput").value.toLowerCase();
+        const filtered = q
+            ? data.filter(o => (o.study_description || "").toLowerCase().includes(q) || o.id.includes(q))
+            : data;
+        const list = document.getElementById("list");
+        if (!filtered.length) { list.innerHTML = '<div class="empty">Исследований не найдено</div>'; return; }
+        list.innerHTML = filtered.map(o => `
+            <div class="study-card">
+                <div class="study-info">
+                    <h3>${o.study_description || "(без описания)"} — ${o.modality}</h3>
+                    <p>Order: <code>${o.id}</code> · Study UID: <code>${o.study_uid.substring(0, 30)}…</code> · ${fmt(o.created_at)} · <b>${o.status}</b></p>
+                </div>
+                <div class="study-actions">
+                    <a href="/viewer/${o.study_uid}">🖼 Просмотр</a>
+                    <a class="alt" href="/api/studies/download/${o.study_uid}">⬇ ZIP</a>
+                    <a class="alt" href="/orders/${o.id}/protocol">📝 Протокол</a>
+                </div>
+            </div>
+        `).join("");
+    }
+
+    async function loadUser() {
+        const t = localStorage.getItem("access_token");
+        if (!t) return;
+        try {
+            const u = await api.get("/api/auth/me");
+            document.getElementById("userBox").innerHTML =
+                `<span>👤 ${u.full_name}</span>
+                 <button onclick="logout()">Выйти</button>`;
+        } catch { localStorage.removeItem("access_token"); }
+    }
+    function logout() {
+        const r = localStorage.getItem("refresh_token");
+        if (r) fetch("/api/auth/logout", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({refresh_token:r}) });
+        localStorage.clear(); location.reload();
+    }
+
+    document.getElementById("searchInput").addEventListener("input", loadOrders);
+    document.getElementById("modalityFilter").addEventListener("change", loadOrders);
+
+    (async () => { await loadModalities(); await loadOrders(); await loadUser(); })();
+    </script>
+</body>
+</html>

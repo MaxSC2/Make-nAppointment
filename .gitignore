@@ -1,5 +1,43 @@
+# Node
 node_modules/
+dist/
 .next/
-out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+*.egg-info/
+
+# Environment
 .env
 .env.local
+
+# Database
+*.db
+*.sqlite
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+*.err.log
+
+# Project specific
+*.pid
+orthanc/orthanc.pid
+
+# Personal
+.ai-context.md
+
+# Orthanc binary
+backend/orthanc/
