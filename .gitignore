@@ -38,6 +38,7 @@ orthanc/orthanc.pid
 
 # Personal
 .ai-context.md
+PRACTICE_LOG.md
 
 # Orthanc binary
 backend/orthanc/
