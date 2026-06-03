@@ -1,0 +1,34 @@
+# =============================================================================
+# Зависимости Python для PACS-RIS-Queue (PostgreSQL-версия)
+# =============================================================================
+# Установка: pip install -r requirements.txt
+# Python 3.12+ (протестировано на 3.14)
+# =============================================================================
+
+# --- Веб-фреймворк ---
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+jinja2==3.1.5
+python-multipart==0.0.20          # для form-data в FastAPI
+
+# --- База данных (async) ---
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.31.0                    # async-драйвер PostgreSQL (с prebuilt wheel для Py 3.14)
+psycopg[binary]==3.2.3             # sync-драйвер v3 (совместим с Py 3.14; заменяет psycopg2-binary)
+alembic==1.14.0                    # миграции
+
+# --- Безопасность ---
+bcrypt==4.2.1                      # хеширование паролей (напрямую, без passlib)
+PyJWT==2.10.1                      # JWT-токены
+pydantic[email]==2.10.3            # валидация (EmailStr)
+pydantic-settings==2.7.0           # конфиг из .env
+
+# --- Интеграции ---
+httpx==0.28.1                      # HTTP-клиент (RIS ↔ elqueue ↔ Orthanc)
+pydicom==2.4.4                     # работа с DICOM-метаданными
+requests==2.32.3                   # HTTP-клиент для тестовых скриптов (load-test-data.py)
+numpy==2.1.3                       # для generate-test-images.py
+pillow==11.0.0                     # для generate-test-images.py
+
+# --- Утилиты ---
+python-dotenv==1.0.1               # чтение .env (если pydantic-settings не справляется)

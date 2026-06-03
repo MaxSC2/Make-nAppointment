@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Панель врача — Электронная очередь</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #28a745, #218838); color: white; border-radius: 12px 12px 0 0; }
+        .header h1 { font-size: 28px; margin-bottom: 5px; }
+        .header p { opacity: 0.9; font-size: 14px; }
+        .nav { background: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .nav a { color: #218838; text-decoration: none; margin-right: 14px; font-size: 14px; font-weight: 500; }
+        .nav .user { font-size: 13px; color: #555; }
+        .nav .user button { background: none; border: 1px solid #ccc; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .toolbar { background: white; padding: 16px 24px; display: flex; gap: 12px; align-items: center; }
+        .toolbar select, .toolbar button { padding: 8px 16px; font-size: 14px; border-radius: 6px; border: 1px solid #ddd; }
+        .toolbar button { background: #28a745; color: white; border: none; cursor: pointer; }
+        .toolbar button:hover { background: #218838; }
+        .toolbar button:disabled { background: #aaa; cursor: not-allowed; }
+        .toolbar a { color: #28a745; text-decoration: none; padding: 8px 12px; font-size: 14px; }
+
+        .columns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .col { background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .col h3 { color: #333; border-bottom: 2px solid; padding-bottom: 8px; margin-bottom: 12px; font-size: 16px; }
+        .col.in_progress h3 { border-color: #007bff; }
+        .col.waiting h3 { border-color: #ffc107; }
+        .col.done h3 { border-color: #28a745; }
+        .ticket { padding: 12px; background: #f8f9fa; border-radius: 6px; margin-bottom: 8px; border-left: 4px solid; }
+        .ticket.in_progress { border-color: #007bff; }
+        .ticket.waiting { border-color: #ffc107; }
+        .ticket.done { border-color: #28a745; }
+        .ticket .num { font-size: 22px; font-weight: bold; color: #333; }
+        .ticket .name { color: #555; font-size: 14px; margin: 4px 0; }
+        .ticket .time { color: #999; font-size: 12px; }
+        .ticket button { margin-top: 8px; padding: 6px 14px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .ticket button:hover { background: #0069d9; }
+        .ticket button.danger { background: #dc3545; }
+        .ticket button.danger:hover { background: #c82333; }
+        .empty { text-align: center; color: #999; padding: 20px; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👨‍⚕️ Панель врача</h1>
+            <p>Управление потоком пациентов</p>
+        </div>
+
+        <div class="nav">
+            <div>
+                <a href="/">Регистратура</a>
+                <a href="/admin">Панель врача</a>
+            </div>
+            <div class="user" id="userBox">
+                <a href="/login">🔐 Войти</a>
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <label>Кабинет:
+                <select id="cabinetSelect" style="margin-left: 8px;"></select>
+            </label>
+            <button id="btnNext" onclick="callNext()">📢 Вызвать следующего</button>
+            <a href="http://localhost:8000/studies" target="_blank">📋 Исследования (RIS)</a>
+        </div>
+
+        <div class="columns" style="margin-top: 20px;">
+            <div class="col in_progress">
+                <h3>🔵 На приёме</h3>
+                <div id="colInProgress"></div>
+            </div>
+            <div class="col waiting">
+                <h3>⏳ Ожидают</h3>
+                <div id="colWaiting"></div>
+            </div>
+            <div class="col done">
+                <h3>✅ Завершённые</h3>
+                <div id="colDone"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const api = {
+        headers() {
+            const t = localStorage.getItem("access_token");
+            return t ? { "Content-Type": "application/json", "Authorization": "Bearer " + t }
+                     : { "Content-Type": "application/json" };
+        },
+        async get(url)  { return (await fetch(url,  { method: "GET",  headers: this.headers() })).json(); },
+        async post(url, body) { return (await fetch(url, { method: "POST", headers: this.headers(), body: JSON.stringify(body) })).json(); },
+    };
+
+    function fmtTime(iso) { return iso ? iso.substring(11, 16) : "—"; }
+
+    async function loadCabinets() {
+        const data = await api.get("/api/cabinets");
+        const sel = document.getElementById("cabinetSelect");
+        sel.innerHTML = data.map(c => `<option value="${c.code}">${c.code} — ${c.name}</option>`).join("");
+        const params = new URLSearchParams(location.search);
+        if (params.get("cabinet")) sel.value = params.get("cabinet");
+    }
+
+    function renderTicket(t, status) {
+        const viewer = t.study_uid
+            ? `<button onclick="window.open('http://localhost:8000/viewer/${t.study_uid}', '_blank')">🖼 Снимки</button>`
+            : "";
+        const completeBtn = status === "in_progress"
+            ? `<button class="danger" onclick="complete('${t.ticket_number}')">Завершить</button>`
+            : "";
+        return `<div class="ticket ${status}">
+            <div class="num">${t.ticket_number}</div>
+            <div class="name">${t.patient.full_name}</div>
+            <div class="time">Создан: ${fmtTime(t.created_at)}${t.called_at ? " · Вызван: " + fmtTime(t.called_at) : ""}</div>
+            ${completeBtn} ${viewer}
+        </div>`;
+    }
+
+    async function refresh() {
+        const cab = document.getElementById("cabinetSelect").value;
+        if (!cab) return;
+        const all = await api.get(`/api/tickets?cabinet=${cab}`);
+        const inProg = all.filter(t => t.status === "in_progress");
+        const waiting = all.filter(t => t.status === "waiting");
+        const done = all.filter(t => t.status === "done").slice(0, 10);
+
+        document.getElementById("colInProgress").innerHTML =
+            inProg.length ? inProg.map(t => renderTicket(t, "in_progress")).join("") : '<div class="empty">—</div>';
+        document.getElementById("colWaiting").innerHTML =
+            waiting.length ? waiting.map(t => renderTicket(t, "waiting")).join("") : '<div class="empty">Нет ожидающих</div>';
+        document.getElementById("colDone").innerHTML =
+            done.length ? done.map(t => renderTicket(t, "done")).join("") : '<div class="empty">—</div>';
+
+        document.getElementById("btnNext").disabled = !waiting.length;
+    }
+
+    async function callNext() {
+        const cab = document.getElementById("cabinetSelect").value;
+        const r = await api.post("/api/tickets/next", { cabinet_code: cab });
+        if (r.detail) { alert(r.detail); return; }
+        refresh();
+    }
+
+    async function complete(ticketNumber) {
+        const r = await api.post(`/api/tickets/${ticketNumber}/complete`, {});
+        if (r.detail) { alert(r.detail); return; }
+        refresh();
+    }
+
+    async function loadUser() {
+        const token = localStorage.getItem("access_token");
+        if (!token) return;
+        try {
+            const u = await api.get("/api/auth/me");
+            const has = (r) => u.role_codes.includes(r);
+            if (!has("doctor") && !has("technician") && !has("admin")) {
+                document.getElementById("userBox").innerHTML =
+                    `<span style="color:#dc3545">Нет прав: нужна роль doctor/technician/admin</span>`;
+            }
+            document.getElementById("userBox").innerHTML =
+                `<span>👤 ${u.full_name} (${u.role_codes.join(", ")})</span>
+                 <button onclick="logout()">Выйти</button>`;
+        } catch { localStorage.removeItem("access_token"); }
+    }
+    function logout() {
+        const r = localStorage.getItem("refresh_token");
+        if (r) api.post("/api/auth/logout", { refresh_token: r });
+        localStorage.clear(); location.reload();
+    }
+
+    (async () => {
+        await loadCabinets();
+        await refresh();
+        await loadUser();
+        setInterval(refresh, 10000);  // автообновление каждые 10 сек
+    })();
+    </script>
+</body>
+</html>
