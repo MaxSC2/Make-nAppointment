@@ -102,6 +102,10 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
           setSliceInfo({ current: 1, total })
         }
       } catch { /* ignore */ }
+      // После загрузки восстанавливаем активный Draw shape
+      if (activeTool === 'Draw') {
+        try { app.setToolFeatures({ shapeName: activeShape }) } catch { /* ignore */ }
+      }
     })
 
     app.addEventListener('error', (event) => {
@@ -144,10 +148,14 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       inst => `/api/v1/instances/${inst.orthanc_id}/dicom`,
     )
 
-    const token = getToken()
-    const options: DicomWebLoadOptions | undefined = token
-      ? { requestHeaders: { Authorization: `Bearer ${token}` } }
-      : undefined
+    const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
+    const requestHeaders = token
+      ? [{ name: 'Authorization', value: `Bearer ${token}` }]
+      : [{ name: 'Accept', value: 'application/dicom' }]
+    const options: DicomWebLoadOptions = {
+      requestHeaders,
+      forceLoader: 'dicom',
+    }
 
     appRef.current.loadURLs(urls, options)
   }, [])
@@ -207,22 +215,22 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
   const handleToolChange = useCallback((tool: string) => {
     setActiveTool(tool)
     setShowShapes(tool === 'Draw')
-    appRef.current?.setTool(tool)
-    if (tool === 'Draw' && loaded) {
+    try {
+      appRef.current?.setTool(tool)
+    } catch (e) { /* tool may not be ready yet */ }
+    if (tool === 'Draw') {
       try {
         appRef.current?.setToolFeatures({ shapeName: activeShape })
       } catch { /* tool not initialized yet */ }
     }
-  }, [activeShape, loaded])
+  }, [activeShape])
 
   const handleShapeChange = useCallback((shape: string) => {
     setActiveShape(shape)
-    if (loaded) {
-      try {
-        appRef.current?.setToolFeatures({ shapeName: shape })
-      } catch { /* tool not initialized yet */ }
-    }
-  }, [loaded])
+    try {
+      appRef.current?.setToolFeatures({ shapeName: shape })
+    } catch { /* tool not initialized yet */ }
+  }, [])
 
   const handleSeriesChange = useCallback((seriesUid: string) => {
     if (seriesUid === activeSeriesUid) return
