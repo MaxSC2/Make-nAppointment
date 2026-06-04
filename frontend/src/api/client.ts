@@ -1,5 +1,6 @@
 const ELQUEUE_BASE = '/elqueue/api'
 const RIS_BASE = '/ris/api'
+const RIS_V1_BASE = '/api/v1'
 
 let authToken: string | null = null
 
@@ -65,4 +66,9 @@ export function risPut<T>(path: string, body?: unknown) {
     method: 'PUT',
     body: body ? JSON.stringify(body) : undefined,
   }) as Promise<T>
+}
+
+// ---- PACS-фасад (RIS, префикс /api/v1) ----
+export function risV1Get<T>(path: string) {
+  return request(RIS_V1_BASE, path) as Promise<T>
 }
