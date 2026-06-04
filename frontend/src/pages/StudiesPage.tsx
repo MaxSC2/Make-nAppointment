@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { getStudiesList } from '../api/ris'
+import { Link, useNavigate } from 'react-router-dom'
+import { getStudiesList, linkStudy } from '../api/ris'
 import type { StudyListItem } from '../types/ris'
 
 const MODALITY_FILTERS = [
@@ -12,10 +12,12 @@ const MODALITY_FILTERS = [
 ] as const
 
 export default function StudiesPage() {
+  const navigate = useNavigate()
   const [studies, setStudies] = useState<StudyListItem[]>([])
   const [modality, setModality] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [linkingId, setLinkingId] = useState<string | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -27,6 +29,29 @@ export default function StudiesPage() {
       setError(err instanceof Error ? err.message : 'Ошибка загрузки')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleLink = async (s: StudyListItem) => {
+    if (!s.modality) {
+      setError('Не удалось определить модальность снимка')
+      return
+    }
+    if (!confirm(`Связать снимок "${s.patient_name_dicom || s.orthanc_id.slice(0, 8)}" с новым RIS-заказом?`)) {
+      return
+    }
+    setLinkingId(s.orthanc_id)
+    setError(null)
+    try {
+      const res = await linkStudy(s.orthanc_id, {
+        modality_code: s.modality,
+        referring_physician: undefined,
+      })
+      navigate(`/protocol/${res.order_id}`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка линковки')
+    } finally {
+      setLinkingId(null)
     }
   }
 
@@ -138,7 +163,7 @@ export default function StudiesPage() {
                       >
                         Просмотр
                       </Link>
-                      {s.ris_order_id && (
+                      {s.ris_order_id ? (
                         <>
                           <span className="text-slate-300">·</span>
                           <Link
@@ -147,6 +172,17 @@ export default function StudiesPage() {
                           >
                             Протокол
                           </Link>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-slate-300">·</span>
+                          <button
+                            onClick={() => handleLink(s)}
+                            disabled={linkingId === s.orthanc_id}
+                            className="text-xs text-emerald-600 hover:text-emerald-700 font-medium disabled:opacity-50"
+                          >
+                            {linkingId === s.orthanc_id ? 'Создаём...' : '+ Заказ'}
+                          </button>
                         </>
                       )}
                     </div>

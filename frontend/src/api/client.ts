@@ -72,3 +72,10 @@ export function risPut<T>(path: string, body?: unknown) {
 export function risV1Get<T>(path: string) {
   return request(RIS_V1_BASE, path) as Promise<T>
 }
+
+export function risV1Post<T>(path: string, body?: unknown) {
+  return request(RIS_V1_BASE, path, {
+    method: 'POST',
+    body: body ? JSON.stringify(body) : undefined,
+  }) as Promise<T>
+}
