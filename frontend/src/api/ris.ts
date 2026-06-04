@@ -1,5 +1,5 @@
 import type { ModalityOut, OrderOut, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
-import { risGet, risPatch, risPost, risPut } from './client'
+import { risGet, risPatch, risPost, risPut, risV1Get } from './client'
 
 export function getOrders(status?: string, patientId?: string) {
   const params = new URLSearchParams()
@@ -54,5 +54,5 @@ export function getStudies(modality?: string) {
 
 export function getStudiesList(modality?: string) {
   const qs = modality ? `?modality=${modality}` : ''
-  return risGet<StudyListItem[]>(`/api/v1/studies${qs}`)
+  return risV1Get<StudyListItem[]>(`/studies${qs}`)
 }
