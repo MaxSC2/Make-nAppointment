@@ -21,6 +21,7 @@ export function useQueue(cabinet?: string, pollInterval = 10000) {
   }, [cabinet])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTickets()
     intervalRef.current = setInterval(fetchTickets, pollInterval)
     return () => {

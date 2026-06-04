@@ -19,6 +19,7 @@ export function useOrders(status?: string) {
     }
   }, [status])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchOrders() }, [fetchOrders])
 
   return { orders, loading, error, refetch: fetchOrders }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { getOrder, getProtocol, signProtocol, upsertProtocol } from '../api/ris'
 import type { OrderOut, ProtocolOut } from '../types/ris'
-import { useAuth } from '../contexts/AuthContext'
+import { useAuth } from '../hooks/useAuth'
 import StatusBadge from '../components/StatusBadge'
 
 const TEMPLATES: Record<string, string> = {

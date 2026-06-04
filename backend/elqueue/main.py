@@ -11,6 +11,7 @@ from pathlib import Path
 
 import jinja2
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.templating import _TemplateResponse
@@ -55,6 +56,15 @@ app = FastAPI(
     version="2.0.0",
     description="Электронная очередь для регистратуры на базе PostgreSQL",
     lifespan=lifespan,
+)
+
+# CORS — разрешаем фронт на любом origin (dev режим)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Глобальные обработчики ошибок с русскими сообщениями

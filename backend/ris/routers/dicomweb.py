@@ -15,13 +15,15 @@ multipart/related (WADO-RS pixel data) и application/dicom+json.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Annotated, Any
 
 import httpx
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Depends, Request, Response
 from fastapi.responses import StreamingResponse
 
 from db.config import settings
+from db.dependencies import get_current_user
+from db.models.auth import User
 
 router = APIRouter(prefix="/dicom", tags=["DICOMweb"])
 
@@ -77,6 +79,10 @@ def _forward_headers(headers: dict[str, Any]) -> dict[str, str]:
 
 
 @router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def dicomweb_proxy(path: str, request: Request) -> Response:
+async def dicomweb_proxy(
+    path: str,
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
+) -> Response:
     """Универсальный прокси для всех DICOMweb запросов."""
     return await _proxy(request, path)
