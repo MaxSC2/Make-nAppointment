@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { App, AppOptions, ViewConfig } from 'dwv'
 import type { PositionEvent } from 'dwv'
+import { getToken } from '../api/client'
 
 const TOOLS = [
   { id: 'Scroll', label: 'Cрезы' },
@@ -20,9 +21,18 @@ interface SeriesItem {
 }
 
 interface StudyData {
-  uid: string
-  patient_id: string
-  patient_name: string
+  orthanc_id: string
+  study_uid: string
+  study_date: string | null
+  study_description: string | null
+  modality: string | null
+  patient_id_dicom: string | null
+  patient_name_dicom: string | null
+  patient_birth_date: string | null
+  accession_number: string | null
+  is_stable: boolean
+  unlinked: boolean
+  patient: { id: string; full_name: string; birth_date: string | null } | null
   series: SeriesItem[]
 }
 
@@ -70,6 +80,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       appRef.current = app
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError('Не удалось инициализировать DWV: ' + msg)
       onError?.(msg)
       return
@@ -122,7 +133,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     }
   }, [initApp, onError])
 
-  const loadSeries = useCallback((studyUid: string, seriesUid: string) => {
+  const loadSeries = useCallback((seriesUid: string) => {
     const data = studyDataRef.current
     if (!data || !appRef.current) return
 
@@ -144,7 +155,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
 
     const fetchStudy = async () => {
       try {
-        const token = localStorage.getItem('mp_access_token') ?? ''
+        const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
         const resp = await fetch(
           `/api/v1/studies/${encodeURIComponent(studyUid)}`,
           { headers: { Authorization: `Bearer ${token}` } },
@@ -159,7 +170,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
           id: data.patient_id_dicom || data.patient?.id || '—',
         })
 
-        const series: SeriesItem[] = (data.series || []).map((s: any) => ({
+        const series: SeriesItem[] = (data.series || []).map((s: { series_uid: string; modality: string; series_description: string | null; instance_count: number; instances: { orthanc_id: string; sop_instance_uid: string }[] }) => ({
           series_uid: s.series_uid,
           modality: s.modality,
           description: s.series_description || null,
@@ -171,7 +182,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
         if (series.length > 0) {
           const first = series[0].series_uid
           setActiveSeriesUid(first)
-          loadSeries(studyUid, first)
+          loadSeries(first)
         } else {
           setError('Исследование не содержит серий')
         }
@@ -192,22 +203,28 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     setActiveTool(tool)
     setShowShapes(tool === 'Draw')
     appRef.current?.setTool(tool)
-    if (tool === 'Draw') {
-      appRef.current?.setToolFeatures({ shapeName: activeShape })
+    if (tool === 'Draw' && loaded) {
+      try {
+        appRef.current?.setToolFeatures({ shapeName: activeShape })
+      } catch { /* tool not initialized yet */ }
     }
-  }, [activeShape])
+  }, [activeShape, loaded])
 
   const handleShapeChange = useCallback((shape: string) => {
     setActiveShape(shape)
-    appRef.current?.setToolFeatures({ shapeName: shape })
-  }, [])
+    if (loaded) {
+      try {
+        appRef.current?.setToolFeatures({ shapeName: shape })
+      } catch { /* tool not initialized yet */ }
+    }
+  }, [loaded])
 
   const handleSeriesChange = useCallback((seriesUid: string) => {
     if (seriesUid === activeSeriesUid) return
     setActiveSeriesUid(seriesUid)
     setLoaded(false)
-    loadSeries(studyUid, seriesUid)
-  }, [activeSeriesUid, studyUid, loadSeries])
+    loadSeries(seriesUid)
+  }, [activeSeriesUid, loadSeries])
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -272,7 +289,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
                 <option key={s.series_uid} value={s.series_uid}>
                   {s.modality}
                   {s.description ? ' - ' + s.description : ''}
-                  {' (' + s.instance_count + ')}'}
+                  {' (' + s.instance_count + ')'}
                 </option>
               ))}
             </select>

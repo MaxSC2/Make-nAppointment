@@ -24,7 +24,7 @@ export default function DoctorPage() {
     }
   }, [cabinetCode])
 
-  const handleCall = useCallback(async (_ticket: TicketDetail) => {
+  const handleCall = useCallback(async () => {
     try {
       await queueApi.callNext(cabinetCode)
       await refresh()

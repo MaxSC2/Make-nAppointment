@@ -1,4 +1,4 @@
-import type { ModalityOut, OrderOut, ProtocolOut, StudyOut } from '../types/ris'
+import type { ModalityOut, OrderOut, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
 import { risGet, risPatch, risPost, risPut } from './client'
 
 export function getOrders(status?: string, patientId?: string) {
@@ -50,4 +50,9 @@ export function getModalities() {
 export function getStudies(modality?: string) {
   const qs = modality ? `?modality=${modality}` : ''
   return risGet<OrderOut[]>(`/studies${qs}`)
+}
+
+export function getStudiesList(modality?: string) {
+  const qs = modality ? `?modality=${modality}` : ''
+  return risGet<StudyListItem[]>(`/api/v1/studies${qs}`)
 }

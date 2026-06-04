@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { setToken as setClientToken } from '../api/client'
 import type { UserOut } from '../types/auth'
@@ -19,8 +19,10 @@ interface AuthContextValue extends AuthState {
   logout: () => void
   refreshUser: () => Promise<void>
 }
+export type { AuthContextValue }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
+export { AuthContext }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserOut | null>(null)
@@ -32,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refresh = localStorage.getItem(STORAGE_REFRESH)
     const u = localStorage.getItem(STORAGE_USER)
     if (access) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAccessToken(access)
       setClientToken(access)
     }
@@ -128,10 +131,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }), [user, accessToken, isLoading, login, logout, refreshUser])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>')
-  return ctx
 }

@@ -346,8 +346,9 @@ async def orthanc_proxy_write(
 async def orthanc_proxy_read(
     path: str,
     request: Request,
+    current_user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
-    """Чтение DICOM (tags/preview/archive) — публично, viewer должен работать без токена."""
+    """Чтение DICOM (tags/preview/archive)."""
     return await _orthanc_forward(path, request)
 
 
