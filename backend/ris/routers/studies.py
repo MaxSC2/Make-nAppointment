@@ -9,6 +9,7 @@ PACS-фасад скрывает Orthanc от frontend. Frontend работае�
 - GET /api/v1/studies/{study_uid}/preview   — превью первого среза (PNG)
 - GET /api/v1/instances/{instance_id}/preview       — превью среза
 - GET /api/v1/instances/{instance_id}/dicom-tags    — DICOM-теги
+- GET /api/v1/instances/{instance_id}/dicom         — сырой DICOM-файл (для DWV)
 - GET /api/v1/patients/{patient_id}/studies         — все снимки пациента
 - GET /api/v1/orders/{order_id}/dicom               — DICOM-данные по заказу
 
@@ -112,6 +113,27 @@ async def get_instance_dicom_tags(
     """Упрощённый набор DICOM-тегов (MainDicomTags) для отображения в viewer."""
     try:
         return await pacs_facade.get_instance_dicom_tags(instance_id)
+    except pacs_facade.PACSError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.get(
+    "/instances/{instance_id}/dicom",
+    summary="Сырой DICOM-файл инстанса (для DWV)",
+    response_class=Response,
+)
+async def get_instance_dicom(
+    instance_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Возвращает сырой DICOM-файл (application/dicom) для DWV-просмотрщика.
+
+    Все запросы идут через PACS-фасад, что гарантирует JWT-аутентификацию
+    (в отличие от прямого доступа к Orthanc).
+    """
+    try:
+        dicom_bytes, content_type = await pacs_facade.get_instance_dicom_file(instance_id)
+        return Response(content=dicom_bytes, media_type=content_type)
     except pacs_facade.PACSError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 

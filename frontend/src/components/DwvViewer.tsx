@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { App, AppOptions, ViewConfig } from 'dwv'
-import type { PositionEvent } from 'dwv'
+import type { DicomWebLoadOptions, PositionEvent } from 'dwv'
 import { getToken } from '../api/client'
 
 const TOOLS = [
@@ -141,10 +141,15 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     if (!series || series.instances.length === 0) return
 
     const urls: string[] = series.instances.map(
-      inst => `/dicom-files/${inst.orthanc_id}/file`,
+      inst => `/api/v1/instances/${inst.orthanc_id}/dicom`,
     )
 
-    appRef.current.loadURLs(urls)
+    const token = getToken()
+    const options: DicomWebLoadOptions | undefined = token
+      ? { requestHeaders: { Authorization: `Bearer ${token}` } }
+      : undefined
+
+    appRef.current.loadURLs(urls, options)
   }, [])
 
   useEffect(() => {
