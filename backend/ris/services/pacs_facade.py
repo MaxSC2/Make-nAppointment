@@ -293,6 +293,16 @@ async def get_instance_preview(instance_id: str) -> tuple[bytes, str]:
     return png_bytes, "image/png"
 
 
+async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
+    """Сырой DICOM-файл инстанса (для DWV-просмотрщика).
+
+    Возвращает (bytes, content_type). Требует JWT — иначе был бы обход через
+    прямой запрос в Orthanc.
+    """
+    dicom_bytes = await _orthanc_get_bytes(f"instances/{instance_id}/file")
+    return dicom_bytes, "application/dicom"
+
+
 async def get_instance_dicom_tags(instance_id: str) -> dict:
     """DICOM-теги инстанса (MainDicomTags)."""
     inst = await _orthanc_get_json(f"instances/{instance_id}")
