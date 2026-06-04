@@ -279,18 +279,22 @@ async def list_all_studies(
         patients_by_id = {p.id: p for p in rows}
 
     orders_by_orthanc: dict[str, Order] = {}
+    orders_by_id_cache: dict[str, Order] = {}
     if orthanc_ids:
-        rows = (await db.execute(
-            select(Order)
-            .join(Study, Study.order_id == Order.id)
+        # Сначала забираем ris.studies (orthanc_id → order_id)
+        study_rows = (await db.execute(
+            select(Study.orthanc_id, Study.order_id)
             .where(Study.orthanc_id.in_(orthanc_ids))
-        )).scalars().all()
-        for o in rows:
-            # Берём первый попавшийся Study с этим orthanc_id
-            for st in o.studies if hasattr(o, 'studies') else []:
-                if st.orthanc_id in orthanc_ids:
-                    orders_by_orthanc[st.orthanc_id] = o
-                    break
+        )).all()
+        needed_order_ids = {row.order_id for row in study_rows}
+        if needed_order_ids:
+            order_rows = (await db.execute(
+                select(Order).where(Order.id.in_(needed_order_ids))
+            )).scalars().all()
+            orders_by_id_cache = {o.id: o for o in order_rows}
+        for row in study_rows:
+            if row.order_id in orders_by_id_cache:
+                orders_by_orthanc[row.orthanc_id] = orders_by_id_cache[row.order_id]
 
     orders_by_accession: dict[str, Order] = {}
     if accession_numbers:

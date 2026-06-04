@@ -56,3 +56,14 @@ export function getStudiesList(modality?: string) {
   const qs = modality ? `?modality=${modality}` : ''
   return risV1Get<StudyListItem[]>(`/studies${qs}`)
 }
+
+export function linkStudy(orthancId: string, body: {
+  modality_code: string
+  study_description?: string
+  referring_physician?: string
+}) {
+  return risV1Post<{ order_id: string; patient_id: string; patient_name: string }>(
+    `/studies/${orthancId}/link`,
+    body,
+  )
+}
