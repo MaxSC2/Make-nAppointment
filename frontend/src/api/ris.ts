@@ -1,5 +1,5 @@
 import type { ModalityOut, OrderOut, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
-import { risGet, risPatch, risPost, risPut, risV1Get } from './client'
+import { risGet, risPatch, risPost, risPut, risV1Get, risV1Post } from './client'
 
 export function getOrders(status?: string, patientId?: string) {
   const params = new URLSearchParams()
