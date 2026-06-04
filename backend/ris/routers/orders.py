@@ -133,9 +133,16 @@ async def create_order(
     # 4. Пустой протокол
     db.add(Protocol(order_id=order.id, body="", is_draft=True))
 
-    # 5. Отправляем метаданные в Orthanc (best-effort)
+    # 5. Отправляем метаданные в Orthanc (best-effort) и сохраняем связь
     try:
-        await _send_metadata_to_orthanc(patient, order, study_uid)
+        orthanc_id = await _send_metadata_to_orthanc(patient, order, study_uid)
+        if orthanc_id:
+            db.add(Study(
+                order_id=order.id,
+                orthanc_id=orthanc_id,
+                is_uploaded=True,
+                uploaded_at=now,
+            ))
     except Exception as e:
         print(f"[ris] Orthanc недоступен: {e}")
 
@@ -375,8 +382,11 @@ async def _send_metadata_to_orthanc(
     patient: Patient,
     order: Order,
     study_uid: str,
-) -> None:
-    """Создаёт минимальный DICOM (только метаданные) и загружает в Orthanc."""
+) -> str | None:
+    """Создаёт минимальный DICOM (только метаданные) и загружает в Orthanc.
+
+    Возвращает orthanc_id загруженного инстанса или None при ошибке.
+    """
     ds = Dataset()
     ds.PatientName = patient.full_name
     ds.PatientID = str(patient.id)
@@ -386,6 +396,7 @@ async def _send_metadata_to_orthanc(
     ds.SeriesInstanceUID = _generate_dicom_uid()
     ds.SOPInstanceUID = _generate_dicom_uid()
     ds.SOPClassUID = "1.2.840.10008.5.1.4.1.1.2"  # CT Image Storage (по умолчанию)
+    ds.AccessionNumber = order.id  # для матчинга в PACS-фасаде (фолбэк)
 
     ds.file_meta = pydicom.Dataset()
     ds.file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
@@ -405,8 +416,10 @@ async def _send_metadata_to_orthanc(
         if resp.status_code == 200:
             orthanc_id = resp.json().get("ID", "")
             print(f"[ris] Orthanc study {orthanc_id} создан для order {order.id}")
+            return orthanc_id
         else:
             print(f"[ris] Orthanc error {resp.status_code}: {resp.text}")
+            return None
 
 
 async def _audit(

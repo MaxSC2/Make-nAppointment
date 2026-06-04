@@ -19,6 +19,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 from typing import Any
 
@@ -34,6 +35,7 @@ from db.models.ris import Order, OrderStatus, Study
 # ======================== НИЗКОУРОВНЕВЫЙ КЛИЕНТ ========================
 
 ORTHANC_TIMEOUT = 10.0
+_ORTHANC_CONCURRENCY = 8  # ограничиваем параллельные запросы к Orthanc
 
 
 class PACSError(Exception):
@@ -45,9 +47,28 @@ class PACSError(Exception):
         super().__init__(message)
 
 
+_orthanc_semaphore = asyncio.Semaphore(_ORTHANC_CONCURRENCY)
+_orthanc_client: httpx.AsyncClient | None = None
+
+
+def _get_orthanc_client() -> httpx.AsyncClient:
+    """Singleton httpx-клиент (connection pool)."""
+    global _orthanc_client
+    if _orthanc_client is None:
+        _orthanc_client = httpx.AsyncClient(
+            timeout=ORTHANC_TIMEOUT,
+            limits=httpx.Limits(
+                max_connections=_ORTHANC_CONCURRENCY * 2,
+                max_keepalive_connections=_ORTHANC_CONCURRENCY,
+            ),
+        )
+    return _orthanc_client
+
+
 async def _orthanc_get_json(path: str) -> Any:
     """GET к Orthanc, ожидаем JSON-ответ."""
-    async with httpx.AsyncClient(timeout=ORTHANC_TIMEOUT) as client:
+    async with _orthanc_semaphore:
+        client = _get_orthanc_client()
         url = f"{settings.orthanc_url}/{path.lstrip('/')}"
         try:
             r = await client.get(url)
@@ -63,7 +84,8 @@ async def _orthanc_get_json(path: str) -> Any:
 
 async def _orthanc_get_bytes(path: str) -> bytes:
     """GET к Orthanc, ожидаем бинарный ответ (PNG/ZIP)."""
-    async with httpx.AsyncClient(timeout=ORTHANC_TIMEOUT) as client:
+    async with _orthanc_semaphore:
+        client = _get_orthanc_client()
         url = f"{settings.orthanc_url}/{path.lstrip('/')}"
         try:
             r = await client.get(url)
@@ -217,20 +239,99 @@ async def list_all_studies(
         modality: фильтр по модальности (CT, MR, DX, US)
     """
     orthanc_studies = await _orthanc_get_json("studies?expand")
-    result: list[dict] = []
+
+    # Шаг 1: собрать сводки + подтянуть modality из первой серии (параллельно)
+    modality_tasks = []
     for s in orthanc_studies:
+        if not (s.get("MainDicomTags") or {}).get("Modality") and s.get("Series"):
+            series_id = s["Series"][0]
+            modality_tasks.append(_orthanc_get_json(f"series/{series_id}"))
+        else:
+            modality_tasks.append(asyncio.sleep(0, result=None))
+
+    series_results = await asyncio.gather(*modality_tasks, return_exceptions=True)
+
+    summaries: list[dict] = []
+    for s, series_data in zip(orthanc_studies, series_results):
         summary = _build_study_summary(s)
-        # Модальность Orthanc кладёт в серию, а не в study — добираем из первой серии
-        if not summary.get("modality") and s.get("Series"):
-            try:
-                first_series = await _orthanc_get_json(f"series/{s['Series'][0]}")
-                summary["modality"] = (first_series.get("MainDicomTags") or {}).get("Modality")
-            except PACSError:
-                pass
+        if not summary.get("modality") and isinstance(series_data, dict):
+            summary["modality"] = (series_data.get("MainDicomTags") or {}).get("Modality")
         if modality and summary.get("modality") != modality:
             continue
-        joined = await _join_with_ris(db, summary)
-        result.append(joined)
+        summaries.append(summary)
+
+    # Шаг 2: батч-запросы в БД (2 запроса вместо 2×N)
+    patient_uuids = {
+        pid for s in summaries
+        if (pid := _try_patient_id(s.get("patient_id_dicom"))) is not None
+    }
+    orthanc_ids = {s["orthanc_id"] for s in summaries if s.get("orthanc_id")}
+    accession_numbers = {
+        s["accession_number"] for s in summaries
+        if s.get("accession_number")
+    }
+
+    patients_by_id: dict[uuid.UUID, Patient] = {}
+    if patient_uuids:
+        rows = (await db.execute(
+            select(Patient).where(Patient.id.in_(patient_uuids))
+        )).scalars().all()
+        patients_by_id = {p.id: p for p in rows}
+
+    orders_by_orthanc: dict[str, Order] = {}
+    if orthanc_ids:
+        rows = (await db.execute(
+            select(Order)
+            .join(Study, Study.order_id == Order.id)
+            .where(Study.orthanc_id.in_(orthanc_ids))
+        )).scalars().all()
+        for o in rows:
+            # Берём первый попавшийся Study с этим orthanc_id
+            for st in o.studies if hasattr(o, 'studies') else []:
+                if st.orthanc_id in orthanc_ids:
+                    orders_by_orthanc[st.orthanc_id] = o
+                    break
+
+    orders_by_accession: dict[str, Order] = {}
+    if accession_numbers:
+        rows = (await db.execute(
+            select(Order).where(Order.id.in_(accession_numbers))
+        )).scalars().all()
+        orders_by_accession = {o.id: o for o in rows}
+
+    # Шаг 3: склеить всё в Python (без доп. запросов в БД)
+    result: list[dict] = []
+    for summary in summaries:
+        s = dict(summary)
+        s["unlinked"] = True
+        s["ris_order_id"] = None
+        s["ris_order_status"] = None
+        s["patient"] = None
+
+        # Patient
+        pid = _try_patient_id(s.get("patient_id_dicom"))
+        if pid and pid in patients_by_id:
+            p = patients_by_id[pid]
+            s["unlinked"] = False
+            s["patient"] = {
+                "id": str(p.id),
+                "full_name": p.full_name,
+                "birth_date": str(p.birth_date) if p.birth_date else None,
+            }
+
+        # Order: сначала через ris.studies, фолбэк через accession_number
+        order = orders_by_orthanc.get(s.get("orthanc_id", ""))
+        if order is None and s.get("accession_number"):
+            order = orders_by_accession.get(s["accession_number"])
+        if order is not None:
+            s["unlinked"] = False
+            s["ris_order_id"] = order.id
+            s["ris_order_status"] = (
+                order.status.value if isinstance(order.status, OrderStatus) else order.status
+            )
+            s["ris_study_description"] = order.study_description
+        result.append(s)
+
     result.sort(key=lambda x: x.get("study_date") or "", reverse=True)
     return result
 
