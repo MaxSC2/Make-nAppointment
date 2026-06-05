@@ -182,6 +182,10 @@ async def link_study_to_order(
     ))
 
     await db.commit()
+    # Инвалидируем кэш маппинга study_uid → orthanc_id (новый order/patient в БД
+    # не меняет кэш, но если в будущем будем линковать новые studies в Orthanc —
+    # обязательно сбросить).
+    pacs_facade.invalidate_study_uid_cache()
     return LinkStudyResponse(
         order_id=order.id,
         patient_id=str(patient.id),
