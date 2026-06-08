@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setClientToken(access)
     }
     if (u) {
-      try { setUser(JSON.parse(u)) } catch { localStorage.removeItem(STORAGE_USER) }
+      try { setUser(JSON.parse(u)) } catch { console.error('Auth: corrupted user in localStorage'); localStorage.removeItem(STORAGE_USER) }
     }
     setLoading(false)
     if (refresh && access) {

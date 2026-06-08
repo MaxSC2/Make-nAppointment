@@ -128,7 +128,7 @@ async def main() -> None:
         await seed_cabinets(db)
         print("  ✓ кабинеты")
         await seed_admin(db)
-        print(f"  ✓ администратор: {settings.admin_username!r} / {settings.admin_password!r}")
+        print(f"  ✓ администратор: {settings.admin_username!r} / ***")
 
     print("=== init_db: готово ===")
 
