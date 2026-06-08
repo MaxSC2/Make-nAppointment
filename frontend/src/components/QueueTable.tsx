@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import type { TicketDetail } from '../types/queue'
 import StatusBadge from './StatusBadge'
 
@@ -9,6 +10,7 @@ interface QueueTableProps {
 }
 
 export default function QueueTable({ tickets, onCall, onComplete, showActions }: QueueTableProps) {
+  const navigate = useNavigate()
   if (tickets.length === 0) {
     return (
       <div className="text-center py-12 text-gray-400">
@@ -50,7 +52,13 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
                 })}
               </td>
               {showActions && (
-                <td className="px-4 py-3 text-right">
+                <td className="px-4 py-3 text-right space-x-2">
+                  <button
+                    onClick={() => navigate(`/patients/${ticket.patient_id}`)}
+                    className="text-sm bg-white text-teal-600 border border-teal-300 px-3 py-1 rounded hover:bg-teal-50 transition-colors"
+                  >
+                    Карта пациента
+                  </button>
                   {ticket.status === 'waiting' && onCall && (
                     <button
                       onClick={() => onCall(ticket)}

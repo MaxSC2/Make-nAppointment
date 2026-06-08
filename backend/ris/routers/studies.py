@@ -33,6 +33,7 @@ from db.models.auth import RoleCode, User
 from db.models.queue import Patient
 from db.models.ris import Modality, Order, OrderStatus, Protocol, Study
 from db.schemas.ris import OrderOut
+from db.schemas.queue import PatientOut
 from ris.services import pacs_facade
 
 
@@ -203,11 +204,13 @@ async def link_study_to_order(
 )
 async def get_instance_preview(
     instance_id: str,
+    window_width: int | None = Query(None, alias="W", description="Window Width"),
+    window_level: int | None = Query(None, alias="L", description="Window Level"),
     current_user=Depends(get_current_user),
 ):
     """Возвращает PNG-превью одного инстанса (для листания в viewer)."""
     try:
-        png_bytes, content_type = await pacs_facade.get_instance_preview(instance_id)
+        png_bytes, content_type = await pacs_facade.get_instance_preview(instance_id, window_width, window_level)
         return Response(content=png_bytes, media_type=content_type)
     except pacs_facade.PACSError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
@@ -296,6 +299,41 @@ async def get_study_thumbnail(
         return Response(content=png_bytes, media_type=content_type)
     except pacs_facade.PACSError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+# ======================== PATIENTS ========================
+
+
+@router.get("/patients", response_model=list[dict])
+async def list_patients(
+    search: str | None = Query(None, description="Поиск по ФИО или номеру полиса"),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Список пациентов с поиском по ФИО или номеру полиса."""
+    from sqlalchemy import or_
+
+    stmt = select(Patient)
+    if search:
+        stmt = stmt.where(
+            or_(
+                Patient.full_name.ilike(f"%{search}%"),
+                Patient.policy_number.ilike(f"%{search}%"),
+            )
+        )
+    stmt = stmt.order_by(Patient.created_at.desc())
+    result = await db.execute(stmt)
+    patients = result.scalars().all()
+    return [
+        {
+            "id": str(p.id),
+            "full_name": p.full_name,
+            "policy_number": p.policy_number,
+            "birth_date": str(p.birth_date) if p.birth_date else None,
+            "phone": p.phone,
+        }
+        for p in patients
+    ]
 
 
 # ======================== PATIENT / ORDER ========================

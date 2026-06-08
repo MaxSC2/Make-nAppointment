@@ -187,7 +187,7 @@
 /elqueue/*  → http://localhost:8005
 /ris/*      → http://localhost:8000
 /api/v1/*   → http://localhost:8000
-/dicom/*    → http://localhost:8042/dicom-web/
+/dicom/*    → http://localhost:8000 (FastAPI, с JWT)
 ```
 
 ## 5. Root Next.js 15 Приложение
@@ -267,7 +267,7 @@ d9bad57 fix: code review fixes — types, JWT, CORS, lint cleanup
 | **Backend Python** | ~3000+ строк |
 | **Frontend TSX/TS** | ~2000+ строк |
 | **DB таблиц** | 13 (4 схемы) |
-| **DICOM-исследований в Orthanc** | 8770 |
+| **DICOM-исследований в Orthanc** | 10 |
 | **Git коммитов** | 11 |
 | **Python зависимостей** | ~20 |
 | **NPM пакетов (frontend)** | 189 |

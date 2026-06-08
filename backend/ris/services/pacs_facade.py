@@ -83,13 +83,13 @@ async def _orthanc_get_json(path: str) -> Any:
         return r.json()
 
 
-async def _orthanc_get_bytes(path: str) -> bytes:
+async def _orthanc_get_bytes(path: str, params: dict[str, str] | None = None) -> bytes:
     """GET к Orthanc, ожидаем бинарный ответ (PNG/ZIP)."""
     async with _orthanc_semaphore:
         client = _get_orthanc_client()
         url = f"{settings.orthanc_url}/{path.lstrip('/')}"
         try:
-            r = await client.get(url)
+            r = await client.get(url, params=params)
         except httpx.RequestError as e:
             raise PACSError(f"Orthanc недоступен: {e}", status_code=503) from e
         if r.status_code != 200:
@@ -450,9 +450,14 @@ async def get_study_preview(study_uid: str) -> tuple[bytes, str]:
     return png_bytes, "image/png"
 
 
-async def get_instance_preview(instance_id: str) -> tuple[bytes, str]:
-    """Превью конкретного среза (PNG)."""
-    png_bytes = await _orthanc_get_bytes(f"instances/{instance_id}/preview")
+async def get_instance_preview(instance_id: str, window_width: int | None = None, window_level: int | None = None) -> tuple[bytes, str]:
+    """Превью конкретного среза (PNG) с опциональным оконтуриванием (W/L)."""
+    params = {}
+    if window_width is not None:
+        params["W"] = str(window_width)
+    if window_level is not None:
+        params["L"] = str(window_level)
+    png_bytes = await _orthanc_get_bytes(f"instances/{instance_id}/preview", params=params or None)
     return png_bytes, "image/png"
 
 

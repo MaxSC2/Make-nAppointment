@@ -55,6 +55,17 @@ export interface ProtocolOut {
   updated_at: string
 }
 
+export interface PatientStudy {
+  order_id: string
+  order_status: string
+  study_uid: string
+  modality: string | null
+  created_at: string
+  orthanc_id: string | null
+  is_uploaded: boolean
+  preview_url: string | null
+}
+
 export interface ModalityOut {
   code: string
   name: string

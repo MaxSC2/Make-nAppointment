@@ -12,12 +12,15 @@ POST /api/tickets/{ticket_number}/complete — завершить приём
 
 from __future__ import annotations
 
+import logging
 import secrets
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
 import httpx
+
+logger = logging.getLogger("elqueue.tickets")
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -254,6 +257,7 @@ async def complete_ticket(
         select(Ticket)
         .where(Ticket.ticket_number == ticket_number)
         .options(selectinload(Ticket.patient), selectinload(Ticket.cabinet))
+        .with_for_update()
     )
     ticket = (await db.execute(stmt)).scalar_one_or_none()
     if ticket is None:
@@ -312,10 +316,9 @@ async def _create_ris_order(
                 data = resp.json()
                 return data["id"], data.get("study_uid")
             else:
-                print(f"[elqueue] RIS вернул {resp.status_code}: {resp.text[:200]}")
+                logger.warning("RIS вернул %s: %s", resp.status_code, resp.text[:200])
     except Exception as e:
-        # RIS недоступен — не блокируем регистрацию
-        print(f"[elqueue] RIS недоступен: {e}")
+        logger.warning("RIS недоступен: %s", e)
     return None, None
 
 
@@ -333,7 +336,7 @@ async def _patch_ris_status(
                 headers=headers,
             )
     except Exception:
-        pass
+        logger.warning("RIS недоступен (PATCH status)", exc_info=True)
 
 
 async def _audit(
@@ -355,4 +358,5 @@ async def _audit(
     try:
         await db.commit()
     except Exception:
+        logger.warning("audit log rollback", exc_info=True)
         await db.rollback()

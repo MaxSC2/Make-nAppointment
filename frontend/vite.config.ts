@@ -23,8 +23,7 @@ export default defineConfig({
         changeOrigin: false,
       },
       '/dicom': {
-        target: 'http://localhost:8042',
-        rewrite: (path) => path.replace(/^\/dicom/, '/dicom-web'),
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
     },
