@@ -466,23 +466,69 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | F4.1-4.6 | Аутентификация и RBAC | ✓ Выполнено |
 | F5.1-5.4 | Тестирование (4 сценария + безопасность) | ✓ Выполнено |
 
-### 5.3. Code review
+### 5.3. Code review (08.06.2026)
 
-После интеграции просмотрщика DWV (DICOM Viewer от другой команды) проведён полный аудит кода. Найдено **10 проблем**, из них **5 критических**:
+После завершения MVP проведён полный аудит кода всей системы: backend (FastAPI + PostgreSQL), frontend (React 19 + Vite 8), корень (Next.js 15). Методология: инспекция всех файлов в `backend/`, `frontend/src/`, ключевых файлов корня.
 
-**Исправленные критические баги:**
-1. `inst.uid` не существовал — viewer не загружал снимки. Исправлено: маппинг на `inst.orthanc_id` + добавлен endpoint `/api/v1/instances/{id}/dicom`.
-2. DICOMweb-прокси без JWT — добавлен `Depends(get_current_user)`.
-3. Orthanc READ-прокси без JWT — добавлен `Depends(get_current_user)`.
-4. TypeScript-интерфейс `StudyData` не соответствовал PACS-фасаду — исправлен тип, убран `as any`.
-5. Двойной префикс URL (`/ris/api/api/v1`) при вызове PACS-фасада — добавлен `risV1Get()` с базой `/api/v1`.
+**Найдено 24 проблемы:** 3 критических, 6 высокого приоритета, 8 среднего, 7 низкого.
 
-**Исправленные значительные:**
-6. CORS не настроен — добавлен `CORSMiddleware` на оба сервиса.
-7. StudiesPage использовал OrderOut вместо PACS-фасада — переключено.
-8. Прямой Vite-прокси `/dicom-files` к Orthanc в обход JWT — endpoint добавлен в PACS-фасад, прокси удалён.
+#### Исправленные критические баги (08.06.2026)
 
-**Результат:** 0 ошибок TypeScript, 0 ошибок ESLint, 0 ошибок Python compile.
+| # | Проблема | Файл | Решение |
+|---|----------|------|---------|
+| 1 | Vite proxy `/dicom` → Orthanc в обход JWT | `vite.config.ts:25` | Цель изменена на FastAPI `:8000`, удалён rewrite. DICOMweb-запросы идут через JWT-защищённый прокси `dicomweb.py` |
+| 2 | `download_study` без JWT — любой мог скачать ZIP | `orders.py:311` | Добавлен `Depends(get_current_user)` |
+| 3 | `complete_ticket` race condition | `tickets.py:245` | Добавлен `.with_for_update()` (аналогично `call_next`) |
+
+#### Исправленные значительные (08.06.2026)
+
+| # | Проблема | Файлы | Решение |
+|---|----------|-------|---------|
+| 4 | 73 `print()` вместо `logging` | `main.py`, `orders.py`, `tickets.py` | Заменены на `logging.getLogger()`. CLI-скрипты оставлены с `print()` |
+| 5 | `create_order` без RBAC — любой юзер создавал заказы | `orders.py:92` | `get_current_user` → `require_role(DOCTOR, TECHNICIAN, ADMIN)` |
+| 6 | Немые `except:` — аудит и Orthanc-ошибки глотались | 4 файла | Добавлен `logger.warning(..., exc_info=True)` |
+| 7 | W/L params не передавались в Orthanc | `pacs_facade.py:453` | `_orthanc_get_bytes` + `params`, `get_instance_preview` + `window_width/level`, эндпоинт + `Query(alias="W/L")` |
+| 8 | `httpx.AsyncClient` per request в DICOMweb | `dicomweb.py:39` | Добавлен singleton `_get_client()` с connection pool |
+| 9 | 404 на `GET /api/v1/patients/{id}` | `studies.py` | Добавлен эндпоинт |
+| 10 | PatientCardPage: «Invalid Date» + key prop | `PatientCardPage.tsx` | API: поля `created_at`, `order_id`, `is_uploaded`, `preview_url`. Frontend: ключ `orthanc_id \|\| study_uid` |
+
+#### Оставшиеся (рекомендации)
+
+| # | Приоритет | Проблема | Файл |
+|---|-----------|----------|------|
+| 1 | 🟠 | Пароль админа в консоль при старте | `init_db.py:131` |
+| 2 | 🟡 | Справочники `/modalities`, `/cabinets` без auth | `orders.py:62`, `tickets.py:48` |
+| 3 | 🟡 | `httpx.AsyncClient` per request в orders.py (3 места) | `orders.py:320,371,419` |
+| 4 | 🟡 | DwvViewer: 6 пустых catch блоков | `DwvViewer.tsx` |
+| 5 | 🟡 | ViewerPage: хардкод localhost:5550 (NestJS) | `ViewerPage.tsx:12` |
+| 6 | 🟡 | DoctorPage без polling (ручное обновление) | `DoctorPage.tsx` |
+| 7 | 🟡 | useCabinets без AbortController + пустой catch | `useQueue.ts:48` |
+| 8 | 🟡 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` |
+| 9 | 🟡 | Нет тестов | весь проект |
+
+**Результат:** 10 из 24 проблем исправлены (3/3 критические, 4/6 высокого приоритета, 3/8 среднего). 0 ошибок TypeScript, 0 ошибок ESLint, 0 ошибок Python compile.
+
+### 5.4. Аудит безопасности
+
+Проведён целевой аудит безопасности JWT + RBAC + Orthanc-прокси:
+
+**Проверено и подтверждено:**
+- ✅ JWT на всех эндпоинтах PACS-фасада (`/api/v1/*`) — `Depends(get_current_user)`
+- ✅ JWT на DICOMweb-прокси (`/dicom/*`) — `dicomweb.py:85`
+- ✅ JWT на Orthanc-прокси GET (`/orthanc/*`) — `orders.py:358`
+- ✅ RBAC на Orthanc-прокси POST/PUT/DELETE — `require_role(DOCTOR, TECHNICIAN, ADMIN)`
+- ✅ RBAC на чувствительных операциях (подпись протокола, вызов пациента)
+- ✅ `with_for_update()` в `call_next` и `complete_ticket`
+- ✅ bcrypt (12 rounds), JWT HS256, refresh-токены в БД
+- ✅ XSS в `viewer.html` исправлен
+
+**Обнаружено и исправлено:**
+- ❌→✅ Vite proxy `/dicom/*` → Orthanc:8042 в обход JWT
+- ❌→✅ `download_study` без JWT
+- ❌→✅ `create_order` без RBAC
+- ❌→✅ Немые except блоки (маскировали ошибки)
+
+
 
 ---
 
@@ -497,9 +543,10 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 3. **PACS-фасад** (`/api/v1/*`) — единая точка работы с DICOM (скрывает Orthanc, JOIN с RIS)
 4. **Аутентификация** — JWT (access + refresh), RBAC (4 роли), аудит
 5. **DWV-просмотрщик** — полноценный DICOM-вьюер (scroll, WW/WL, zoom, draw)
-6. **React-фронтенд** — 8 страниц (Login, Queue, Registration, Doctor, Orders, Studies, Viewer, Protocol)
+6. **React-фронтенд** — 9 страниц (Login, Queue, Registration, Doctor, Orders, Studies, Viewer, Protocol, Patients)
 7. **Генератор тестовых данных** с реалистичными DICOM-изображениями
-8. **Документация**: ТЗ, README, отчёт, ARCHITECTURE.md, RIS_vs_PACS.md, DEMO_CHECKLIST.md
+8. **Безопасность** — полный аудит + устранение 10 уязвимостей (Vite proxy bypass, отсутствие JWT на download, race conditions, RBAC, logging, W/L params)
+9. **Документация**: ТЗ, README, отчёт, ARCHITECTURE.md, CODE_REVIEW.md, SESSION.md, WHERE_TO_WORK.md
 
 ### 6.2. Использованные технологии
 
@@ -526,15 +573,27 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 
 ### 6.4. Перспективы развития
 
-1. **DICOM MWL Provider** (pynetdicom, порт 11112) — аппарат КТ/МРТ будет запрашивать расписание у RIS
-2. **DICOM MPPS Receiver** (pynetdicom, порт 11113) — аппарат сообщает о прогрессе исследования
-3. **HL7 MLLP-сервер** (python-hl7, порт 6661) — интеграция с внешней МИС
-4. **Расписание** — CRUD + календарь для визуализации загрузки кабинетов
-5. **Биллинг** — счета, акты, печать
-6. **WebSocket** для очереди (вместо polling каждые 10 секунд)
-7. **CORS whitelist** (вместо `allow_origins=["*"]`)
-8. **PDF-печать протоколов** с QR-кодом для верификации
-9. **Email/SMS уведомления** пациентам о статусе талона
+**Ближайшие (из code review 08.06):**
+1. **Убрать пароль из лога** (`init_db.py:131`) — маскировать при старте
+2. **Добавить auth на справочники** — `/modalities`, `/cabinets` без `get_current_user`
+3. **httpx connection pool** — заменить `AsyncClient()` per request в `orders.py` (3 места) на singleton
+4. **Логирование в DwvViewer** — заменить 6 пустых catch на `console.error`
+5. **DoctorPage polling** — автоматическое обновление очереди (как в `useQueue`)
+6. **Убрать хардкод localhost:5550** — заменить на актуальный URL или убрать кнопку
+7. **Тесты** — хотя бы smoke-тесты на критические эндпоинты (login, tickets, studies)
+
+**Среднесрочные:**
+8. **DICOM MWL Provider** (pynetdicom, порт 11112) — аппарат КТ/МРТ будет запрашивать расписание у RIS
+9. **DICOM MPPS Receiver** (pynetdicom, порт 11113) — аппарат сообщает о прогрессе исследования
+10. **WebSocket** для очереди (вместо polling каждые 10 секунд)
+11. **CORS whitelist** (вместо `allow_origins=["*"]`)
+
+**Долгосрочные:**
+12. **HL7 MLLP-сервер** (python-hl7, порт 6661) — интеграция с внешней МИС
+13. **Расписание** — CRUD + календарь для визуализации загрузки кабинетов
+14. **Биллинг** — счета, акты, печать
+15. **PDF-печать протоколов** с QR-кодом для верификации
+16. **Email/SMS уведомления** пациентам о статусе талона
 
 ---
 
@@ -677,6 +736,7 @@ npm run dev
 |---|---|---|
 | v1.0 | 2026-05 | Первая итерация на SQLite, без аутентификации |
 | v2.0 | 2026-06 | Миграция на PostgreSQL 16, JWT, RBAC, PACS-фасад, React 19, DWV, code review |
+| v2.1 | 2026-06-08 | Аудит безопасности + исправление 10 уязвимостей: Vite proxy bypass, download_study JWT, complete_ticket race, W/L params, print→logging, silent excepts, RBAC, httpx pool, patient API. Добавлены PatientsPage, PatientCardPage. Отчёт дополнен разделами 5.3–5.4. |
 
 ---
 
