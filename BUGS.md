@@ -5,6 +5,60 @@
 
 ---
 
+## 🔴 `getPatient(id)` вызовет 404 — фронт-страница поломается
+
+**Найдено:** 08.06.2026
+**Где:** `frontend/src/api/ris.ts:78-80` → `frontend/src/pages/PatientCardPage.tsx`
+**Что:** Другой AI добавил `getPatient(patientId)` (frontend), но в `studies.py` НЕ было `GET /api/v1/patients/{id}` — только `/patients` (список) и `/patients/{id}/studies`. `PatientCardPage` использует `getPatient(id)`, что вызывало 404.
+**Статус:** ✅ **ИСПРАВЛЕНО** — другой AI добавил эндпоинт `get_patient(patient_id)` в `backend/ris/routers/studies.py:339`. Проверено: возвращает пациента.
+**Урок:** Перед коммитом проверять парность frontend-функции и backend-эндпоинта через `grep @router.get`.
+
+---
+
+## 🟡 Emoji 🔍 в placeholder PatientsPage
+
+**Найдено:** 08.06.2026
+**Где:** `frontend/src/pages/PatientsPage.tsx:35`
+**Что:** В placeholder поиска `🔍 Поиск по ФИО или полису...`
+**Почему проблема:** В коде проекта нет конвенции использовать emoji. В других страницах используется SVG-иконка. Plus: emoji может не отрендериться в некоторых браузерах/шрифтах.
+**Надо:** Заменить на SVG `<svg className="absolute left-3 top-3 ...">` (как было в моей версии).
+
+---
+
+## 🟡 `is_uploaded` в pacs_facade всегда True
+
+**Найдено:** 08.06.2026
+**Где:** `backend/ris/services/pacs_facade.py:259`
+**Что:** Другой AI добавил `summary["is_uploaded"] = True` — **всегда True**, без проверки реального состояния Orthanc.
+**Почему проблема:** В БД есть `ris.studies.is_uploaded` (true для всех 12), но семантически это должно проверяться через Orthanc (`studies/{id}/instances` count > 0).
+**Надо:** Сделать реальную проверку: `await _orthanc_get_json(f"studies/{orthanc_id}/instances")` и проверять len > 0.
+
+---
+
+## 🟡 `preview_url` строится по study_uid, не orthanc_id
+
+**Найдено:** 08.06.2026
+**Где:** `backend/ris/services/pacs_facade.py:261`
+**Что:** `summary["preview_url"] = f"/api/v1/studies/{summary['study_uid']}/preview"` — превью-эндпоинт принимает **orthanc_id** или **study_uid**?
+**Надо:** Проверить, какой идентификатор принимает `get_study_preview` в `pacs_facade.py` (нужно чтение). Если orthanc_id — баг, логи preview-ссылки сломаются.
+
+---
+
+## ⚪ `series_count` и `instance_count` = 0 (известно)
+
+**Где:** `ris.studies.series_count`, `ris.studies.instance_count`
+**Что:** В БД всегда 0 — не обновляются после линковки.
+**Обходной путь (фронт):** Скрывать счётчики если 0 (см. `TASK_FINAL_MVP.md`, задача 4.2).
+**Полный фикс:** В `link_study_to_order` (studies.py:105) добавить `await _orthanc_get_json(f"studies/{orthanc_id}/series?expand")` и записать реальные числа.
+
+---
+
+## ⚪ `CORS` отсутствует в elqueue
+
+(См. ниже — унаследованный баг)
+
+---
+
 ## 🔴 POST /api/tickets требует авторизацию (breaking change)
 
 **Где:** `elqueue/routers/tickets.py:126`

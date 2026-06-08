@@ -74,6 +74,10 @@ export function getPatients(search?: string) {
   return risV1Get<PatientOut[]>(`/patients${qs}`)
 }
 
+export function getPatient(patientId: string) {
+  return risV1Get<PatientOut>(`/patients/${patientId}`)
+}
+
 export function getPatientStudies(patientId: string) {
   return risV1Get<PatientStudy[]>(`/patients/${patientId}/studies`)
 }
