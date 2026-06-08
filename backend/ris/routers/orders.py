@@ -19,11 +19,14 @@ GET   /studies/download/{study_uid}   — скачать ZIP
 from __future__ import annotations
 
 import io
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated
 
 import httpx
+
+logger = logging.getLogger("ris.orders")
 import pydicom
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
@@ -93,7 +96,7 @@ async def create_order(
     body: OrderCreateRequest,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN))],
 ) -> Order:
     """Создаёт заказ на исследование + отправляет минимальный DICOM в Orthanc."""
     # 1. Пациент должен существовать
@@ -144,7 +147,7 @@ async def create_order(
                 uploaded_at=now,
             ))
     except Exception as e:
-        print(f"[ris] Orthanc недоступен: {e}")
+        logger.warning("Orthanc недоступен: %s", e)
 
     await db.commit()
     await db.refresh(order)
@@ -309,7 +312,10 @@ async def sign_protocol(
 # ======================== СКАЧИВАНИЕ ========================
 
 @router.get("/studies/download/{study_uid}")
-async def download_study(study_uid: str) -> Response:
+async def download_study(
+    study_uid: str,
+    user: Annotated[User, Depends(get_current_user)],
+) -> Response:
     """Скачать исследование как ZIP с DICOM-файлами через Orthanc archive."""
     async with httpx.AsyncClient(timeout=60) as client:
         find_resp = await client.post(
@@ -415,10 +421,10 @@ async def _send_metadata_to_orthanc(
         )
         if resp.status_code == 200:
             orthanc_id = resp.json().get("ID", "")
-            print(f"[ris] Orthanc study {orthanc_id} создан для order {order.id}")
+            logger.info("Orthanc study %s создан для order %s", orthanc_id, order.id)
             return orthanc_id
         else:
-            print(f"[ris] Orthanc error {resp.status_code}: {resp.text}")
+            logger.error("Orthanc error %s: %s", resp.status_code, resp.text)
             return None
 
 
@@ -443,4 +449,5 @@ async def _audit(
     try:
         await db.commit()
     except Exception:
+        logger.warning("audit log rollback", exc_info=True)
         await db.rollback()

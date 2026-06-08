@@ -6,10 +6,13 @@
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import jinja2
+
+logger = logging.getLogger("elqueue")
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -42,11 +45,11 @@ def render(name: str, context: dict) -> _TemplateResponse:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """При старте: лог информационных сообщений."""
-    print(f"[elqueue] старт, шаблоны: {TEMPLATES_DIR}")
-    print(f"[elqueue] БД: {settings.database_url.split('@')[-1]}")
-    print(f"[elqueue] RIS: {settings.ris_url}")
+    logger.info("старт, шаблоны: %s", TEMPLATES_DIR)
+    logger.info("БД: %s", settings.database_url.split('@')[-1])
+    logger.info("RIS: %s", settings.ris_url)
     yield
-    print("[elqueue] остановлен")
+    logger.info("остановлен")
 
 
 # ======================== ПРИЛОЖЕНИЕ ========================

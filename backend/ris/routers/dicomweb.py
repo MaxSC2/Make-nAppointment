@@ -29,6 +29,17 @@ router = APIRouter(prefix="/dicom", tags=["DICOMweb"])
 
 ORTHANC_DICOMWEB_BASE = f"{settings.orthanc_url}/dicom-web"
 PROXY_TIMEOUT = 120
+_dicomweb_client: httpx.AsyncClient | None = None
+
+
+def _get_client() -> httpx.AsyncClient:
+    global _dicomweb_client
+    if _dicomweb_client is None:
+        _dicomweb_client = httpx.AsyncClient(
+            timeout=PROXY_TIMEOUT,
+            limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+        )
+    return _dicomweb_client
 
 
 async def _proxy(request: Request, path: str) -> Response:
@@ -36,13 +47,12 @@ async def _proxy(request: Request, path: str) -> Response:
     url = f"{ORTHANC_DICOMWEB_BASE}/{path.lstrip('/')}"
     body = await request.body()
 
-    async with httpx.AsyncClient(timeout=PROXY_TIMEOUT) as client:
-        resp = await client.request(
-            method=request.method,
-            url=url,
-            content=body if body else None,
-            params=dict(request.query_params),
-        )
+    resp = await _get_client().request(
+        method=request.method,
+        url=url,
+        content=body if body else None,
+        params=dict(request.query_params),
+    )
 
     content_type = resp.headers.get("content-type", "application/octet-stream")
 

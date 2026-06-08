@@ -1,4 +1,5 @@
-import type { ModalityOut, OrderOut, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
+import type { ModalityOut, OrderOut, PatientStudy, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
+import type { PatientOut } from '../types/queue'
 import { risGet, risPatch, risPost, risPut, risV1Get, risV1Post } from './client'
 
 export function getOrders(status?: string, patientId?: string) {
@@ -66,4 +67,13 @@ export function linkStudy(orthancId: string, body: {
     `/studies/${orthancId}/link`,
     body,
   )
+}
+
+export function getPatients(search?: string) {
+  const qs = search ? `?search=${encodeURIComponent(search)}` : ''
+  return risV1Get<PatientOut[]>(`/patients${qs}`)
+}
+
+export function getPatientStudies(patientId: string) {
+  return risV1Get<PatientStudy[]>(`/patients/${patientId}/studies`)
 }

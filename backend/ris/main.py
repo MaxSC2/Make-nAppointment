@@ -7,10 +7,13 @@ PACS: Orthanc (прокси).
 
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import jinja2
+
+logger = logging.getLogger("ris")
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -42,11 +45,11 @@ def render(name: str, context: dict) -> _TemplateResponse:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f"[ris] старт, шаблоны: {TEMPLATES_DIR}")
-    print(f"[ris] БД: {settings.database_url.split('@')[-1]}")
-    print(f"[ris] Orthanc: {settings.orthanc_url}")
+    logger.info("старт, шаблоны: %s", TEMPLATES_DIR)
+    logger.info("БД: %s", settings.database_url.split('@')[-1])
+    logger.info("Orthanc: %s", settings.orthanc_url)
     yield
-    print("[ris] остановлен")
+    logger.info("остановлен")
 
 
 # ======================== ПРИЛОЖЕНИЕ ========================

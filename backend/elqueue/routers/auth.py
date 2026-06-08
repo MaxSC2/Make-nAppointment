@@ -8,11 +8,14 @@ GET  /api/auth/me       — текущий пользователь
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+
+logger = logging.getLogger("elqueue.auth")
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -155,4 +158,5 @@ async def _audit(
     try:
         await db.commit()
     except Exception:
+        logger.warning("audit log rollback", exc_info=True)
         await db.rollback()

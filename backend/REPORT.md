@@ -120,7 +120,7 @@ DICOM (Digital Imaging and Communications in Medicine) — международ�
 | Frontend (стили) | Tailwind CSS | 4.3.0 |
 | Frontend (роутинг) | React Router | 7.16.0 |
 | Frontend (DICOM) | DWV | 0.36.3 |
-| Backend (язык) | Python | 3.12+ |
+| Backend (язык) | Python | 3.14.3 |
 | Backend (фреймворк) | FastAPI | 0.110+ |
 | ASGI-сервер | Uvicorn | 0.29+ |
 | HTTP-клиент | httpx | 0.27+ |
@@ -130,7 +130,7 @@ DICOM (Digital Imaging and Communications in Medicine) — международ�
 | ORM | SQLAlchemy | 2 (async) |
 | Миграции | Alembic | — |
 | Аутентификация | JWT (HS256) | — |
-| PACS-сервер | Orthanc | 26.6.0 |
+| PACS-сервер | Orthanc | 1.12.11 |
 | DICOM-просмотрщик | DWV | 0.36.3 |
 | Контейнеризация | Docker Compose | — |
 
@@ -163,7 +163,7 @@ DICOM (Digital Imaging and Communications in Medicine) — международ�
         │                  │                  │
         ▼                  ▼                  ▼
 ┌──────────────────────────┐    ┌────────────────────┐
-│  PostgreSQL 16 (:5432)   │    │  Orthanc 26.6.0    │
+│  PostgreSQL 16 (:5432)   │    │  Orthanc 1.12.11    │
 │  - auth (users, roles)   │    │  - DICOM Storage   │
 │  - queue (tickets)       │    │  - DICOMweb        │
 │  - ris (orders, studies) │    │  - REST API        │
@@ -503,10 +503,10 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 
 ### 6.2. Использованные технологии
 
-- Python 3.12, FastAPI, Uvicorn, pydicom, httpx
+- Python 3.14.3, FastAPI, Uvicorn, pydicom, httpx
 - PostgreSQL 16, SQLAlchemy 2 (async), Alembic
 - JWT (HS256), bcrypt
-- Orthanc 26.6.0 (PACS-сервер, DICOMweb)
+- Orthanc 1.12.11 (PACS-сервер, DICOMweb)
 - React 19, Vite 8, TypeScript 6, Tailwind CSS 4
 - DWV 0.36.3 (DICOM-просмотрщик)
 - Docker Compose
