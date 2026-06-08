@@ -1,0 +1,129 @@
+import Link from "next/link";
+import { Calendar, FolderOpen, FlaskConical, ShieldPlus } from "lucide-react";
+
+const features = [
+  {
+    icon: Calendar,
+    title: "Онлайн-запись",
+    desc: "Выбирайте удобное время и записывайтесь к специалистам без очередей",
+  },
+  {
+    icon: FolderOpen,
+    title: "Электронная медкарта",
+    desc: "Вся история визитов и назначений всегда под рукой",
+  },
+  {
+    icon: FlaskConical,
+    title: "Лаборатория",
+    desc: "Мгновенный доступ к результатам анализов",
+  },
+];
+
+export default function LandingPage() {
+  return (
+    <div className="min-h-screen bg-background">
+      {/* ===== Header ===== */}
+      <header className="flex h-16 items-center justify-between border-b border-border bg-white px-4 md:px-8">
+        <Link href="/" className="flex items-center gap-2">
+          <ShieldPlus className="h-6 w-6 text-primary" />
+          <span className="text-lg font-bold text-foreground">
+            Med<span className="text-primary">Platform</span>
+          </span>
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            className="rounded-lg border border-border px-4 py-2 text-body font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            Войти
+          </Link>
+          <Link
+            href="/register"
+            className="rounded-lg bg-primary px-4 py-2 text-body font-semibold text-white transition-opacity hover:opacity-90"
+          >
+            Регистрация
+          </Link>
+        </div>
+      </header>
+
+      {/* ===== Hero Section ===== */}
+      <section className="overflow-hidden bg-gradient-to-br from-[#178787] to-[#0e5e5e] px-6 py-20 text-center text-white md:py-28">
+        <div className="mx-auto max-w-3xl">
+          <div className="mx-auto mb-6 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-label font-medium">
+            <ShieldPlus className="h-3.5 w-3.5" />
+            Клиника Antis-Med
+          </div>
+          <h1 className="mb-5 text-[32px] font-extrabold leading-tight md:text-5xl">
+            Ваше здоровье под&nbsp;надёжным контролем
+          </h1>
+          <p className="mx-auto mb-10 max-w-[580px] text-body leading-relaxed text-white/80 md:text-[17px]">
+            Записывайтесь к врачам, получайте результаты анализов и ведите
+            электронную медкарту в едином приложении
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-8 py-3.5 text-body font-bold text-primary shadow-lg transition-opacity hover:opacity-90 md:text-base"
+          >
+            Начать использование
+          </Link>
+        </div>
+      </section>
+
+      {/* ===== Features Section ===== */}
+      <section className="px-6 py-16 md:py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="mb-12 text-center text-h2 font-extrabold text-foreground">
+            Возможности платформы
+          </h2>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            {features.map((f) => (
+              <div
+                key={f.title}
+                className="group rounded-xl border border-border bg-card p-7 transition-shadow hover:shadow-lg"
+              >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <f.icon className="h-6 w-6" />
+                </div>
+                <h3 className="mb-2 text-h3 font-bold text-foreground">
+                  {f.title}
+                </h3>
+                <p className="text-body leading-relaxed text-muted-foreground">
+                  {f.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== CTA Section ===== */}
+      <section className="px-6 pb-16 md:pb-20">
+        <div className="mx-auto max-w-3xl rounded-2xl bg-primary px-8 py-14 text-center text-white md:px-16 md:py-16">
+          <h2 className="mb-3 text-h2 font-extrabold md:text-[28px]">
+            Готовы начать?
+          </h2>
+          <p className="mb-8 text-body text-white/80">
+            Регистрация занимает меньше минуты
+          </p>
+          <Link
+            href="/register"
+            className="inline-flex items-center gap-2 rounded-lg bg-white px-10 py-3.5 text-body font-bold text-primary shadow-md transition-opacity hover:opacity-90"
+          >
+            Создать аккаунт
+          </Link>
+        </div>
+      </section>
+
+      {/* ===== Footer ===== */}
+      <footer className="border-t border-border px-6 py-8 text-center text-label text-muted-foreground">
+        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-2 md:flex-row">
+          <div className="flex items-center gap-1.5 text-foreground">
+            <ShieldPlus className="h-4 w-4 text-primary" />
+            <span className="text-label font-semibold">MedPlatform</span>
+          </div>
+          <span>© 2026 MedPlatform. Для клиники Antis-Med.</span>
+        </div>
+      </footer>
+    </div>
+  );
+}

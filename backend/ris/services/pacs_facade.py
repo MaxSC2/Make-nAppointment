@@ -375,18 +375,30 @@ async def list_all_studies(
 async def get_study_with_details(db: AsyncSession, study_uid: str) -> dict:
     """Детальная информация по study: серии, инстансы, RIS order.
 
-    Оптимизация (3s → ~30ms):
-    - /studies/{id}/series?expand даёт ВСЕ серии + инстансы за 1 запрос
+    Оптимизация (3s → ~50ms):
+    - 1 запрос: /studies/{id}/series?expand → все серии (Instances = список ID)
+    - 1 запрос: /studies/{id}/instances?expand → все инстансы с MainDicomTags
+    - Группируем инстансы по ParentSeries → получаем instances внутри каждой серии
     - раньше было 1 + N + N запросов (без expand каждый = 268ms)
     """
     orthanc_id = await _resolve_orthanc_id(study_uid)
     if not orthanc_id:
         raise PACSError(f"Исследование {study_uid} не найдено в PACS", status_code=404)
 
-    # Параллельно: метаданные study (для DICOM-тегов) + серии с инстансами
+    # Параллельно: метаданные study + серии + все инстансы
     orthanc_study_task = _orthanc_get_json(f"studies/{orthanc_id}")
     series_task = _orthanc_get_json(f"studies/{orthanc_id}/series?expand")
-    orthanc_study, series = await asyncio.gather(orthanc_study_task, series_task)
+    instances_task = _orthanc_get_json(f"studies/{orthanc_id}/instances?expand")
+    orthanc_study, series, all_instances = await asyncio.gather(
+        orthanc_study_task, series_task, instances_task
+    )
+
+    # Группируем инстансы по ParentSeries
+    instances_by_series: dict[str, list[dict]] = {}
+    for inst in all_instances:
+        parent = inst.get("ParentSeries")
+        if parent:
+            instances_by_series.setdefault(parent, []).append(inst)
 
     summary = _build_study_summary(orthanc_study)
     joined = await _join_with_ris(db, summary)
@@ -405,7 +417,7 @@ async def get_study_with_details(db: AsyncSession, study_uid: str) -> dict:
                     "sop_instance_uid": (inst.get("MainDicomTags") or {}).get("SOPInstanceUID"),
                     "instance_number": (inst.get("MainDicomTags") or {}).get("InstanceNumber"),
                 }
-                for inst in (s.get("Instances") or [])
+                for inst in instances_by_series.get(s["ID"], [])
             ],
         }
         for s in series
@@ -458,6 +470,50 @@ async def get_instance_dicom_tags(instance_id: str) -> dict:
     """DICOM-теги инстанса (MainDicomTags)."""
     inst = await _orthanc_get_json(f"instances/{instance_id}")
     return inst.get("MainDicomTags", {}) or {}
+
+
+async def get_series_instances(series_id: str) -> list[dict]:
+    """Список инстансов серии (с MainDicomTags) — 1 запрос с ?expand."""
+    instances = await _orthanc_get_json(f"series/{series_id}/instances?expand")
+    return [
+        {
+            "orthanc_id": inst["ID"],
+            "sop_instance_uid": (inst.get("MainDicomTags") or {}).get("SOPInstanceUID"),
+            "instance_number": (inst.get("MainDicomTags") or {}).get("InstanceNumber"),
+        }
+        for inst in instances
+    ]
+
+
+async def get_series_thumbnail(series_id: str) -> tuple[bytes, str]:
+    """Thumbnail PNG серии (для списка серий в UI).
+
+    Использует Orthanc /series/{id}/thumbnail. Если недоступно — fallback на
+    preview первого инстанса.
+    """
+    try:
+        png_bytes = await _orthanc_get_bytes(f"series/{series_id}/thumbnail")
+        return png_bytes, "image/png"
+    except PACSError:
+        # Fallback: первый инстанс → preview
+        instances = await _orthanc_get_json(f"series/{series_id}/instances")
+        if not instances:
+            raise PACSError(f"В серии {series_id} нет инстансов", status_code=404)
+        png_bytes = await _orthanc_get_bytes(f"instances/{instances[0]['ID']}/preview")
+        return png_bytes, "image/png"
+
+
+async def get_study_thumbnail(study_id: str) -> tuple[bytes, str]:
+    """Thumbnail PNG исследования (для списка в UI)."""
+    try:
+        png_bytes = await _orthanc_get_bytes(f"studies/{study_id}/thumbnail")
+        return png_bytes, "image/png"
+    except PACSError:
+        # Fallback: первая серия → thumbnail
+        series = await _orthanc_get_json(f"studies/{study_id}/series")
+        if not series:
+            raise PACSError(f"В исследовании {study_id} нет серий", status_code=404)
+        return await get_series_thumbnail(series[0]["ID"])
 
 
 async def get_patient_studies(db: AsyncSession, patient_id: uuid.UUID) -> list[dict]:

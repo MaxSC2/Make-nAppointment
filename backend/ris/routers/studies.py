@@ -249,6 +249,55 @@ async def get_instance_dicom(
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
+@router.get(
+    "/series/{series_id}/instances",
+    summary="Список инстансов серии (DICOM-теги)",
+)
+async def get_series_instances(
+    series_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Список DICOM-инстансов серии с MainDicomTags (1 запрос ?expand)."""
+    try:
+        return await pacs_facade.get_series_instances(series_id)
+    except pacs_facade.PACSError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.get(
+    "/series/{series_id}/thumbnail",
+    summary="Thumbnail серии (PNG)",
+    response_class=Response,
+)
+async def get_series_thumbnail(
+    series_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Маленький PNG для отображения в списке серий."""
+    try:
+        png_bytes, content_type = await pacs_facade.get_series_thumbnail(series_id)
+        return Response(content=png_bytes, media_type=content_type)
+    except pacs_facade.PACSError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
+@router.get(
+    "/studies/{study_id}/thumbnail",
+    summary="Thumbnail исследования (PNG)",
+    response_class=Response,
+)
+async def get_study_thumbnail(
+    study_id: str,
+    current_user=Depends(get_current_user),
+):
+    """Thumbnail первого среза исследования (для списка в UI)."""
+    try:
+        png_bytes, content_type = await pacs_facade.get_study_thumbnail(study_id)
+        return Response(content=png_bytes, media_type=content_type)
+    except pacs_facade.PACSError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
+
+
 # ======================== PATIENT / ORDER ========================
 
 

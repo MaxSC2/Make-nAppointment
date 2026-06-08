@@ -17,12 +17,12 @@
 | Стилизация | Tailwind CSS | v4 |
 | Роутинг | React Router | v7 |
 | DICOM Viewer | DWV | 0.36.3 |
-| Backend | FastAPI (Python) | 3.12+ |
+| Backend | FastAPI (Python) | 3.14.3 |
 | ASGI-сервер | Uvicorn | — |
 | ORM | SQLAlchemy 2 (async) | — |
 | Миграции | Alembic | — |
 | СУБД | PostgreSQL | 16 |
-| PACS | Orthanc | 26.6.0 (HTTP 8042, DICOM 4242) |
+| PACS | Orthanc | 1.12.11 (HTTP 8042, DICOM 4242) |
 | DICOM | pydicom | 2.4+ |
 | Аутентификация | JWT (HS256) + bcrypt | — |
 | Инфраструктура | Docker Compose | — |
@@ -56,7 +56,7 @@
          │          │        │             │ REST     │
          ▼          ▼        ▼             ▼          ▼
 ┌─────────────────────────────┐    ┌────────────────────┐
-│  PostgreSQL 16 (:5432)      │    │  Orthanc 26.6.0    │
+│  PostgreSQL 16 (:5432)      │    │  Orthanc 1.12.11    │
 │  схемы:                     │    │  HTTP :8042        │
 │   auth (users, roles, JWT)  │    │  DICOM :4242       │
 │   queue (tickets, cabinets) │    │  DICOM-web         │
