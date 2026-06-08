@@ -6,6 +6,16 @@ export default function ViewerPage() {
   const { studyUid = '' } = useParams<{ studyUid: string }>()
   const [error, setError] = useState<string | null>(null)
 
+  const openInFullViewer = () => {
+    if (studyUid) {
+      window.open(
+        `http://localhost:5550/viewer.html?study=${encodeURIComponent(studyUid)}`,
+        '_blank',
+        'noopener,noreferrer',
+      )
+    }
+  }
+
   return (
     <div className="flex flex-col h-[calc(100vh-100px)]">
       <div className="flex items-center justify-between mb-3 flex-shrink-0">
@@ -13,9 +23,21 @@ export default function ViewerPage() {
           <Link to="/studies" className="text-sm text-slate-500 hover:text-slate-700">
             &larr; K списку исследований
           </Link>
-          <h2 className="text-xl font-semibold text-slate-900 mt-1">
-            DICOM Viewer
-          </h2>
+          <div className="flex items-center gap-3 mt-1">
+            <h2 className="text-xl font-semibold text-slate-900">
+              DICOM Viewer
+            </h2>
+            {studyUid && (
+              <button
+                type="button"
+                onClick={openInFullViewer}
+                className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition"
+                title="Открыть в NestJS-просмотрщике с DICOMweb (QIDO-RS/WADO-RS) и поиском по PACS"
+              >
+                Открыть в полном просмотрщике
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

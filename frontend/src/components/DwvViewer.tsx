@@ -60,6 +60,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
 
   const initApp = useCallback((containerId: string): App => {
     const viewConfig = new ViewConfig(containerId)
+    viewConfig.defaultCharacterSet = 'utf-8'
     const options = new AppOptions({ '*': [viewConfig] })
     options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: {} }
     options.viewOnFirstLoadItem = true
@@ -135,6 +136,9 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       appRef.current = null
       studyDataRef.current = null
     }
+    // activeTool/activeShape читаются внутри loadend-callback,
+    // а их изменение не требует пересоздания App — подавляем лишние deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initApp, onError])
 
   const loadSeries = useCallback((seriesUid: string) => {
@@ -217,7 +221,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     setShowShapes(tool === 'Draw')
     try {
       appRef.current?.setTool(tool)
-    } catch (e) { /* tool may not be ready yet */ }
+    } catch { /* tool may not be ready yet */ }
     if (tool === 'Draw') {
       try {
         appRef.current?.setToolFeatures({ shapeName: activeShape })

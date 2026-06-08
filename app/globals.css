@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F5F8FA;
+  --color-card: #FFFFFF;
+  --color-foreground: #1A2E35;
+  --color-muted-foreground: #5C6B72;
+  --color-border: #E2E8EB;
+  --color-primary: #178787;
+
+  --font-size-h1: 30px;
+  --font-size-h2: 24px;
+  --font-size-h3: 20px;
+  --font-size-body: 14px;
+  --font-size-label: 12px;
+  --font-size-micro: 10px;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
