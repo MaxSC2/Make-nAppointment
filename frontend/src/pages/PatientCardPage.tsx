@@ -68,13 +68,23 @@ export default function PatientCardPage() {
       </button>
 
       <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-slate-900 mb-2">
-          👤 {patient.full_name}
-        </h2>
-        <div className="text-sm text-slate-600 space-y-1">
-          <div>Полис: <span className="font-mono">{patient.policy_number}</span></div>
-          {patient.birth_date && <div>Дата рождения: {patient.birth_date}</div>}
-          {patient.phone && <div>Телефон: {patient.phone}</div>}
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+              {patient.full_name}
+            </h2>
+            <div className="text-sm text-slate-600 space-y-1">
+              <div>Полис: <span className="font-mono">{patient.policy_number}</span></div>
+              {patient.birth_date && <div>Дата рождения: {patient.birth_date}</div>}
+              {patient.phone && <div>Телефон: {patient.phone}</div>}
+            </div>
+          </div>
+          <button
+            onClick={() => navigate(`/orders/new?patientId=${patient.id}`)}
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition flex-shrink-0"
+          >
+            + Назначить исследование
+          </button>
         </div>
       </div>
 
