@@ -54,13 +54,15 @@ export default function Layout() {
                 key={to}
                 to={to}
                 end={to === '/'}
-                className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-md text-sm font-medium transition ${
-                    isActive
+                className={({ isActive }) => {
+                  const isPatientsSection = to === '/patients' && window.location.pathname.startsWith('/patients')
+                  const active = isActive || isPatientsSection
+                  return `px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                    active
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`
-                }
+                }}
               >
                 {label}
               </NavLink>

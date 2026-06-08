@@ -23,6 +23,17 @@ async function request(base: string, path: string, init?: RequestInit) {
 
   const res = await fetch(`${base}${path}`, { ...init, headers })
 
+  if (res.status === 401) {
+    localStorage.removeItem('mp_access_token')
+    localStorage.removeItem('mp_refresh_token')
+    localStorage.removeItem('mp_user')
+    authToken = null
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'
+    }
+    throw new Error('Сессия истекла. Войдите снова.')
+  }
+
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     throw new Error(body.detail || `HTTP ${res.status}`)
