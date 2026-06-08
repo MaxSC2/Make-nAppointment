@@ -4,10 +4,10 @@
 
 | Параметр | Значение |
 |----------|----------|
-| **Путь** | `C:\Projects\ARCHIVE\MedPlatform\` (git, master, 11 коммитов, remote: `Make-nAppointment.git`) |
+| **Путь** | `C:\Projects\ARCHIVE\MedPlatform\` (git, master, 13 коммитов, remote: `Make-nAppointment.git`) |
 | **Тип** | Гибрид: Next.js 15 (корень) + Vite 8 (frontend/) + FastAPI × 2 (backend/) |
 | **Назначение** | Медицинская ИС: РИС (радиология) + PACS (DICOM) + электронная очередь |
-| **Статус** | MVP, все сервисы работают, 10 исследований в Orthanc |
+| **Статус** | MVP, все сервисы работают, 12 исследований в Orthanc, 29 пациентов в БД |
 
 ## 2. Архитектура
 
@@ -68,7 +68,7 @@
 |--------|---------|-----------|
 | `auth.py` | `/api/auth` | POST login, POST refresh, POST logout, GET me |
 | `orders.py` | `/api` | GET/POST orders, GET/PATCH order/{id}, GET/PUT protocol, POST sign, GET modalities, GET studies, GET download, Orthanc proxy |
-| `studies.py` | `/api/v1` | GET studies, GET study/{uid}, GET preview, POST link, GET instances, GET dicom-tags, GET dicom file, GET series/instances, GET series/thumbnail, GET study/thumbnail, GET patient/studies, GET order/dicom |
+| `studies.py` | `/api/v1` | GET studies, GET study/{uid}, GET preview, POST link, GET instances, GET dicom-tags, GET dicom file, GET series/instances, GET series/thumbnail, GET study/thumbnail, **GET patients (поиск)**, GET patient/studies, GET order/dicom |
 | `dicomweb.py` | `/dicom` | QIDO-RS / WADO-RS / STOW-RS прокси к Orthanc |
 
 **Сервисы:**
@@ -142,7 +142,7 @@
 | DWV (DICOM Viewer) | 0.36.3 |
 | Konva | 9.3.20 |
 
-### 4.2 Страницы (8)
+### 4.2 Страницы (10)
 
 | Страница | Маршрут | Описание |
 |----------|---------|----------|
@@ -154,15 +154,17 @@
 | `StudiesPage` | `/studies` | DICOM-исследования (PACS-фасад) с линковкой |
 | `ViewerPage` | `/viewer/:studyUid` | DICOM-просмотрщик (DWV) |
 | `ProtocolPage` | `/protocol/:orderId` | Протокол заключения |
+| `PatientsPage` | `/patients` | Список пациентов с поиском по ФИО/полису |
+| `PatientCardPage` | `/patients/:id` | Карточка пациента: статистика, история исследований, превью снимков |
 
 ### 4.3 Компоненты (5)
 
 | Компонент | Описание |
 |-----------|----------|
-| `Layout` | Хедер, навигация, аватар, logout |
+| `Layout` | Хедер, навигация (5 пунктов + Пациенты), аватар, logout |
 | `DwvViewer` | DICOM-вьювер: инструменты (Scroll, WindowLevel, ZoomAndPan, Draw), фигуры (Ruler/Circle/Rectangle/FreeHand/Arrow/Angle), серии, file upload, info bar |
 | `StatusBadge` | Цветовой индикатор статуса |
-| `QueueTable` | Таблица очереди |
+| `QueueTable` | Таблица очереди + кнопка "Карта пациента" |
 | `OrderCard` | Карточка заказа |
 
 ### 4.4 API-клиент
@@ -172,13 +174,13 @@
 | `client.ts` | `/elqueue/api`, `/ris/api`, `/api/v1` | request, setToken, getToken |
 | `queue.ts` | `/elqueue/api` | getCabinets, registerTicket, getTickets, getTicket, getTicketEvents, callNext, completeTicket |
 | `ris.ts` | `/ris/api` | getOrders, getOrder, createOrder, updateStatus, getOrderStudies, getProtocol, upsertProtocol, signProtocol, getModalities, getStudies |
-| `ris.ts` | `/api/v1` | getStudiesList, linkStudy |
+| `ris.ts` | `/api/v1` | getStudiesList, linkStudy, **getPatients (поиск)**, **getPatientStudies** |
 
 ### 4.5 Types
 
 - `auth.ts` — UserOut, TokenPair, LoginRequest, RefreshRequest
 - `queue.ts` — CabinetOut, PatientOut, TicketOut, TicketDetail, TicketEventOut, TicketCreateRequest, NextCallRequest
-- `ris.ts` — OrderOut, StudyListItem, StudyOut, ProtocolOut, ModalityOut
+- `ris.ts` — OrderOut, StudyListItem, StudyOut, ProtocolOut, ModalityOut, PatientStudy
 - `dwv.d.ts` — декларации для dwv (PositionEvent, DicomWebLoadOptions)
 
 ### 4.6 Vite Proxy
@@ -215,9 +217,9 @@
 | PostgreSQL 16 | 5432 | ✅ |
 | Orthanc HTTP API | 8042 | ✅ |
 | Orthanc DICOM | 4242 | ✅ |
-| RIS (FastAPI) | 8000 | ❌ (был остановлен) |
-| Elqueue (FastAPI) | 8005 | ❌ (был остановлен) |
-| Vite dev server | 5173 | ❌ (был остановлен) |
+| RIS (FastAPI) | 8000 | ✅ |
+| Elqueue (FastAPI) | 8005 | ✅ |
+| Vite dev server | 5173 | ✅ |
 
 ### 6.2 Тестовые учётки
 
@@ -242,9 +244,11 @@
 4. Semaphore (8 параллельных запросов к Orthanc)
 5. httpx connection pool (singleton)
 
-## 8. Git История (11 коммитов)
+## 8. Git История (13 коммитов)
 
 ```
+5137994 feat: PatientsPage + PatientCardPage + /api/v1/patients endpoints
+781ab75 feat: patients page, card, api endpoints — work in progress
 0cbe953 perf(pacs): cache study_uid map + use ?expand on series (3s -> 46ms)
 e3db132 docs: mark active project path in all main docs + add WHERE_TO_WORK.md
 447a04e fix(dwv): always set Draw shape on tool change
@@ -263,19 +267,23 @@ d9bad57 fix: code review fixes — types, JWT, CORS, lint cleanup
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего файлов** | ~150+ |
-| **Backend Python** | ~3000+ строк |
-| **Frontend TSX/TS** | ~2000+ строк |
+| **Всего файлов** | ~180+ |
+| **Backend Python** | ~3100+ строк |
+| **Frontend TSX/TS** | ~2200+ строк |
 | **DB таблиц** | 13 (4 схемы) |
-| **DICOM-исследований в Orthanc** | 10 |
-| **Git коммитов** | 11 |
+| **DB пациентов** | 29 в queue.patients |
+| **DB заказов** | 31 в ris.orders |
+| **DICOM-исследований в Orthanc** | 12 |
+| **Git коммитов** | 13 |
 | **Python зависимостей** | ~20 |
 | **NPM пакетов (frontend)** | 189 |
 
 ## 10. Известные TODO
 
-1. Переписать `DwvViewer.tsx`: Ellipse, drag-and-drop, PACS search, reset, load timeout, file list, status
-2. Убрать кнопку `openInFullViewer` из ViewerPage после переноса фич
-3. Подключить Next.js страницы к реальному API
-4. Доделать RBAC в middleware (Next.js) — сейчас заглушка
-5. Создать PatientsPage, PatientCardPage, OrderEntryPage (из AI_CODER_FULL_CONTEXT.md)
+1. Исправить `series_count`/`instance_count` в `ris.studies` — всегда 0 (не обновляются после линковки)
+2. Переписать `DwvViewer.tsx`: Ellipse, drag-and-drop, PACS search, reset, load timeout, file list, status
+3. Убрать кнопку `openInFullViewer` из ViewerPage после переноса фич
+4. Подключить Next.js страницы к реальному API
+5. Доделать RBAC в middleware (Next.js) — сейчас заглушка
+6. Создать OrderEntryPage (из AI_CODER_FULL_CONTEXT.md)
+7. Протоколы: все 31 пустые черновики — нужен ввод заключений
