@@ -178,3 +178,112 @@
 | 12 | 🟡 | useCabinets/useOrders без cleanup | `hooks/useQueue.ts:46` |
 | 13 | 🔵 | DoctorPage без polling | `DoctorPage.tsx` |
 | 14 | 🔵 | ViewerPage хардкод localhost:5550 | `ViewerPage.tsx:12` |
+
+---
+
+## Вторая волна ревью (08.06 — после исправлений)
+
+> Полный пересмотр всей кодовой базы после фиксов первой волны.
+> Найдено 17 новых замечаний (0 🔴, 2 🟠, 15 🟡).
+
+### 🟠 HIGH
+
+#### 15. `except PACSError: pass` — молчаливое игнорирование ошибки Orthanc
+**Файл:** `ris/services/pacs_facade.py:568`
+```python
+except PACSError:
+    pass
+```
+В `get_order_dicom()` — если Orthanc недоступен при загрузке `studies?expand`, данные DICOM-исследований теряются без лога. Добавить `logger.warning`.
+
+#### 16. Пароль админа в лог при старте
+**Файл:** `db/init_db.py:131`
+```python
+print(f"  ✓ администратор: {settings.admin_username!r} / {settings.admin_password!r}")
+```
+Выводит `admin / admin123` в консоль. Замаскировать: `***` вместо пароля.
+
+### 🟡 MEDIUM
+
+#### 17. `asyncio.sleep(0, result=None)` — нестандартный паттерн
+**Файл:** `ris/services/pacs_facade.py:295`
+```python
+modality_tasks.append(asyncio.sleep(0, result=None))
+```
+Dummy-awaitable в `gather()`. Синтаксис корректен (Python 3.10+), но неочевиден.
+
+#### 18. `get_patient_studies` загружает все исследования
+**Файл:** `ris/services/pacs_facade.py:539`
+```python
+all_studies = await list_all_studies(db)
+return [s for s in all_studies if ...]
+```
+Загружает ВСЕ DICOM-исследования из Orthanc + JOIN с БД, потом фильтрует одного пациента. O(n).
+
+#### 19-23. `httpx.AsyncClient()` per request (5 мест)
+| Файл | Строка | Таймаут | Контекст |
+|------|--------|---------|----------|
+| `orders.py` | 320 | 60 | `download_study` |
+| `orders.py` | 371 | 30 | `_orthanc_forward` |
+| `orders.py` | 419 | 5 | `_send_to_orthanc` |
+| `tickets.py` | 305 | 5 | `_create_ris_order` |
+| `tickets.py` | 335 | 3 | `_patch_ris_status` |
+
+Все создают новый HTTP-клиент без connection pool. В `pacs_facade.py` и `dicomweb.py` уже есть singleton-клиенты.
+
+#### 24. `AuthContext`: пустой catch на JSON.parse
+**Файл:** `frontend/src/contexts/AuthContext.tsx:42`
+```typescript
+try { setUser(JSON.parse(u)) } catch { localStorage.removeItem(STORAGE_USER) }
+```
+Ошибка глотается без лога.
+
+#### 25. `AuthContext`: fetch напрямую в обход api/client.ts
+**Файл:** `frontend/src/contexts/AuthContext.tsx:47-76`
+`fetch('/elqueue/api/auth/me', ...)` и `fetch('/elqueue/api/auth/refresh', ...)` — не используют `api/client.ts` request wrapper. Нет консистентного JWT-заголовка.
+
+#### 26. `useCabinets`: пустой catch + нет AbortController
+**Файл:** `frontend/src/hooks/useQueue.ts:45-50`
+```typescript
+queueApi.getCabinets().then(setCabinets).catch(() => {}).finally(...)
+```
+
+#### 27. `useOrders`: нет AbortController
+**Файл:** `frontend/src/hooks/useOrders.ts:23`
+Смена фильтра status запускает fetch без отмены предыдущего — race condition.
+
+#### 28. `DwvViewer`: 6 пустых catch блоков
+**Файл:** `frontend/src/components/DwvViewer.tsx:105,108,135,224,228,236`
+
+#### 29. `ViewerPage`: хардкод localhost:5550
+**Файл:** `frontend/src/pages/ViewerPage.tsx:12`
+
+#### 30. `DoctorPage`: нет polling
+**Файл:** `frontend/src/pages/DoctorPage.tsx:14-25`
+
+#### 31. `config.py`: дефолтные credentials в коде
+**Файл:** `db/config.py:56,72`
+JWT-секрет и пароль админа захардкожены как default-значения.
+
+### 🔵 LOW
+
+#### 32. CORS `allow_origins=["*"]`
+**Файлы:** `ris/main.py:62`, `elqueue/main.py:62`
+
+#### 33. Нет тестов
+0 unit/integration/e2e.
+
+### Итого (обе волны)
+
+| Волна | 🔴 | 🟠 | 🟡 | 🔵 |
+|-------|----|----|----|-----|
+| Первая | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
+| Вторая | 0 | 2 | 15 | 2 |
+| **Осталось** | **0** | **2** | **15** | **2** |
+
+**Топ-5:**
+1. 🟠 `except PACSError: pass` → `logger.warning`
+2. 🟠 Пароль админа в лог → маскировать
+3. 🟡 httpx pool в 5 местах → singleton
+4. 🟡 6 пустых catch в DwvViewer → `console.error`
+5. 🟡 ViewerPage localhost:5550 → убрать
