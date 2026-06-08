@@ -550,30 +550,30 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 
 **Найдено 17 новых замечаний (0 критических):**
 
-#### 🟠 Высокий приоритет (2)
+#### 🟠 Высокий приоритет (2) — **все исправлены 08.06**
 
-| # | Проблема | Файл |
-|---|----------|------|
-| 1 | `except PACSError: pass` — молча игнорирует ошибку Orthanc в `get_order_dicom()` | `pacs_facade.py:568` |
-| 2 | Пароль админа в консоль при `init_db` | `init_db.py:131` |
+| # | Проблема | Файл | Статус |
+|---|----------|------|--------|
+| 1 | `except PACSError: pass` — молча игнорирует ошибку Orthanc | `pacs_facade.py:568` | ✅ `logger.warning` |
+| 2 | Пароль админа в консоль при `init_db` | `init_db.py:131` | ✅ заменён на `***` |
 
-#### 🟡 Средний приоритет (13)
+#### 🟡 Средний приоритет (13) — **6 исправлено 08.06**
 
-| # | Проблема | Файл |
-|---|----------|------|
-| 3 | `httpx.AsyncClient()` per request — 5 мест без connection pool | `orders.py:320,371,419`, `tickets.py:305,335` |
-| 4 | 6 пустых catch блоков в DwvViewer — ошибки DWV не видны | `DwvViewer.tsx:105,108,135,224,228,236` |
-| 5 | `AuthContext`: fetch напрямую (не через api/client.ts) | `AuthContext.tsx:47-76` |
-| 6 | `AuthContext`: пустой catch на JSON.parse | `AuthContext.tsx:42` |
-| 7 | `useCabinets`: пустой catch + нет AbortController | `useQueue.ts:48` |
-| 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` |
-| 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` |
-| 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` |
-| 11 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` |
-| 12 | `localStorage.getItem` для токена в `api/client.ts` | `client.ts:5-13` |
-| 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` |
-| 14 | ViewerPage: хардкод `localhost:5550` (NestJS не запущен) | `ViewerPage.tsx:12` |
-| 15 | `config.py`: дефолтные JWT secret + admin password в коде | `config.py:56,72` |
+| # | Проблема | Файл | Статус |
+|---|----------|------|--------|
+| 3 | `httpx.AsyncClient()` per request — 5 мест без connection pool | `orders.py:320,371,419`, `tickets.py:305,335` | — |
+| 4 | 6 пустых catch блоков в DwvViewer — ошибки DWV не видны | `DwvViewer.tsx` | ✅ `console.error` |
+| 5 | `AuthContext`: fetch напрямую (не через api/client.ts) | `AuthContext.tsx:47-76` | — |
+| 6 | `AuthContext`: пустой catch на JSON.parse | `AuthContext.tsx:42` | ✅ `console.error` |
+| 7 | `useCabinets`: пустой catch + нет AbortController | `useQueue.ts:48` | ✅ `console.error` |
+| 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` | — |
+| 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` | — |
+| 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` | — |
+| 11 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | — |
+| 12 | `localStorage.getItem` для токена в `api/client.ts` | `client.ts:5-13` | — |
+| 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` | — |
+| 14 | ViewerPage: хардкод `localhost:5550` (NestJS не запущен) | `ViewerPage.tsx:12` | ✅ убрана кнопка |
+| 15 | `config.py`: дефолтные JWT secret + admin password в коде | `config.py:56,72` | — |
 
 #### 🔵 Низкий приоритет (2)
 
@@ -587,8 +587,8 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | Волна | 🔴 | 🟠 | 🟡 | 🔵 |
 |-------|----|----|----|-----|
 | Первая (утро) | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
-| Вторая (полный обход) | 0 | 2 | 13 | 2 |
-| **Осталось** | **0** | **2** | **13** | **2** |
+| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅6 | 2 |
+| **Осталось** | **0** | **0** | **7** | **2** |
 
 ---
 

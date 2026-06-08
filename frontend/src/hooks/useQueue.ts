@@ -45,7 +45,7 @@ export function useCabinets() {
   useEffect(() => {
     queueApi.getCabinets()
       .then(setCabinets)
-      .catch(() => {})
+      .catch(() => { console.error('useCabinets: failed to load') })
       .finally(() => setLoading(false))
   }, [])
 

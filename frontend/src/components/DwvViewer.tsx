@@ -102,10 +102,10 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
           const total = vc.getNumberOfSlices()
           setSliceInfo({ current: 1, total })
         }
-      } catch { /* ignore */ }
+} catch { console.error('DwvViewer: failed to get slice count') }
       // После загрузки восстанавливаем активный Draw shape
       if (activeTool === 'Draw') {
-        try { app.setToolFeatures({ shapeName: activeShape }) } catch { /* ignore */ }
+        try { app.setToolFeatures({ shapeName: activeShape }) } catch { console.error('DwvViewer: failed to set Draw shape') }
       }
     })
 
@@ -132,7 +132,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     })
 
     return () => {
-      try { app.reset() } catch { /* ignore */ }
+      try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
       appRef.current = null
       studyDataRef.current = null
     }
@@ -221,11 +221,11 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
     setShowShapes(tool === 'Draw')
     try {
       appRef.current?.setTool(tool)
-    } catch { /* tool may not be ready yet */ }
+    } catch { console.error('DwvViewer: tool not ready') }
     if (tool === 'Draw') {
       try {
         appRef.current?.setToolFeatures({ shapeName: activeShape })
-      } catch { /* tool not initialized yet */ }
+      } catch { console.error('DwvViewer: tool not initialized') }
     }
   }, [activeShape])
 

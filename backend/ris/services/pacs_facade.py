@@ -20,6 +20,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import time
 import uuid
 from typing import Any
@@ -27,6 +28,8 @@ from typing import Any
 import httpx
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger("pacs_facade")
 
 from db.config import settings
 from db.models.queue import Patient
@@ -565,8 +568,8 @@ async def get_order_dicom(db: AsyncSession, order_id: str) -> dict:
             for o in all_studies:
                 if o.get("ID") in needed:
                     orthanc_by_id[o["ID"]] = o
-        except PACSError:
-            pass
+        except PACSError as e:
+            logger.warning("Orthanc недоступен в get_order_dicom: %s", e)
 
     # Параллельно: пациент
     patient_task = (

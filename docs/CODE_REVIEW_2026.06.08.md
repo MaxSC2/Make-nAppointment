@@ -188,20 +188,13 @@
 
 ### 🟠 HIGH
 
-#### 15. `except PACSError: pass` — молчаливое игнорирование ошибки Orthanc
+#### 15. ~~`except PACSError: pass`~~ ✅ FIXED
 **Файл:** `ris/services/pacs_facade.py:568`
-```python
-except PACSError:
-    pass
-```
-В `get_order_dicom()` — если Orthanc недоступен при загрузке `studies?expand`, данные DICOM-исследований теряются без лога. Добавить `logger.warning`.
+Добавлен `logger.warning` с сообщением об ошибке.
 
-#### 16. Пароль админа в лог при старте
+#### 16. ~~Пароль админа в лог~~ ✅ FIXED
 **Файл:** `db/init_db.py:131`
-```python
-print(f"  ✓ администратор: {settings.admin_username!r} / {settings.admin_password!r}")
-```
-Выводит `admin / admin123` в консоль. Замаскировать: `***` вместо пароля.
+Заменён на `***`.
 
 ### 🟡 MEDIUM
 
@@ -278,12 +271,12 @@ JWT-секрет и пароль админа захардкожены как de
 | Волна | 🔴 | 🟠 | 🟡 | 🔵 |
 |-------|----|----|----|-----|
 | Первая | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
-| Вторая | 0 | 2 | 15 | 2 |
-| **Осталось** | **0** | **2** | **15** | **2** |
+| Вторая | 0 | 2 → ✅2 | 15 → ✅9 | 2 |
+| **Осталось** | **0** | **0** | **6** | **2** |
 
-**Топ-5:**
-1. 🟠 `except PACSError: pass` → `logger.warning`
-2. 🟠 Пароль админа в лог → маскировать
-3. 🟡 httpx pool в 5 местах → singleton
-4. 🟡 6 пустых catch в DwvViewer → `console.error`
-5. 🟡 ViewerPage localhost:5550 → убрать
+**Топ-5 (осталось):**
+1. 🟡 httpx pool в 5 местах → singleton
+2. 🟡 AuthContext fetch напрямую → через api/client
+3. 🟡 useOrders нет AbortController
+4. 🟡 DoctorPage без polling
+5. 🟡 Нет тестов
