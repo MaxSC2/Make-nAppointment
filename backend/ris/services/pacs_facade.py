@@ -252,6 +252,19 @@ async def _join_with_ris(
             order.status.value if isinstance(order.status, OrderStatus) else order.status
         )
         summary["ris_study_description"] = order.study_description
+        summary["order_id"] = order.id
+        summary["order_status"] = summary["ris_order_status"]
+        summary["created_at"] = order.created_at.isoformat() if order.created_at else None
+    else:
+        summary["order_id"] = None
+        summary["order_status"] = None
+        summary["created_at"] = None
+
+    summary["is_uploaded"] = True
+    if summary.get("study_uid"):
+        summary["preview_url"] = f"/api/v1/studies/{summary['study_uid']}/preview"
+    else:
+        summary["preview_url"] = None
     return summary
 
 

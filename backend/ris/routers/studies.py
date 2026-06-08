@@ -336,6 +336,27 @@ async def list_patients(
     ]
 
 
+@router.get("/patients/{patient_id}")
+async def get_patient(
+    patient_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Информация о пациенте по ID."""
+    p = (await db.execute(
+        select(Patient).where(Patient.id == patient_id)
+    )).scalar_one_or_none()
+    if p is None:
+        raise HTTPException(status_code=404, detail="Пациент не найден")
+    return {
+        "id": str(p.id),
+        "full_name": p.full_name,
+        "policy_number": p.policy_number,
+        "birth_date": str(p.birth_date) if p.birth_date else None,
+        "phone": p.phone,
+    }
+
+
 # ======================== PATIENT / ORDER ========================
 
 
