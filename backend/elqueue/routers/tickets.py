@@ -125,7 +125,7 @@ async def register_ticket(
     body: TicketCreateRequest,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(require_role(RoleCode.REGISTRAR, RoleCode.ADMIN))],
+    user: Annotated[User, Depends(get_current_user)],
 ) -> TicketDetail:
     """Регистрация пациента: создаёт patient + ticket, запрашивает заказ в RIS."""
     # 1. Кабинет
