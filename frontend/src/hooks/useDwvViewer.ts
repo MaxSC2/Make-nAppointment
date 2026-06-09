@@ -205,8 +205,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           }))
         }
       })
-        }
-      })
     }
 
     tryInit()
