@@ -482,9 +482,33 @@ async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
 
     Возвращает (bytes, content_type). Требует JWT — иначе был бы обход через
     прямой запрос в Orthanc.
+    
+    Если файл без DICOM-преамбулы (128 байт + 'DICM'), добавляем её
+    через pydicom — DWV требует preamble для декодирования.
     """
-    dicom_bytes = await _orthanc_get_bytes(f"instances/{instance_id}/file")
-    return dicom_bytes, "application/dicom"
+    import io
+    from pydicom.filereader import dcmread
+    from pydicom.filewriter import dcmwrite
+
+    raw = await _orthanc_get_bytes(f"instances/{instance_id}/file")
+    if len(raw) >= 132 and raw[128:132] == b"DICM":
+        return raw, "application/dicom"
+
+    try:
+        ds = dcmread(io.BytesIO(raw), force=True)
+        if not hasattr(ds, 'file_meta'):
+            ds.file_meta = Dataset()
+        ds.file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
+        ds.file_meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
+        ds.file_meta.TransferSyntaxUID = ds.get('TransferSyntaxUID', '1.2.840.10008.1.2.1')
+        ds.is_little_endian = True
+        ds.is_implicit_VR = True
+        buf = io.BytesIO()
+        dcmwrite(buf, ds, write_like_original=False)
+        return buf.getvalue(), "application/dicom"
+    except Exception:
+        logger.warning("Не удалось добавить DICOM preamble для %s", instance_id)
+        return raw, "application/dicom"
 
 
 async def get_instance_dicom_tags(instance_id: str) -> dict:
