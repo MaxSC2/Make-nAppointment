@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import * as dwv from 'dwv'
+import { App, AppOptions, ViewConfig } from 'dwv'
+import type { DicomWebLoadOptions, PositionEvent } from 'dwv'
 import { getToken } from '../api/client'
 
 export const TOOLS = [
@@ -22,6 +23,7 @@ export interface SeriesItem {
   series_uid: string
   modality: string
   description: string | null
+  series_description?: string | null
   instance_count: number
   instances: SeriesInstance[]
 }
@@ -125,8 +127,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
     appRef.current.loadURLs(urls, {
       requestHeaders: token
-        ? [{ name: 'Authorization', value: `Bearer ${token}` }]
-        : [],
+        ? { Authorization: `Bearer ${token}` }
+        : {},
     })
   }, [])
 
@@ -175,10 +177,13 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         setLoading(false)
         setLoaded(true)
         setSliceInfo({ current: 1, total: seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)?.instance_count || 0 })
-        try { app.setTool(activeToolRef.current) } catch { /* ignore */ }
-        if (activeToolRef.current === 'Draw') {
-          try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { /* ignore */ }
-        }
+        // Delay tool activation — DWV needs time to render first frame
+        setTimeout(() => {
+          try { app.setTool(activeToolRef.current) } catch { /* ignore */ }
+          if (activeToolRef.current === 'Draw') {
+            try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { /* ignore */ }
+          }
+        }, 200)
       })
 
       app.addEventListener('error', (event) => {
@@ -379,7 +384,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
       if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
-      if (key === '0' && e.ctrlKey) { try { app.setZoom(1, 0, 0) } catch {}; e.preventDefault() }
+      if (key === '0' && e.ctrlKey) { try { app.resetLayout() } catch {}; e.preventDefault() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
