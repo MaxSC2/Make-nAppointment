@@ -23,7 +23,9 @@ from db.config import settings
 from db.error_handlers import register_error_handlers
 from elqueue.routers import auth as auth_router
 from ris.routers import dicomweb as dicomweb_router
+from ris.routers import monitoring as monitoring_router
 from ris.routers import orders as orders_router
+from ris.routers import queue_integration as queue_integration_router
 from ris.routers import studies as studies_router
 
 
@@ -76,7 +78,9 @@ register_error_handlers(app)
 app.include_router(auth_router.router)
 app.include_router(orders_router.router)
 app.include_router(studies_router.router)
+app.include_router(monitoring_router.router)
 app.include_router(dicomweb_router.router)
+app.include_router(queue_integration_router.router)
 
 
 # ======================== HTML-СТРАНИЦЫ ========================

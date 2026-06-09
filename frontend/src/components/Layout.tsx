@@ -8,6 +8,7 @@ const navItems = [
   { to: '/studies', label: 'Исследования', roles: ['doctor', 'admin', 'viewer'] },
   { to: '/orders', label: 'Заказы', roles: ['doctor', 'admin', 'viewer'] },
   { to: '/patients', label: 'Пациенты', roles: ['doctor', 'admin', 'registrar', 'viewer'] },
+  { to: '/monitoring', label: 'Мониторинг', roles: ['admin', 'doctor', 'registrar'] },
 ] as const
 
 function initials(name: string | null | undefined, username: string): string {
