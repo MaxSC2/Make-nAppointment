@@ -164,13 +164,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       clearLoadTimeout()
       setLoading(false)
       setLoaded(true)
-      try {
-        const vc = 'getViewController' in app ? app.getViewController() : null
-        if (vc && typeof vc.getNumberOfSlices === 'function') {
-          const total = vc.getNumberOfSlices()
-          setSliceInfo({ current: 1, total })
-        }
-      } catch { console.error('DwvViewer: failed to get slice count') }
+      // Slice info from active series (already known from API)
+      setSliceInfo(prev => {
+        const activeSeries = seriesList.find(s => s.series_uid === activeSeriesUid)
+        const total = activeSeries?.instance_count || prev.total || 0
+        return { current: prev.current || 1, total }
+      })
       // Восстанавливаем активный Draw shape
       if (activeTool === 'Draw') {
         try { app.setToolFeatures({ shapeName: activeShape }) } catch { console.error('DwvViewer: failed to set Draw shape') }
