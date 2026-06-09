@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import * as dwv from 'dwv'
-import type { DicomWebLoadOptions } from 'dwv'
 import { getToken } from '../api/client'
 
 export const TOOLS = [
@@ -12,7 +11,7 @@ export const TOOLS = [
 
 export const DRAW_SHAPES = ['Ruler', 'Circle', 'Rectangle', 'Ellipse', 'Arrow']
 
-export const LOAD_TIMEOUT_MS = 15000
+export const LOAD_TIMEOUT_MS = 60000
 
 export interface SeriesInstance {
   orthanc_id: string
@@ -107,11 +106,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
   const loadSeries = useCallback(async (seriesUid: string) => {
     const data = studyDataRef.current
-    console.log('loadSeries called, appRef:', !!appRef.current, 'data:', !!data, 'seriesUid:', seriesUid)
-    if (!data || !appRef.current) {
-      console.log('loadSeries: early return — missing data or app')
-      return
-    }
+    if (!data || !appRef.current) return
 
     const series = data.series.find(s => s.series_uid === seriesUid)
     if (!series || series.instances.length === 0) {
@@ -128,20 +123,11 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     setLoading(true)
     setError(null)
 
-    const options: DicomWebLoadOptions = {
+    appRef.current.loadURLs(urls, {
       requestHeaders: token
         ? [{ name: 'Authorization', value: `Bearer ${token}` }]
         : [],
-      forceLoader: 'dicom',
-    }
-    console.log('DWV loadURLs:', urls.length, 'slices, token:', token ? token.substring(0, 16) + '...' : 'MISSING')
-    try {
-      appRef.current.loadURLs(urls, options)
-    } catch (e) {
-      console.error('loadURLs failed:', e)
-      setError('Ошибка загрузки: ' + (e instanceof Error ? e.message : String(e)))
-      setLoading(false)
-    }
+    })
   }, [])
 
   // Init dwv App
@@ -153,9 +139,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     // Wait for container to have dimensions before init
     const tryInit = () => {
       const rect = container.getBoundingClientRect()
-      console.log('DWV init: container size', rect.width, 'x', rect.height)
       if (rect.width === 0 || rect.height === 0) {
-        console.log('DWV init: waiting for dimensions...')
         requestAnimationFrame(tryInit)
         return
       }
@@ -172,7 +156,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       }
 
       app.addEventListener('loadstart', () => {
-        console.log('DWV loadstart')
         setLoading(true)
         setLoaded(false)
         setError(null)
@@ -186,16 +169,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       })
 
       app.addEventListener('loadend', () => {
-        console.log('DWV loadend')
-        // Check canvas
-        const container = containerRef.current
-        if (container) {
-          const canvases = container.querySelectorAll('canvas')
-          console.log('DWV canvases:', canvases.length, 'found')
-          canvases.forEach((c, i) => {
-            console.log(`  canvas ${i}: ${c.width}x${c.height} style=${c.style.width}x${c.style.height} visible=${c.style.display !== 'none'}`)
-          })
-        }
         clearLoadTimeout()
         setLoading(false)
         setLoaded(true)
@@ -211,7 +184,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
       app.addEventListener('error', (event) => {
         clearLoadTimeout()
-        console.error('DWV error event:', event)
         const ev = event as { data?: { message?: string } | string }
         const data = ev.data
         const message = typeof data === 'string'
