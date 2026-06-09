@@ -118,7 +118,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
     const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
     const urls = series.instances.map(
-      inst => `/api/v1/instances/${inst.orthanc_id}/dicom`,
+      inst => `${window.location.origin}/api/v1/instances/${inst.orthanc_id}/dicom`,
     )
 
     setLoaded(false)
@@ -131,7 +131,14 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         : [],
       forceLoader: 'dicom',
     }
-    appRef.current.loadURLs(urls, options)
+    console.log('DWV loadURLs:', urls.length, 'slices, token:', token ? token.substring(0, 16) + '...' : 'MISSING')
+    try {
+      appRef.current.loadURLs(urls, options)
+    } catch (e) {
+      console.error('loadURLs failed:', e)
+      setError('Ошибка загрузки: ' + (e instanceof Error ? e.message : String(e)))
+      setLoading(false)
+    }
   }, [])
 
   // Init dwv App
@@ -190,6 +197,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
       app.addEventListener('error', (event) => {
         clearLoadTimeout()
+        console.error('DWV error event:', event)
         const ev = event as { data?: { message?: string } | string }
         const data = ev.data
         const message = typeof data === 'string'
