@@ -190,6 +190,15 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
       app.addEventListener('loadend', () => {
         console.log('DWV loadend')
+        // Check canvas
+        const container = containerRef.current
+        if (container) {
+          const canvases = container.querySelectorAll('canvas')
+          console.log('DWV canvases:', canvases.length, 'found')
+          canvases.forEach((c, i) => {
+            console.log(`  canvas ${i}: ${c.width}x${c.height} style=${c.style.width}x${c.style.height} visible=${c.style.display !== 'none'}`)
+          })
+        }
         clearLoadTimeout()
         setLoading(false)
         setLoaded(true)
