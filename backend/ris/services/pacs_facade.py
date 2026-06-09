@@ -491,23 +491,22 @@ async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
     from pydicom.filewriter import dcmwrite
 
     raw = await _orthanc_get_bytes(f"instances/{instance_id}/file")
-    if len(raw) >= 132 and raw[128:132] == b"DICM":
-        return raw, "application/dicom"
 
     try:
         ds = dcmread(io.BytesIO(raw), force=True)
-        if not hasattr(ds, 'file_meta'):
+        if not hasattr(ds, 'file_meta') or not ds.file_meta:
             ds.file_meta = Dataset()
-        ds.file_meta.MediaStorageSOPClassUID = ds.SOPClassUID
-        ds.file_meta.MediaStorageSOPInstanceUID = ds.SOPInstanceUID
-        ds.file_meta.TransferSyntaxUID = ds.get('TransferSyntaxUID', '1.2.840.10008.1.2.1')
+        ds.file_meta.MediaStorageSOPClassUID = getattr(ds, 'SOPClassUID', '1.2.840.10008.5.1.4.1.1.2')
+        ds.file_meta.MediaStorageSOPInstanceUID = getattr(ds, 'SOPInstanceUID', '1.2.840.0')
+        ds.file_meta.TransferSyntaxUID = getattr(ds.file_meta, 'TransferSyntaxUID', None) or '1.2.840.10008.1.2.1'
+        ds.file_meta.ImplementationClassUID = '1.2.40.0.13.1.1'
         ds.is_little_endian = True
-        ds.is_implicit_VR = True
+        ds.is_implicit_VR = False
         buf = io.BytesIO()
         dcmwrite(buf, ds, write_like_original=False)
         return buf.getvalue(), "application/dicom"
     except Exception:
-        logger.warning("Не удалось добавить DICOM preamble для %s", instance_id)
+        logger.warning("Не удалось обработать DICOM для %s", instance_id)
         return raw, "application/dicom"
 
 
