@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { App, AppOptions, ViewConfig } from 'dwv'
-import type { DicomWebLoadOptions, PositionEvent } from 'dwv'
+import * as dwv from 'dwv'
+import type { DicomWebLoadOptions } from 'dwv'
 import { getToken } from '../api/client'
 
 export const TOOLS = [
@@ -67,7 +67,7 @@ export interface UseDwvViewerResult {
 export function useDwvViewer(studyUid: string, onError?: (msg: string) => void): UseDwvViewerResult {
   const containerRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const appRef = useRef<App | null>(null)
+  const appRef = useRef<dwv.App | null>(null)
   const studyDataRef = useRef<StudyData | null>(null)
   const seriesListRef = useRef<SeriesItem[]>([])
   const activeSeriesUidRef = useRef('')
@@ -95,13 +95,13 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     }
   }
 
-  const initApp = useCallback((containerId: string): App => {
-    const viewConfig = new ViewConfig(containerId)
+  const initApp = useCallback((containerId: string): dwv.App => {
+    const viewConfig = new dwv.ViewConfig(containerId)
     viewConfig.defaultCharacterSet = 'utf-8'
-    const options = new AppOptions({ '*': [viewConfig] })
+    const options = new dwv.AppOptions({ '*': [viewConfig] })
     options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } }
     options.viewOnFirstLoadItem = false
-    const app = new App()
+    const app = new dwv.App()
     app.init(options)
     return app
   }, [])
@@ -150,7 +150,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         return
       }
 
-      let app: App
+      let app: dwv.App
       try {
         app = initApp(containerId)
         appRef.current = app
@@ -201,7 +201,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       })
 
       app.addEventListener('positionchange', (event) => {
-        const ev = event as PositionEvent
+        const ev = event as dwv.PositionEvent
         const pos = ev.position
         if (pos?.slice) {
           setSliceInfo({
@@ -216,7 +216,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
     return () => {
       clearLoadTimeout()
-      const app = appRef.current
+      const app = appRef.current as dwv.App
       if (app) {
         try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
       }
