@@ -69,6 +69,7 @@
 - **Вариант A**: Скрывать кнопку "Вызвать" если тикет не первый в очереди (статус `waiting` + `min(created_at)` для кабинета).
 - **Вариант B**: Добавить параметр `ticket_number` в `POST /api/tickets/next` для явного вызова конкретного тикета.
 **Срочность:** 🟠 HIGH — критично для демо, но не блокирует сценарий "Регистратура → очередь" (там callNext не используется).
+**Статус:** ✅ **ИСПРАВЛЕНО 09.06** — Вариант A: кнопка «Вызвать» показывается только для первого ожидающего тикета в очереди (`QueueTable.tsx:63`).
 
 ---
 
@@ -106,6 +107,7 @@
 **Как было:** Регистрация без токена работала (было закомментировано `# Регистрация доступна всем (в т.ч. анонимам с КИС)`).
 **Надо:** Вернуть публичный доступ, либо сделать guest-токен для киосков регистратуры.
 **Файл:** `elqueue\routers\tickets.py`
+**Статус:** ✅ **ИСПРАВЛЕНО 09.06** — заменён `require_role` на `get_current_user` (любой авторизованный пользователь может регистрировать).
 
 ---
 
@@ -180,3 +182,67 @@ alembic revision --autogenerate -m "queue model updates"
 alembic upgrade head
 ```
 Проверить, что БД не расходится с моделями.
+
+---
+
+## 🟡 `useDwvViewer.ts` — пустой catch (другой AI)
+
+**Найдено:** 09.06.2026 (финальное ревью)
+**Где:** `frontend/src/hooks/useDwvViewer.ts:287`
+**Что:** Другой AI вынес логику DWV в хук `useDwvViewer`. В строке 287 остался пустой catch:
+```typescript
+} catch { /* tool not initialized yet */ }
+```
+Остальные 5 catch в этом файле уже с `console.error`. Этот — нет.
+**Надо:** Заменить на `console.error('DwvViewer: tool not initialized')`.
+**⚠️ Не трогать без согласования — файл другого AI.**
+
+---
+
+## 🟡 `DicomSearch.tsx` — raw fetch вместо api/client (другой AI)
+
+**Найдено:** 09.06.2026 (финальное ревью)
+**Где:** `frontend/src/components/DicomSearch.tsx:35-38`
+**Что:** Другой AI добавил компонент поиска в PACS. Использует `fetch()` напрямую вместо `risV1Get()` из `api/client.ts`:
+```typescript
+const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
+const resp = await fetch('/api/v1/studies/', { headers: { Authorization: `Bearer ${token}` } })
+```
+**Проблемы:**
+1. Не используется единый API-клиент (нет обработки ошибок, нет консистентного JWT)
+2. `localStorage.getItem` как fallback — токен в двух хранилищах
+3. Трейлинг-слеш `/api/v1/studies/` — работает сейчас, но неконсистентно с остальными вызовами
+**⚠️ Не трогать без согласования — файл другого AI.**
+
+---
+
+## ✅ ИТОГО: что исправлено за 08-09.06
+
+| # | Баг | Статус |
+|---|-----|--------|
+| 1 | Vite proxy `/dicom` bypass JWT | ✅ |
+| 2 | `download_study` без JWT | ✅ |
+| 3 | `complete_ticket` race condition | ✅ |
+| 4 | W/L params не передаются | ✅ |
+| 5 | `print()` → logging (11 шт) | ✅ |
+| 6 | `create_order` без RBAC | ✅ |
+| 7 | Silent except блоки (4 файла) | ✅ |
+| 8 | `except PACSError: pass` | ✅ |
+| 9 | Пароль админа в лог | ✅ |
+| 10 | httpx pool (5 мест) | ✅ |
+| 11 | DwvViewer catch (6 шт) | ✅ |
+| 12 | ViewerPage localhost:5550 | ✅ |
+| 13 | AuthContext/useQueue catch | ✅ |
+| 14 | DoctorPage polling | ✅ |
+| 15 | useOrders AbortController | ✅ |
+| 16 | `series_count` = 0 | ✅ |
+| 17 | `getPatient(id)` 404 | ✅ |
+| 18 | Invalid Date / key prop | ✅ |
+| 19 | `get_patient_studies` O(n) | ✅ |
+| 20 | `asyncio.sleep(0, result=None)` | ✅ |
+| 21 | `callNext` вызывает не того | ✅ |
+| 22 | `POST /api/tickets` RBAC | ✅ |
+| 23 | `PatientCardPage` пустой статус | ✅ (другой AI) |
+| 24 | `is_uploaded` всегда True | ⚪ не баг |
+| 25 | `preview_url` study_uid | ⚪ не баг |
+| 26 | `getPatient(id)` 404 | ✅ |
