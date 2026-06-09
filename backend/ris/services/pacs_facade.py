@@ -538,9 +538,54 @@ async def get_study_thumbnail(study_id: str) -> tuple[bytes, str]:
 
 
 async def get_patient_studies(db: AsyncSession, patient_id: uuid.UUID) -> list[dict]:
-    """Все снимки пациента по внутреннему ID (UUID)."""
-    all_studies = await list_all_studies(db)
-    return [s for s in all_studies if (s.get("patient") or {}).get("id") == str(patient_id)]
+    """Все снимки пациента по внутреннему ID (UUID) — без загрузки всего Orthanc."""
+    # 1. Заказы пациента из БД
+    orders = (await db.execute(
+        select(Order).where(Order.patient_id == patient_id)
+    )).scalars().all()
+
+    if not orders:
+        return []
+
+    order_ids = [o.id for o in orders]
+    order_map = {o.id: o for o in orders}
+
+    # 2. Записи в ris.studies (orthanc_id для каждого заказа)
+    db_studies = (await db.execute(
+        select(Study).where(Study.order_id.in_(order_ids))
+    )).scalars().all()
+
+    if not db_studies:
+        return []
+
+    # 3. Загружаем только нужные исследования из Orthanc (параллельно)
+    orthanc_ids = [s.orthanc_id for s in db_studies if s.orthanc_id]
+    if not orthanc_ids:
+        return []
+
+    tasks = [_orthanc_get_json(f"studies/{oid}?expand") for oid in orthanc_ids]
+    orthanc_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    # 4. Сборка результатов
+    result: list[dict] = []
+    for db_study, orth_data in zip(db_studies, orthanc_results):
+        if isinstance(orth_data, BaseException):
+            logger.warning("Orthanc недоступен для study %s: %s", db_study.orthanc_id, orth_data)
+            continue
+        summary = _build_study_summary(orth_data)
+        summary = await _join_with_ris(db, summary)
+
+        # Счётчики из реальных данных
+        summary["series_count"] = len(orth_data.get("Series") or [])
+        summary["instance_count"] = (
+            len(orth_data.get("Instances") or [])
+            or sum(len(s.get("Instances") or []) for s in (orth_data.get("Series") or []))
+        )
+
+        result.append(summary)
+
+    result.sort(key=lambda x: x.get("study_date") or "", reverse=True)
+    return result
 
 
 async def get_order_dicom(db: AsyncSession, order_id: str) -> dict:
