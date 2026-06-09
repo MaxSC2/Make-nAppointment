@@ -118,10 +118,10 @@ export default function PatientCardPage() {
 
               <div className="flex-1 min-w-0">
                 <div className="font-medium text-slate-900">
-                  {s.modality} · {s.description || 'Без описания'}
+                  {s.modality} · {s.study_description || 'Без описания'}
                 </div>
                 <div className="text-sm text-slate-500">
-                  {s.study_date || 'Дата неизвестна'} · Статус: {s.status}
+                  {s.study_date || (s.created_at && s.created_at.slice(0, 10)) || 'Дата неизвестна'} · Статус: {s.order_status || s.ris_order_status || 'назначен'}
                 </div>
               </div>
 
