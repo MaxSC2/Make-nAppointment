@@ -135,75 +135,88 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   useEffect(() => {
     if (!containerRef.current) return
 
+    const container = containerRef.current
     const containerId = `dwv-${Math.random().toString(36).slice(2, 9)}`
-    containerRef.current.id = containerId
+    container.id = containerId
 
-    let app: App
-    try {
-      app = initApp(containerId)
-      appRef.current = app
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setError('Не удалось инициализировать DWV: ' + msg)
-      onError?.(msg)
-      return
+    // Wait for container to have dimensions before init
+    const tryInit = () => {
+      const rect = container.getBoundingClientRect()
+      if (rect.width === 0 || rect.height === 0) {
+        requestAnimationFrame(tryInit)
+        return
+      }
+
+      let app: App
+      try {
+        app = initApp(containerId)
+        appRef.current = app
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
+        setError('Не удалось инициализировать DWV: ' + msg)
+        onError?.(msg)
+        return
+      }
+
+      app.addEventListener('loadstart', () => {
+        setLoading(true)
+        setLoaded(false)
+        setError(null)
+        clearLoadTimeout()
+        loadTimeoutRef.current = window.setTimeout(() => {
+          const msg = `Таймаут загрузки (${LOAD_TIMEOUT_MS / 1000}с). Проверьте подключение.`
+          setError(msg)
+          setLoading(false)
+          onError?.(msg)
+        }, LOAD_TIMEOUT_MS)
+      })
+
+      app.addEventListener('loadend', () => {
+        clearLoadTimeout()
+        setLoading(false)
+        setLoaded(true)
+        setSliceInfo(prev => {
+          const activeSeries = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)
+          const total = activeSeries?.instance_count || prev.total || 0
+          return { current: prev.current || 1, total }
+        })
+        if (activeTool === 'Draw') {
+          try { app.setToolFeatures({ shapeName: activeShape }) } catch { console.error('DwvViewer: failed to set Draw shape') }
+        }
+      })
+
+      app.addEventListener('error', (event) => {
+        clearLoadTimeout()
+        const ev = event as { data?: { message?: string } | string }
+        const data = ev.data
+        const message = typeof data === 'string'
+          ? data
+          : data?.message ?? 'Ошибка загрузки DICOM'
+        setError(message)
+        setLoading(false)
+        onError?.(message)
+      })
+
+      app.addEventListener('positionchange', (event) => {
+        const ev = event as PositionEvent
+        const pos = ev.position
+        if (pos?.slice) {
+          setSliceInfo({
+            current: pos.slice.number ?? pos.slice.index + 1,
+            total: pos.slice.total,
+          })
+        }
+      })
     }
 
-    app.addEventListener('loadstart', () => {
-      setLoading(true)
-      setLoaded(false)
-      setError(null)
-      clearLoadTimeout()
-      loadTimeoutRef.current = window.setTimeout(() => {
-        const msg = `Таймаут загрузки (${LOAD_TIMEOUT_MS / 1000}с). Проверьте подключение.`
-        setError(msg)
-        setLoading(false)
-        onError?.(msg)
-      }, LOAD_TIMEOUT_MS)
-    })
-
-    app.addEventListener('loadend', () => {
-      clearLoadTimeout()
-      setLoading(false)
-      setLoaded(true)
-      // Slice info from active series (already known from API)
-      setSliceInfo(prev => {
-        const activeSeries = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)
-        const total = activeSeries?.instance_count || prev.total || 0
-        return { current: prev.current || 1, total }
-      })
-      // Восстанавливаем активный Draw shape
-      if (activeTool === 'Draw') {
-        try { app.setToolFeatures({ shapeName: activeShape }) } catch { console.error('DwvViewer: failed to set Draw shape') }
-      }
-    })
-
-    app.addEventListener('error', (event) => {
-      clearLoadTimeout()
-      const ev = event as { data?: { message?: string } | string }
-      const data = ev.data
-      const message = typeof data === 'string'
-        ? data
-        : data?.message ?? 'Ошибка загрузки DICOM'
-      setError(message)
-      setLoading(false)
-      onError?.(message)
-    })
-
-    app.addEventListener('positionchange', (event) => {
-      const ev = event as PositionEvent
-      const pos = ev.position
-      if (pos?.slice) {
-        setSliceInfo({
-          current: pos.slice.number ?? pos.slice.index + 1,
-          total: pos.slice.total,
-        })
-      }
-    })
+    tryInit()
 
     return () => {
       clearLoadTimeout()
-      try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
+      const app = appRef.current
+      if (app) {
+        try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
+      }
       appRef.current = null
       studyDataRef.current = null
     }
