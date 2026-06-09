@@ -103,7 +103,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
           {v.loaded && v.sliceInfo.total > 0 && (
             <span className="text-slate-500">Кадр {v.sliceInfo.current}/{v.sliceInfo.total}</span>
           )}
-          {v.loading && (
+          {(v.loading || (!v.loaded && v.studyInfo)) && (
             <span className="flex items-center gap-1 text-blue-400">
               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" /> Загрузка...
             </span>
