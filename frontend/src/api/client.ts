@@ -97,3 +97,24 @@ export function risV1Post<T>(path: string, body?: unknown) {
     body: body ? JSON.stringify(body) : undefined,
   }) as Promise<T>
 }
+
+// ---- auth (elqueue, без auto-refresh) ----
+export function authLogin(username: string, password: string) {
+  return request(ELQUEUE_BASE, '/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  }) as Promise<{ access_token: string; refresh_token: string }>
+}
+
+export function authMe(token: string) {
+  return fetch(`${ELQUEUE_BASE}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(r => r.ok ? r.json() : Promise.reject(r))
+}
+
+export function authRefresh(refreshToken: string) {
+  return request(ELQUEUE_BASE, '/auth/refresh', {
+    method: 'POST',
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  }) as Promise<{ access_token: string }>
+}
