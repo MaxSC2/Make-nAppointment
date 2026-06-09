@@ -54,6 +54,18 @@ from db.schemas.ris import (
 
 router = APIRouter(prefix="/api", tags=["ris"])
 
+_http_client: httpx.AsyncClient | None = None
+
+
+def _get_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None:
+        _http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(60.0),
+            limits=httpx.Limits(max_connections=10, max_keepalive_connections=5),
+        )
+    return _http_client
+
 
 def _generate_dicom_uid() -> str:
     """DICOM-совместимый UID: 1.2.840.<до 15 цифр без дефисов>."""
@@ -317,21 +329,22 @@ async def download_study(
     user: Annotated[User, Depends(get_current_user)],
 ) -> Response:
     """Скачать исследование как ZIP с DICOM-файлами через Orthanc archive."""
-    async with httpx.AsyncClient(timeout=60) as client:
-        find_resp = await client.post(
-            f"{settings.orthanc_url}/tools/find",
-            json={"Level": "Study", "Query": {"StudyInstanceUID": study_uid}},
-        )
-        if find_resp.status_code != 200 or not find_resp.json():
-            raise HTTPException(status_code=404, detail="Study not found in Orthanc")
+    client = _get_client()
+    find_resp = await client.post(
+        f"{settings.orthanc_url}/tools/find",
+        json={"Level": "Study", "Query": {"StudyInstanceUID": study_uid}},
+        timeout=60,
+    )
+    if find_resp.status_code != 200 or not find_resp.json():
+        raise HTTPException(status_code=404, detail="Study not found in Orthanc")
 
-        study_id = find_resp.json()[0]
-        archive_resp = await client.get(
-            f"{settings.orthanc_url}/studies/{study_id}/archive",
-            timeout=120,
-        )
-        if archive_resp.status_code != 200:
-            raise HTTPException(status_code=502, detail="Failed to create archive")
+    study_id = find_resp.json()[0]
+    archive_resp = await client.get(
+        f"{settings.orthanc_url}/studies/{study_id}/archive",
+        timeout=120,
+    )
+    if archive_resp.status_code != 200:
+        raise HTTPException(status_code=502, detail="Failed to create archive")
 
     return Response(
         content=archive_resp.content,
@@ -368,12 +381,13 @@ async def orthanc_proxy_read(
 async def _orthanc_forward(path: str, request: Request) -> Response:
     url = f"{settings.orthanc_url}/{path}"
     body = await request.body()
-    async with httpx.AsyncClient(timeout=30) as client:
-        resp = await client.request(
-            method=request.method,
-            url=url,
-            content=body if body else None,
-        )
+    client = _get_client()
+    resp = await client.request(
+        method=request.method,
+        url=url,
+        content=body if body else None,
+        timeout=30,
+    )
     content_type = resp.headers.get("content-type", "application/octet-stream")
     return Response(
         content=resp.content,
@@ -413,19 +427,20 @@ async def _send_metadata_to_orthanc(
 
     buf = io.BytesIO()
     ds.save_as(buf)
-    async with httpx.AsyncClient(timeout=5) as client:
-        resp = await client.post(
-            f"{settings.orthanc_url}/instances",
-            content=buf.getvalue(),
-            headers={"Content-Type": "application/dicom"},
-        )
-        if resp.status_code == 200:
-            orthanc_id = resp.json().get("ID", "")
-            logger.info("Orthanc study %s создан для order %s", orthanc_id, order.id)
-            return orthanc_id
-        else:
-            logger.error("Orthanc error %s: %s", resp.status_code, resp.text)
-            return None
+    client = _get_client()
+    resp = await client.post(
+        f"{settings.orthanc_url}/instances",
+        content=buf.getvalue(),
+        headers={"Content-Type": "application/dicom"},
+        timeout=5,
+    )
+    if resp.status_code == 200:
+        orthanc_id = resp.json().get("ID", "")
+        logger.info("Orthanc study %s создан для order %s", orthanc_id, order.id)
+        return orthanc_id
+    else:
+        logger.error("Orthanc error %s: %s", resp.status_code, resp.text)
+        return None
 
 
 async def _audit(
