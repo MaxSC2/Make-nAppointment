@@ -295,7 +295,7 @@ async def list_all_studies(
             series_id = s["Series"][0]
             modality_tasks.append(_orthanc_get_json(f"series/{series_id}"))
         else:
-            modality_tasks.append(asyncio.sleep(0, result=None))
+            modality_tasks.append(asyncio.sleep(0))  # dummy awaitable
 
     series_results = await asyncio.gather(*modality_tasks, return_exceptions=True)
 
