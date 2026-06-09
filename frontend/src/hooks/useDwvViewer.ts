@@ -117,31 +117,21 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     }
 
     const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
+    const urls = series.instances.map(
+      inst => `/api/v1/instances/${inst.orthanc_id}/dicom`,
+    )
+
     setLoaded(false)
     setLoading(true)
     setError(null)
 
-    try {
-      const buffers = await Promise.all(
-        series.instances.map(async inst => {
-          const resp = await fetch(
-            `/api/v1/instances/${inst.orthanc_id}/dicom`,
-            { headers: { Authorization: `Bearer ${token}` } },
-          )
-          if (!resp.ok) throw new Error(`DICOM load failed: ${resp.status}`)
-          return resp.arrayBuffer()
-        })
-      )
-      const files = buffers.map((buf, i) =>
-        new File([buf], `slice_${i}.dcm`, { type: 'application/dicom' })
-      )
-      appRef.current.loadFiles(files)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      setError('Ошибка загрузки DICOM: ' + msg)
-      setLoading(false)
-      onErrorRef.current?.(msg)
+    const options: DicomWebLoadOptions = {
+      requestHeaders: token
+        ? [{ name: 'Authorization', value: `Bearer ${token}` }]
+        : [],
+      forceLoader: 'dicom',
     }
+    appRef.current.loadURLs(urls, options)
   }, [])
 
   // Init dwv App
