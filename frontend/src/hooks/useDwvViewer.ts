@@ -96,11 +96,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   }
 
   const initApp = useCallback((container: HTMLDivElement): dwv.App => {
+    container.id = 'layerGroup0'
+    const viewConfig = new dwv.ViewConfig('layerGroup0')
+    const options = new dwv.AppOptions({ '*': [viewConfig] })
+    options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } }
     const app = new dwv.App()
-    app.init({
-      containerDiv: container,
-      tools: { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } },
-    })
+    app.init(options)
     return app
   }, [])
 
@@ -148,8 +149,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     if (!containerRef.current) return
 
     const container = containerRef.current
-    const containerId = `dwv-${Math.random().toString(36).slice(2, 9)}`
-    container.id = containerId
 
     // Wait for container to have dimensions before init
     const tryInit = () => {
