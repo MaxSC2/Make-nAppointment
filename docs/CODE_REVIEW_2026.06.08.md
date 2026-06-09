@@ -300,35 +300,21 @@ JWT-секрет и пароль админа захардкожены как de
 
 ### 🟡 MEDIUM
 
-#### 34. `label: 'Cрезы'` — латинская C вместо кириллической С
+#### 34. ~~`label: 'Cрезы'`~~ ✅ FIXED
 **Файл:** `useDwvViewer.ts:7`
-```typescript
-{ id: 'Scroll', label: 'Cрезы' },
-```
-Кириллица: `Срезы`. Латинская: `Cрезы`. Визуально одинаково, но технически разная буква. `DwvIcons.tsx` имеет правильные названия — расхождение.
+Исправлено на `Срезы` (кириллическая С).
 
-#### 35. `loadSeries` загружает инстансы последовательно, не параллельно
+#### 35. ~~`loadSeries` последовательная загрузка~~ ✅ FIXED
 **Файл:** `useDwvViewer.ts:122-130`
-```typescript
-for (const inst of series.instances) {
-  const resp = await fetch(...)
-  buffers.push(await resp.arrayBuffer())
-}
-```
-10 срезов × ~200ms = 2 секунды. Для 100+ срезов — заметно. Заменить на `Promise.all`.
+Заменён на `Promise.all` — параллельная загрузка всех срезов.
 
-#### 36. `loadend` читает `activeTool`/`activeShape` из стейла
+#### 36. ~~`loadend` читает `activeTool`/`activeShape` из стейла~~ ✅ FIXED
 **Файл:** `useDwvViewer.ts:192`
-```typescript
-if (activeTool === 'Draw') {
-  try { app.setToolFeatures({ shapeName: activeShape }) } catch {...}
-}
-```
-`activeTool` и `activeShape` — state-переменные в замыкании эффекта. Могут быть стейловыми при повторных загрузках. Использовать рефы (`activeToolRef`, `activeShapeRef`).
+Добавлены `activeToolRef`, `activeShapeRef`. `loadend` читает рефы.
 
-#### 37. `useEffect` dep `[loadSeries, onError]` — потенциальный перезапуск
+#### 37. ~~`useEffect` dep `[loadSeries, onError]`~~ ✅ FIXED
 **Файл:** `useDwvViewer.ts:293`
-`loadSeries` зависит от `onError`. Если родитель пересоздаёт `onError`, эффект перезапускается и DWV пересоздаётся. `onError` приходит из `ViewerPage` как `setError` — стабилен, но нет гарантии.
+`onError` заменён на `onErrorRef`. Зависимости: `[initApp]` и `[studyUid, loadSeries]`.
 
 ### 🔵 LOW
 
@@ -349,5 +335,5 @@ disabled={!v.appRef.current}
 |-------|----|----|----|-----|
 | Первая | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
 | Вторая | 0 | 2 → ✅2 | 13 → ✅10 | 2 |
-| Третья (viewer) | 0 | 0 | 4 | 2 |
-| **Осталось** | **0** | **0** | **10** | **4** |
+| Третья (viewer) | 0 | 0 | 4 → ✅4 | 2 |
+| **Осталось** | **0** | **0** | **6** | **4** |
