@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { setToken as setClientToken } from '../api/client'
+import { setToken as setClientToken, authLogin, authMe } from '../api/client'
 import type { UserOut } from '../types/auth'
 
 const STORAGE_ACCESS = 'mp_access_token'
@@ -44,17 +44,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false)
     if (refresh && access) {
       // best-effort refresh on mount
-      void fetch('/elqueue/api/auth/me', { headers: { Authorization: `Bearer ${access}` } })
-        .then(async (r) => {
-          if (r.ok) {
-            const fresh = await r.json() as UserOut
-            setUser(fresh)
-            localStorage.setItem(STORAGE_USER, JSON.stringify(fresh))
-          } else if (r.status === 401 && refresh) {
-            // try refresh
+      void authMe(access).then(fresh => {
+        setUser(fresh)
+        localStorage.setItem(STORAGE_USER, JSON.stringify(fresh))
+      }).catch(async () => {
+        if (refresh && access) {
+          try {
             const rr = await fetch('/elqueue/api/auth/refresh', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ refresh_token: refresh }),
             })
             if (rr.ok) {
@@ -63,35 +60,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setClientToken(pair.access_token)
               localStorage.setItem(STORAGE_ACCESS, pair.access_token)
             } else {
-              // refresh failed — clear
               localStorage.removeItem(STORAGE_ACCESS)
               localStorage.removeItem(STORAGE_REFRESH)
               localStorage.removeItem(STORAGE_USER)
-              setAccessToken(null)
-              setUser(null)
+              setAccessToken(null); setUser(null)
             }
+          } catch {
+            // refresh failed — clear
           }
-        })
-        .catch(() => undefined)
+        }
+      })
     }
   }, [])
 
   const login = useCallback(async (username: string, password: string) => {
-    const res = await fetch('/elqueue/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}))
-      throw new Error((body as { detail?: string }).detail || `HTTP ${res.status}`)
-    }
-    const pair = await res.json() as { access_token: string; refresh_token: string }
+    const pair = await authLogin(username, password)
     setAccessToken(pair.access_token)
     setClientToken(pair.access_token)
     localStorage.setItem(STORAGE_ACCESS, pair.access_token)
     localStorage.setItem(STORAGE_REFRESH, pair.refresh_token)
-    // fetch user profile
     const me = await fetch('/elqueue/api/auth/me', {
       headers: { Authorization: `Bearer ${pair.access_token}` },
     })
@@ -113,14 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     if (!accessToken) return
-    const res = await fetch('/elqueue/api/auth/me', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    if (res.ok) {
-      const u = await res.json() as UserOut
+    try {
+      const u = await authMe(accessToken)
       setUser(u)
       localStorage.setItem(STORAGE_USER, JSON.stringify(u))
-    }
+    } catch { /* token may be expired */ }
   }, [accessToken])
 
   const value = useMemo<AuthContextValue>(() => ({
