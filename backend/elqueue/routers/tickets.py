@@ -77,14 +77,30 @@ async def list_tickets(
     status_filter: str | None = None,
     limit: int = 50,
 ) -> list[TicketDetail]:
-    """Список талонов с предзагрузкой пациента и кабинета (N+1-safe)."""
+    """Список талонов с предзагрузкой пациента и кабинета (N+1-safe).
+    Сортировка: сначала ожидающие по приоритету (stat > urgent > normal) + FIFO, потом остальные по дате.
+    """
+    from db.models.ris import Order
+    from sqlalchemy import case
+
+    priority_order = case(
+        (Order.priority == 'stat', 0),
+        (Order.priority == 'urgent', 1),
+        (Order.priority == 'normal', 2),
+        else_=3,
+    )
     stmt = (
         select(Ticket)
         .options(
             selectinload(Ticket.patient),
             selectinload(Ticket.cabinet),
         )
-        .order_by(Ticket.created_at.desc())
+        .outerjoin(Order, Ticket.order_id == Order.id)
+        .order_by(
+            case((Ticket.status == 'waiting', 0), else_=1),
+            priority_order,
+            Ticket.created_at.asc(),
+        )
         .limit(min(limit, 200))
     )
     if cabinet:
@@ -92,7 +108,19 @@ async def list_tickets(
     if status_filter:
         stmt = stmt.where(Ticket.status == status_filter)
     rows = (await db.execute(stmt)).scalars().all()
-    return [TicketDetail.model_validate(r) for r in rows]
+    # Собираем order_id'ы для batch-запроса priority
+    order_ids = {r.order_id for r in rows if r.order_id}
+    priority_map: dict[str, str] = {}
+    if order_ids:
+        orders = (await db.execute(
+            select(Order.id, Order.priority).where(Order.id.in_(order_ids))
+        )).all()
+        priority_map = {o.id: o.priority for o in orders}
+    details = [TicketDetail.model_validate(r) for r in rows]
+    for d in details:
+        if d.order_id and d.order_id in priority_map:
+            d.priority = priority_map[d.order_id]
+    return details
 
 
 @router.get("/tickets/{ticket_number}", response_model=TicketDetail)
@@ -111,7 +139,14 @@ async def get_ticket(
     ticket = (await db.execute(stmt)).scalar_one_or_none()
     if ticket is None:
         raise HTTPException(status_code=404, detail="Ticket not found")
-    return TicketDetail.model_validate(ticket)
+    detail = TicketDetail.model_validate(ticket)
+    if ticket.order_id:
+        order = (await db.execute(
+            select(Order).where(Order.id == ticket.order_id)
+        )).scalar_one_or_none()
+        if order is not None:
+            detail.priority = order.priority
+    return detail
 
 
 @router.get("/tickets/{ticket_number}/events", response_model=list[TicketEventOut])
@@ -188,7 +223,7 @@ async def register_ticket(
     # Пробрасываем токен пользователя, чтобы RIS не возвращал 401.
     auth_header = request.headers.get("authorization")
     order_id, study_uid = await _create_ris_order(
-        body.full_name, patient.id, cabinet.modality, auth_header,
+        body.full_name, patient.id, cabinet.modality, auth_header, body.priority,
     )
 
     if order_id:
@@ -202,7 +237,14 @@ async def register_ticket(
 
     # 5. Перезагружаем со связями
     await db.refresh(ticket, attribute_names=["patient", "cabinet"])
-    return TicketDetail.model_validate(ticket)
+    detail = TicketDetail.model_validate(ticket)
+    if ticket.order_id:
+        order = (await db.execute(
+            select(Order).where(Order.id == ticket.order_id)
+        )).scalar_one_or_none()
+        if order is not None:
+            detail.priority = order.priority
+    return detail
 
 
 @router.post("/tickets/next", response_model=TicketDetail)
@@ -254,7 +296,14 @@ async def call_next(
     await db.refresh(ticket, attribute_names=["patient", "cabinet"])
     await _audit(request, db, action=AuditAction.TICKET_CALLED.value,
                  resource_type="ticket", resource_id=ticket.ticket_number)
-    return TicketDetail.model_validate(ticket)
+    detail = TicketDetail.model_validate(ticket)
+    if ticket.order_id:
+        order = (await db.execute(
+            select(Order).where(Order.id == ticket.order_id)
+        )).scalar_one_or_none()
+        if order is not None:
+            detail.priority = order.priority
+    return detail
 
 
 @router.post("/tickets/{ticket_number}/complete", response_model=TicketDetail)
@@ -298,7 +347,14 @@ async def complete_ticket(
     await db.refresh(ticket, attribute_names=["patient", "cabinet"])
     await _audit(request, db, action=AuditAction.TICKET_COMPLETED.value,
                  resource_type="ticket", resource_id=ticket.ticket_number)
-    return TicketDetail.model_validate(ticket)
+    detail = TicketDetail.model_validate(ticket)
+    if ticket.order_id:
+        order = (await db.execute(
+            select(Order).where(Order.id == ticket.order_id)
+        )).scalar_one_or_none()
+        if order is not None:
+            detail.priority = order.priority
+    return detail
 
 
 # ======================== СЛУЖЕБНОЕ ========================
@@ -308,6 +364,7 @@ async def _create_ris_order(
     patient_db_id: uuid.UUID,
     modality: str,
     auth_header: str | None = None,
+    priority: str = "normal",
 ) -> tuple[str | None, str | None]:
     """Создаёт заказ в RIS через HTTP. Возвращает (order_id, study_uid) или (None, None)."""
     headers = {"X-Internal-Service": "elqueue"}
@@ -321,6 +378,7 @@ async def _create_ris_order(
                 "patient_id": str(patient_db_id),
                 "modality": modality,
                 "study_description": f"Исследование, модальность {modality}",
+                "priority": priority,
             },
             headers=headers,
             timeout=5,

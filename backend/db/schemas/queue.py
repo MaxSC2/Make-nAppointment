@@ -45,6 +45,8 @@ class TicketCreateRequest(BaseModel):
     cabinet_code: str = Field(default="101", description="Код кабинета (101, 102, …)")
     phone: str | None = None
     birth_date: datetime | None = None
+    priority: str = Field(default="normal", pattern=r"^(normal|urgent|stat)$",
+                          description="Приоритет: normal / urgent / stat")
 
 
 class TicketOut(BaseModel):
@@ -67,6 +69,7 @@ class TicketDetail(TicketOut):
 
     patient: PatientOut
     cabinet: CabinetOut
+    priority: str | None = None  # из связанного Order (scheduled, urgent, stat)
 
 
 class TicketEventOut(BaseModel):
