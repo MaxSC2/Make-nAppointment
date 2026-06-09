@@ -1,6 +1,6 @@
 import type { ModalityOut, OrderOut, PatientStudy, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
 import type { PatientOut } from '../types/queue'
-import { risGet, risPatch, risPost, risPut, risV1Get, risV1Post } from './client'
+import { risGet, risPatch, risPatchBody, risPost, risPut, risV1Get, risV1Post } from './client'
 
 export function getOrders(status?: string, patientId?: string) {
   const params = new URLSearchParams()
@@ -25,7 +25,7 @@ export function createOrder(body: {
 }
 
 export function updateOrderStatus(orderId: string, status: string) {
-  return risPatch(`/orders/${orderId}/status`, { status })
+  return risPatchBody<{ ok: boolean; status: string }>(`/orders/${orderId}/status`, { status })
 }
 
 export function getOrderStudies(orderId: string) {

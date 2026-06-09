@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { useCabinets, useQueue } from '../hooks/useQueue'
 import QueueTable from '../components/QueueTable'
+import { QueueStats } from '../components/QueueStats'
 
 export default function QueuePage() {
   const { cabinets } = useCabinets()
   const [cabinet, setCabinet] = useState<string | undefined>(undefined)
   const { tickets, loading, error } = useQueue(cabinet, 10000)
+
+  const selectedCabinet = cabinet ? cabinets.find(c => c.code === cabinet)?.name : undefined
 
   return (
     <div>
@@ -22,6 +25,8 @@ export default function QueuePage() {
           ))}
         </select>
       </div>
+
+      <QueueStats tickets={tickets} cabinetName={selectedCabinet} />
 
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>

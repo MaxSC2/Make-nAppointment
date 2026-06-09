@@ -72,6 +72,13 @@ export function risPatch(path: string, params?: Record<string, string>) {
   return request(RIS_BASE, `${path}${qs}`, { method: 'PATCH' })
 }
 
+export function risPatchBody<T>(path: string, body?: unknown) {
+  return request(RIS_BASE, path, {
+    method: 'PATCH',
+    body: body ? JSON.stringify(body) : undefined,
+  }) as Promise<T>
+}
+
 export function risPut<T>(path: string, body?: unknown) {
   return request(RIS_BASE, path, {
     method: 'PUT',
