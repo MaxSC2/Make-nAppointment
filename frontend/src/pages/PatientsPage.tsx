@@ -71,7 +71,7 @@ export default function PatientsPage() {
               onClick={() => navigate(`/patients/${p.id}`)}
               className="w-full text-left bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-500 hover:shadow-sm transition"
             >
-              <div className="font-medium text-slate-900">👤 {p.full_name}</div>
+              <div className="font-medium text-slate-900">{p.full_name}</div>
               <div className="text-sm text-slate-500 mt-1">
                 Полис: {p.policy_number}
                 {p.birth_date && ` · Дата рождения: ${p.birth_date}`}
