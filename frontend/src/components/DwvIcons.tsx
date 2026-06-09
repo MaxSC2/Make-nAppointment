@@ -8,11 +8,11 @@ export const TOOLS = [
 ] as const
 
 export const DRAW_SHAPES = [
-  { id: 'Ruler', label: 'Линейка', description: 'Измерение расстояния' },
-  { id: 'Circle', label: 'Круг', description: 'Круговая аннотация' },
-  { id: 'Rectangle', label: 'Прямоугольник', description: 'Прямоугольная область' },
-  { id: 'Ellipse', label: 'Эллипс', description: 'Эллиптическая область' },
-  { id: 'Arrow', label: 'Стрелка', description: 'Стрелочная аннотация' },
+  { id: 'Ruler', label: 'Линейка', description: 'Измерение расстояния (R/К)' },
+  { id: 'Circle', label: 'Круг', description: 'Круговая аннотация (C/С)' },
+  { id: 'Rectangle', label: 'Прямоугольник', description: 'Прямоугольная область (T/Е)' },
+  { id: 'Ellipse', label: 'Эллипс', description: 'Эллиптическая область (E/У)' },
+  { id: 'Arrow', label: 'Стрелка', description: 'Стрелочная аннотация (A/Ф)' },
 ] as const
 
 export function ToolIcon({ id, className = 'w-4 h-4' }: { id: string; className?: string }): ReactNode {
