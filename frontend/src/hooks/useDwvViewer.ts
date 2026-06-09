@@ -364,18 +364,18 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       if (key === '2') { setTool('WindowLevel'); e.preventDefault() }
       if (key === '3') { setTool('ZoomAndPan'); e.preventDefault() }
       if (key === '4') { setTool('Draw'); e.preventDefault() }
-      // Shapes
-      if (key === 'r' && !e.ctrlKey) { setShape('Ruler'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
-      if (key === 'c' && !e.ctrlKey) { setShape('Circle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
-      if (key === 't' && !e.ctrlKey) { setShape('Rectangle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
-      if (key === 'e' && !e.ctrlKey) { setShape('Ellipse'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
-      if (key === 'a' && !e.ctrlKey) { setShape('Arrow'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      // Shapes (Latin + Russian keyboard layout)
+      if ((key === 'r' || key === 'к') && !e.ctrlKey) { setShape('Ruler'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if ((key === 'c' || key === 'с') && !e.ctrlKey) { setShape('Circle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if ((key === 't' || key === 'е') && !e.ctrlKey) { setShape('Rectangle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if ((key === 'e' || key === 'у') && !e.ctrlKey) { setShape('Ellipse'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if ((key === 'a' || key === 'ф') && !e.ctrlKey) { setShape('Arrow'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
       // Navigation
       if (key === 'arrowup') { try { app.stepSlice(-1) } catch {}; setSliceInfo(p => p.total ? {...p, current: Math.max(1, p.current-1)} : p); e.preventDefault() }
       if (key === 'arrowdown') { try { app.stepSlice(1) } catch {}; setSliceInfo(p => p.total ? {...p, current: Math.min(p.total, p.current+1)} : p); e.preventDefault() }
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
-      if (key === 'i' && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
+      if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
       if (key === '0' && e.ctrlKey) { try { app.setZoom(1, 0, 0) } catch {}; e.preventDefault() }
     }
     window.addEventListener('keydown', handler)
