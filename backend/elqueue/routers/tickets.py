@@ -45,6 +45,18 @@ from db.schemas.queue import (
 
 router = APIRouter(prefix="/api", tags=["queue"])
 
+_ris_client: httpx.AsyncClient | None = None
+
+
+def _get_ris_client() -> httpx.AsyncClient:
+    global _ris_client
+    if _ris_client is None:
+        _ris_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(10.0),
+            limits=httpx.Limits(max_connections=5, max_keepalive_connections=2),
+        )
+    return _ris_client
+
 
 # ======================== СПРАВОЧНИКИ ========================
 
@@ -302,21 +314,22 @@ async def _create_ris_order(
     if auth_header:
         headers["Authorization"] = auth_header
     try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            resp = await client.post(
-                f"{settings.ris_url}/api/orders",
-                json={
-                    "patient_id": str(patient_db_id),
-                    "modality": modality,
-                    "study_description": f"Исследование, модальность {modality}",
-                },
-                headers=headers,
-            )
-            if resp.status_code == 201:
-                data = resp.json()
-                return data["id"], data.get("study_uid")
-            else:
-                logger.warning("RIS вернул %s: %s", resp.status_code, resp.text[:200])
+        client = _get_ris_client()
+        resp = await client.post(
+            f"{settings.ris_url}/api/orders",
+            json={
+                "patient_id": str(patient_db_id),
+                "modality": modality,
+                "study_description": f"Исследование, модальность {modality}",
+            },
+            headers=headers,
+            timeout=5,
+        )
+        if resp.status_code == 201:
+            data = resp.json()
+            return data["id"], data.get("study_uid")
+        else:
+            logger.warning("RIS вернул %s: %s", resp.status_code, resp.text[:200])
     except Exception as e:
         logger.warning("RIS недоступен: %s", e)
     return None, None
@@ -329,12 +342,13 @@ async def _patch_ris_status(
     if auth_header:
         headers["Authorization"] = auth_header
     try:
-        async with httpx.AsyncClient(timeout=3) as client:
-            await client.patch(
-                f"{settings.ris_url}/api/orders/{order_id}/status",
-                params={"status": status},
-                headers=headers,
-            )
+        client = _get_ris_client()
+        await client.patch(
+            f"{settings.ris_url}/api/orders/{order_id}/status",
+            params={"status": status},
+            headers=headers,
+            timeout=3,
+        )
     except Exception:
         logger.warning("RIS недоступен (PATCH status)", exc_info=True)
 
