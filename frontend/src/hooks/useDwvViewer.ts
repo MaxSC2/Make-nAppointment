@@ -93,8 +93,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     const viewConfig = new ViewConfig(containerId)
     viewConfig.defaultCharacterSet = 'utf-8'
     const options = new AppOptions({ '*': [viewConfig] })
-    options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: {} }
-    options.viewOnFirstLoadItem = true
+    options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } }
+    options.viewOnFirstLoadItem = false
     const app = new App()
     app.init(options)
     return app
@@ -284,7 +284,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     setActiveShape(shape)
     try {
       appRef.current?.setToolFeatures({ shapeName: shape })
-    } catch { /* tool not initialized yet */ }
+    } catch { console.error('DwvViewer: tool not initialized') }
   }, [])
 
   const setSeries = useCallback((seriesUid: string) => {
