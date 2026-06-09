@@ -29,7 +29,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
   }, [v])
 
   return (
-    <div className="flex flex-col h-full bg-[#060a10] text-slate-200">
+    <div className="flex flex-col min-h-0 flex-1 bg-[#060a10] text-slate-200">
       {/* ═══ TOOLBAR ═══ */}
       <div className="flex items-center justify-between px-2 py-1 bg-slate-900 border-b border-slate-800 text-xs select-none flex-shrink-0">
         <div className="flex items-center gap-1">
@@ -136,7 +136,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
           <div
             ref={v.containerRef}
             onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-            className={'flex-1 bg-black relative ' +
+            className={'flex-1 bg-black relative min-h-[200px] dwv ' +
               (isDragging ? 'outline outline-3 outline-blue-500 outline-dashed outline-offset-[-3px]' : '')}
           >
             {isDragging && (

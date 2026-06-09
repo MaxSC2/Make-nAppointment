@@ -50,3 +50,16 @@ body {
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 6px;
 }
+
+/* DWV DICOM Viewer — canvas layers must fill container */
+.dwv .layerContainer {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+.dwv canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
