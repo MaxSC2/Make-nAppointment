@@ -174,8 +174,11 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         clearLoadTimeout()
         setLoading(false)
         setLoaded(true)
-        const total = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)?.instance_count || 0
-        setSliceInfo({ current: 1, total })
+        setSliceInfo({ current: 1, total: seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)?.instance_count || 0 })
+        try { app.setTool(activeToolRef.current) } catch { /* ignore */ }
+        if (activeToolRef.current === 'Draw') {
+          try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { /* ignore */ }
+        }
       })
 
       app.addEventListener('error', (event) => {
