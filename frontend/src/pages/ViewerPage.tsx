@@ -7,32 +7,44 @@ export default function ViewerPage() {
   const [error, setError] = useState<string | null>(null)
 
   return (
-    <div className="flex flex-col h-[calc(100vh-100px)]">
-      <div className="flex items-center justify-between mb-3 flex-shrink-0">
-        <div>
-          <Link to="/studies" className="text-sm text-slate-500 hover:text-slate-700">
-            &larr; K списку исследований
+    <div className="h-screen flex flex-col bg-[#060a10] text-slate-200">
+      {/* Header */}
+      <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900 border-b border-slate-800 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <Link to="/studies" className="text-xs text-slate-400 hover:text-slate-200 transition">
+            &larr; К списку исследований
           </Link>
-          <h2 className="text-xl font-semibold text-slate-900 mt-1">DICOM Viewer</h2>
+          <span className="w-px h-3 bg-slate-700" />
+          <span className="text-xs font-semibold text-blue-400 tracking-wide uppercase">MedPlatform DICOM</span>
         </div>
+        {studyUid && (
+          <span className="text-[10px] text-slate-500 font-mono truncate max-w-[300px]">
+            {studyUid}
+          </span>
+        )}
       </div>
 
       {!studyUid && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-6 flex-shrink-0">
-          <div className="font-medium mb-1">Не выбран study UID</div>
-          <div className="text-sm">Выберите исследование из списка.</div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-4xl text-slate-600 mb-3">⬡</div>
+            <div className="text-slate-400 font-medium mb-1">Не выбран Study UID</div>
+            <div className="text-slate-600 text-sm">Выберите исследование из списка</div>
+            <Link to="/studies" className="inline-block mt-4 px-4 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition">
+              К списку исследований
+            </Link>
+          </div>
         </div>
       )}
 
       {error && (
-        <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-6 flex-shrink-0">
-          <div className="font-medium mb-1">Не удалось открыть исследование</div>
-          <div className="text-sm">{error}</div>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-red-900/50 border-b border-red-800 text-red-200 text-xs flex-shrink-0">
+          {error}
         </div>
       )}
 
       {studyUid && (
-        <div className="flex-1 bg-white border border-slate-200 rounded-lg overflow-hidden min-h-0">
+        <div className="flex-1 min-h-0">
           <DwvViewer studyUid={studyUid} onError={setError} />
         </div>
       )}
