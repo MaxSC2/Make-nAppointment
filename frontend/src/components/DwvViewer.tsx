@@ -91,7 +91,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
 
         <div className="flex items-center gap-3">
           {v.loaded && v.sliceInfo.total > 0 && (
-            <span className="text-slate-500">Срез {v.sliceInfo.current}/{v.sliceInfo.total}</span>
+            <span className="text-slate-500">Кадр {v.sliceInfo.current}/{v.sliceInfo.total}</span>
           )}
           {v.loading && (
             <span className="flex items-center gap-1 text-blue-400">
@@ -231,7 +231,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
         <span className="w-px h-3 bg-slate-700" />
         <span>Серия: <span className="text-slate-400">{v.activeSeriesUid ? v.activeSeriesUid.substring(0, 12) + '...' : '—'}</span></span>
         <span className="w-px h-3 bg-slate-700" />
-        <span>Срезов: <span className="text-slate-400">{v.sliceInfo.total || '—'}</span></span>
+        <span>Кадров: <span className="text-slate-400">{v.sliceInfo.total || '—'}</span></span>
         <span className="w-px h-3 bg-slate-700" />
         <span>MedPlatform DICOM · DWV 0.36</span>
       </div>
