@@ -569,18 +569,17 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 
 | # | Проблема | Файл | Статус |
 |---|----------|------|--------|
-| 3 | `httpx.AsyncClient()` per request — 5 мест без connection pool | `orders.py:320,371,419`, `tickets.py:305,335` | — |
+| 3 | `httpx.AsyncClient()` per request — 5 мест без connection pool | `orders.py`, `tickets.py` | ✅ singleton pool |
 | 4 | 6 пустых catch блоков в DwvViewer — ошибки DWV не видны | `DwvViewer.tsx` | ✅ `console.error` |
 | 5 | `AuthContext`: fetch напрямую (не через api/client.ts) | `AuthContext.tsx:47-76` | — |
 | 6 | `AuthContext`: пустой catch на JSON.parse | `AuthContext.tsx:42` | ✅ `console.error` |
 | 7 | `useCabinets`: пустой catch + нет AbortController | `useQueue.ts:48` | ✅ `console.error` |
-| 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` | — |
+| 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` | ✅ AbortController |
 | 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` | — |
 | 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` | — |
 | 11 | `series_count` и `instance_count` всегда 0 | `studies.py:178` | ✅ из Orthanc ?expand |
-| 11 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | — |
-| 12 | `localStorage.getItem` для токена в `api/client.ts` | `client.ts:5-13` | — |
-| 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` | — |
+| 12 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | — |
+| 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` | ✅ polling 10s |
 | 14 | ViewerPage: хардкод `localhost:5550` (NestJS не запущен) | `ViewerPage.tsx:12` | ✅ убрана кнопка |
 | 15 | `config.py`: дефолтные JWT secret + admin password в коде | `config.py:56,72` | — |
 
@@ -596,8 +595,8 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | Волна | 🔴 | 🟠 | 🟡 | 🔵 |
 |-------|----|----|----|-----|
 | Первая (утро) | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
-| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅7 | 2 |
-| **Осталось** | **0** | **0** | **6** | **2** |
+| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅10 | 2 |
+| **Осталось** | **0** | **0** | **3** | **2** |
 
 ---
 
@@ -807,7 +806,7 @@ npm run dev
 |---|---|---|
 | v1.0 | 2026-05 | Первая итерация на SQLite, без аутентификации |
 | v2.0 | 2026-06 | Миграция на PostgreSQL 16, JWT, RBAC, PACS-фасад, React 19, DWV, code review |
-| v2.2 | 2026-06-08 | Вторая волна ревью (17 замечаний) + исправлено 8: PACSError logging, пароль в лог, DwvViewer catch, ViewerPage кнопка, AuthContext/useQueue catch, series_count/instance_count из Orthanc. Сквозной демо-сценарий пройден. |
+| v2.3 | 2026-06-09 | httpx connection pool (5 мест), DoctorPage polling, useOrders AbortController, регистрация get_current_user, series_count из Orthanc. Осталось 3🟡 2🔵. |
 
 ## ПРИЛОЖЕНИЕ 5. СООТВЕТСТВИЕ КРИТЕРИЯМ СИЛЛАБУСА
 
