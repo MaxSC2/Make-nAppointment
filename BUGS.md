@@ -5,6 +5,27 @@
 
 ---
 
+## ⚪ series_count / instance_count = 0 (исторически)
+
+**Найдено:** ранее
+**Где:** `ris.studies.series_count`, `ris.studies.instance_count`
+**Что было:** В БД всегда 0 — не обновлялись при линковке.
+**Статус:** ✅ **ЧАСТИЧНО ИСПРАВЛЕНО** (09.06.2026):
+- `link_study_to_order` уже использует `orthanc_study.get("Series")` — будущие линковки правильно записывают counts.
+- 17 исторических записей обновлены: `series_count=1, instance_count=1` (workaround — реальные counts утеряны т.к. Orthanc был перезапущен, orthanc_id в БД больше не соответствуют реальным ID).
+- Для полного фикса: перезалить DICOM-снимки из архива и заново линковать.
+**Урок:** Orthanc данные хрупкие — при перезапуске теряются ссылки. Нужна стратегия бэкапа (PostgreSQL dump + Orthanc export).
+
+---
+
+## 🟢 `is_uploaded` в pacs_facade всегда True (FIXED in commit a754505)
+
+## 🟢 Emoji 👤 в пациентах (FIXED in commit 65e8f91)
+
+## 🟢 PatientCardPage — пустой "Статус:" (FIXED in commit 65e8f91)
+
+## 🟢 callNext FIFO (FIXED in commit 091702b — скрыта кнопка для не-первых)
+
 ## 🔴 Замена DWV-просмотрщика — задача другого AI
 
 **Дата:** 09.06.2026
