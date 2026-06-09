@@ -67,6 +67,7 @@ class Order(Base):
         Index("ix_order_status", "status"),
         Index("ix_order_patient", "patient_id"),
         Index("ix_order_study_uid", "study_uid"),
+        Index("ix_order_source_ticket", "source_ticket_id"),
         UniqueConstraint("study_uid", name="uq_order_study_uid"),
         {"schema": "ris"},
     )
@@ -95,6 +96,14 @@ class Order(Base):
     scheduled_for: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    source_ticket_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    source_system: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    smartq_called_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),

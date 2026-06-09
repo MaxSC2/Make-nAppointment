@@ -87,6 +87,7 @@ async def list_modalities(
 @router.get("/orders", response_model=list[OrderOut])
 async def list_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
     status_filter: str | None = None,
     patient_id: uuid.UUID | None = None,
     limit: int = 100,
@@ -172,6 +173,7 @@ async def create_order(
 async def get_order(
     order_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
 ) -> Order:
     order = (await db.execute(select(Order).where(Order.id == order_id))).scalar_one_or_none()
     if order is None:
@@ -183,31 +185,35 @@ async def get_order(
 async def update_status(
     order_id: str,
     request: Request,
+    body: dict,
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN))],
-    status: str = "scheduled",
 ) -> dict:
-    """Меняет статус заказа (scheduled → in_progress → completed)."""
-    if status not in {s.value for s in OrderStatus}:
-        raise HTTPException(status_code=400, detail=f"Invalid status: {status}")
+    """Меняет статус заказа (scheduled → in_progress → completed).
+
+    Body: {"status": "in_progress"}
+    """
+    new_status = body.get("status")
+    if not new_status or new_status not in {s.value for s in OrderStatus}:
+        raise HTTPException(status_code=400, detail=f"Invalid status: {new_status}")
 
     order = (await db.execute(select(Order).where(Order.id == order_id))).scalar_one_or_none()
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
 
     old_status = order.status
-    order.status = status
+    order.status = new_status
     now = datetime.now(timezone.utc)
-    if status == OrderStatus.IN_PROGRESS.value and order.started_at is None:
+    if new_status == OrderStatus.IN_PROGRESS.value and order.started_at is None:
         order.started_at = now
-    elif status == OrderStatus.COMPLETED.value:
+    elif new_status == OrderStatus.COMPLETED.value:
         order.completed_at = now
 
     await db.commit()
     await _audit(request, db, action=AuditAction.ORDER_STATUS_CHANGED.value,
                  resource_type="order", resource_id=order.id,
-                 extra={"from": old_status, "to": status})
-    return {"ok": True, "status": status}
+                 extra={"from": old_status, "to": new_status})
+    return {"ok": True, "status": new_status}
 
 
 # ======================== ИССЛЕДОВАНИЯ ========================
@@ -216,6 +222,7 @@ async def update_status(
 async def list_order_studies(
     order_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
 ) -> list[Study]:
     stmt = select(Study).where(Study.order_id == order_id).order_by(Study.id)
     return list((await db.execute(stmt)).scalars().all())
@@ -224,6 +231,7 @@ async def list_order_studies(
 @router.get("/studies", response_model=list[OrderOut])
 async def list_studies(
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
     modality: str | None = None,
     limit: int = 100,
 ) -> list[Order]:

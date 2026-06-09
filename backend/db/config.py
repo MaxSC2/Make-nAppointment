@@ -67,6 +67,29 @@ class Settings(BaseSettings):
     ris_port: int = Field(default=8000)
     elqueue_port: int = Field(default=8005)
 
+    # --- Внешний SmartQ (NikNebog/smartq-back, NestJS) ---
+    smartq_url: str = Field(
+        default="http://localhost:3000",
+        description="Базовый URL внешней электронной очереди SmartQ",
+    )
+    smartq_username: str = Field(
+        default="admin",
+        description="Service account для нашего РИС в SmartQ",
+    )
+    smartq_password: str = Field(
+        default="admin123",
+        description="Пароль service account SmartQ",
+    )
+    smartq_webhook_secret: str = Field(
+        default="change-me-smartq-webhook-secret-in-production",
+        min_length=16,
+        description="HMAC-секрет для проверки webhook от SmartQ",
+    )
+    smartq_enabled: bool = Field(
+        default=False,
+        description="Если False — наш elqueue остаётся fallback-симулятором",
+    )
+
     # --- Начальный администратор (создаётся при init_db) ---
     admin_username: str = Field(default="admin")
     admin_password: str = Field(default="admin123")
