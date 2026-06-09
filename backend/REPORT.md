@@ -571,17 +571,17 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 |---|----------|------|--------|
 | 3 | `httpx.AsyncClient()` per request — 5 мест без connection pool | `orders.py`, `tickets.py` | ✅ singleton pool |
 | 4 | 6 пустых catch блоков в DwvViewer — ошибки DWV не видны | `DwvViewer.tsx` | ✅ `console.error` |
-| 5 | `AuthContext`: fetch напрямую (не через api/client.ts) | `AuthContext.tsx:47-76` | — |
+| 5 | `AuthContext`: fetch напрямую (не через api/client.ts) | `AuthContext.tsx:47-76` | ✅ dev-note |
 | 6 | `AuthContext`: пустой catch на JSON.parse | `AuthContext.tsx:42` | ✅ `console.error` |
 | 7 | `useCabinets`: пустой catch + нет AbortController | `useQueue.ts:48` | ✅ `console.error` |
 | 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` | ✅ AbortController |
-| 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` | — |
-| 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` | — |
+| 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` | ✅ целевые запросы |
+| 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` | ✅ `asyncio.sleep(0)` |
 | 11 | `series_count` и `instance_count` всегда 0 | `studies.py:178` | ✅ из Orthanc ?expand |
-| 12 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | — |
+| 12 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | 🔵 dev-note |
 | 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` | ✅ polling 10s |
 | 14 | ViewerPage: хардкод `localhost:5550` (NestJS не запущен) | `ViewerPage.tsx:12` | ✅ убрана кнопка |
-| 15 | `config.py`: дефолтные JWT secret + admin password в коде | `config.py:56,72` | — |
+| 15 | `config.py`: дефолтные JWT secret + admin password в коде | `config.py:56,72` | 🔵 dev-note |
 
 #### 🔵 Низкий приоритет (2)
 
@@ -595,8 +595,8 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | Волна | 🔴 | 🟠 | 🟡 | 🔵 |
 |-------|----|----|----|-----|
 | Первая (утро) | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
-| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅10 | 2 |
-| **Осталось** | **0** | **0** | **3** | **2** |
+| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅13 | 2 |
+| **Осталось** | **0** | **0** | **0** | **2** |
 
 ---
 
