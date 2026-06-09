@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useCabinets } from '../hooks/useQueue'
 import type { TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
@@ -10,6 +10,7 @@ export default function DoctorPage() {
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -23,6 +24,14 @@ export default function DoctorPage() {
       setLoading(false)
     }
   }, [cabinetCode])
+
+  useEffect(() => {
+    refresh()
+    intervalRef.current = setInterval(refresh, 10000)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [refresh])
 
   const handleCall = useCallback(async () => {
     try {
