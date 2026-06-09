@@ -13,6 +13,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
   const [showSearch, setShowSearch] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [activePanel, setActivePanel] = useState<'series' | 'info'>('series')
+  const [showHelp, setShowHelp] = useState(false)
 
   const onDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation(); setIsDragging(true)
@@ -29,7 +30,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
   }, [v])
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-[#060a10] text-slate-200">
+    <div className="flex flex-col flex-1 min-h-0 bg-[#060a10] text-slate-200 relative">
       {/* ═══ TOOLBAR ═══ */}
       <div className="flex items-center justify-between px-2 py-1 bg-slate-900 border-b border-slate-800 text-xs select-none flex-shrink-0">
         <div className="flex items-center gap-1">
@@ -87,6 +88,15 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
             <ToolIcon id="Search" className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">PACS</span>
           </button>
+
+          <button
+            onClick={() => setShowHelp(s => !s)}
+            title="Горячие клавиши"
+            className={'flex items-center gap-1 px-2 py-1 rounded transition cursor-pointer ' +
+              (showHelp ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200')}
+          >
+            <span className="text-sm font-bold">?</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-3">
@@ -126,6 +136,50 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       {showSearch && (
         <div className="bg-slate-100 border-b border-slate-300 max-h-72 overflow-y-auto flex-shrink-0">
           <DicomSearch onClose={() => setShowSearch(false)} />
+        </div>
+      )}
+
+      {/* ═══ HELP OVERLAY ═══ */}
+      {showHelp && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+          <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-5 max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-blue-400">Горячие клавиши</h3>
+              <button onClick={() => setShowHelp(false)} className="text-slate-500 hover:text-slate-300 text-lg leading-none">&times;</button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="text-slate-400 uppercase tracking-wide text-[10px] mb-1">Инструменты</div>
+              {[
+                ['1', 'Срезы (Scroll)'],
+                ['2', 'Окно/Уровень'],
+                ['3', 'Масштаб/Панорама'],
+                ['4', 'Рисование'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between"><span className="text-slate-300">{v}</span><kbd className="bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono text-[11px]">{k}</kbd></div>
+              ))}
+              <div className="text-slate-400 uppercase tracking-wide text-[10px] mb-1 mt-3">Фигуры (лат/рус)</div>
+              {[
+                ['R / К', 'Линейка'],
+                ['C / С', 'Круг'],
+                ['T / Е', 'Прямоугольник'],
+                ['E / У', 'Эллипс'],
+                ['A / Ф', 'Стрелка'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between"><span className="text-slate-300">{v}</span><kbd className="bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono text-[11px]">{k}</kbd></div>
+              ))}
+              <div className="text-slate-400 uppercase tracking-wide text-[10px] mb-1 mt-3">Навигация</div>
+              {[
+                ['↑ ↓', 'Листать срезы'],
+                ['Колесо', 'Листать срезы'],
+                ['Esc', 'Сброс / Срезы'],
+                ['I / Ш', 'Инвертировать'],
+                ['Ctrl+0', 'Сброс зума'],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between"><span className="text-slate-300">{v}</span><kbd className="bg-slate-800 px-2 py-0.5 rounded text-slate-400 font-mono text-[11px]">{k}</kbd></div>
+              ))}
+            </div>
+            <button onClick={() => setShowHelp(false)} className="mt-4 w-full py-1.5 bg-slate-800 text-slate-400 text-xs rounded hover:bg-slate-700 transition">Закрыть</button>
+          </div>
         </div>
       )}
 
