@@ -370,9 +370,9 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       if ((key === 't' || key === 'е') && !e.ctrlKey) { setShape('Rectangle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
       if ((key === 'e' || key === 'у') && !e.ctrlKey) { setShape('Ellipse'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
       if ((key === 'a' || key === 'ф') && !e.ctrlKey) { setShape('Arrow'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
-      // Navigation — dispatch synthetic wheel event
-      if (key === 'arrowup') { container.dispatchEvent(new WheelEvent('wheel', { deltaY: -100 })); e.preventDefault() }
-      if (key === 'arrowdown') { container.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 })); e.preventDefault() }
+      // Arrow keys update counter (DWV handles scroll via wheel natively)
+      if (key === 'arrowup') { setSliceInfo(p => p.total ? {...p, current: Math.max(1, p.current-1)} : p); e.preventDefault() }
+      if (key === 'arrowdown') { setSliceInfo(p => p.total ? {...p, current: Math.min(p.total, p.current+1)} : p); e.preventDefault() }
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
       if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
