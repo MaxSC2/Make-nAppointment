@@ -69,6 +69,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   const fileInputRef = useRef<HTMLInputElement>(null)
   const appRef = useRef<App | null>(null)
   const studyDataRef = useRef<StudyData | null>(null)
+  const seriesListRef = useRef<SeriesItem[]>([])
+  const activeSeriesUidRef = useRef('')
   const loadTimeoutRef = useRef<number | null>(null)
 
   const [loading, setLoading] = useState(false)
@@ -166,7 +168,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       setLoaded(true)
       // Slice info from active series (already known from API)
       setSliceInfo(prev => {
-        const activeSeries = seriesList.find(s => s.series_uid === activeSeriesUid)
+        const activeSeries = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)
         const total = activeSeries?.instance_count || prev.total || 0
         return { current: prev.current || 1, total }
       })
@@ -245,10 +247,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           instances: s.instances || [],
         }))
         setSeriesList(series)
+        seriesListRef.current = series
 
         if (series.length > 0) {
           const first = series[0].series_uid
           setActiveSeriesUid(first)
+          activeSeriesUidRef.current = first
           loadSeries(first)
         } else {
           setError('Исследование не содержит серий')
@@ -287,8 +291,9 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   }, [])
 
   const setSeries = useCallback((seriesUid: string) => {
-    if (seriesUid === activeSeriesUid) return
+    if (seriesUid === activeSeriesUidRef.current) return
     setActiveSeriesUid(seriesUid)
+    activeSeriesUidRef.current = seriesUid
     setLoaded(false)
     loadSeries(seriesUid)
   }, [activeSeriesUid, loadSeries])
