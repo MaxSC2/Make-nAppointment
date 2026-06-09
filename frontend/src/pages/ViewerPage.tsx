@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { DwvViewer } from '../components/DwvViewer'
 
 export default function ViewerPage() {
   const { studyUid = '' } = useParams<{ studyUid: string }>()
   const [error, setError] = useState<string | null>(null)
+
+  // Clear error when studyUid changes
+  useEffect(() => { setError(null) }, [studyUid])
 
   return (
     <div className="h-screen flex flex-col bg-[#060a10] text-slate-200">
