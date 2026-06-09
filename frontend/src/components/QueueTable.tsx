@@ -11,6 +11,7 @@ interface QueueTableProps {
 
 export default function QueueTable({ tickets, onCall, onComplete, showActions }: QueueTableProps) {
   const navigate = useNavigate()
+  const firstWaitingIdx = tickets.findIndex(t => t.status === 'waiting')
   if (tickets.length === 0) {
     return (
       <div className="text-center py-12 text-gray-400">
@@ -34,7 +35,7 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
-          {tickets.map((ticket) => (
+          {tickets.map((ticket, idx) => (
             <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">
                 {ticket.ticket_number}
@@ -59,7 +60,7 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
                   >
                     Карта пациента
                   </button>
-                  {ticket.status === 'waiting' && onCall && (
+                  {ticket.status === 'waiting' && onCall && firstWaitingIdx === idx && (
                     <button
                       onClick={() => onCall(ticket)}
                       className="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
