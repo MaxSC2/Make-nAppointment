@@ -117,19 +117,28 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     }
 
     const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
-    const urls = series.instances.map(
-      inst => `${window.location.origin}/api/v1/instances/${inst.orthanc_id}/dicom`,
-    )
-
     setLoaded(false)
     setLoading(true)
     setError(null)
 
-    appRef.current.loadURLs(urls, {
-      requestHeaders: token
-        ? { Authorization: `Bearer ${token}` }
-        : {},
-    })
+    try {
+      // Parallel fetch for speed
+      const files = await Promise.all(
+        series.instances.map(async inst => {
+          const resp = await fetch(
+            `/api/v1/instances/${inst.orthanc_id}/dicom`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
+          if (!resp.ok) throw new Error(`DICOM ${resp.status}`)
+          return new File([await resp.arrayBuffer()], `${inst.orthanc_id}.dcm`, { type: 'application/dicom' })
+        })
+      )
+      appRef.current.loadFiles(files)
+    } catch (e) {
+      setError('Ошибка загрузки: ' + (e instanceof Error ? e.message : String(e)))
+      setLoading(false)
+      onErrorRef.current?.(e instanceof Error ? e.message : String(e))
+    }
   }, [])
 
   // Init dwv App
