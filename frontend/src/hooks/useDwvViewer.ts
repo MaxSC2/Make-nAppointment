@@ -197,11 +197,14 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       })
 
       app.addEventListener('positionchange', (event) => {
-        const ev = event as { value?: number[] }
+        const ev = event as { value?: number[]; kvp?: number[] }
         if (ev.value && ev.value.length >= 3 && typeof ev.value[2] === 'number' && !isNaN(ev.value[2])) {
           const idx = Math.round(ev.value[2])
           setSliceInfo(prev => {
-            const total = idx + 1 > prev.total ? idx + 1 : (prev.total || idx + 1)
+            // total from positionchange if kvp available, else max seen
+            let total = prev.total || idx + 1
+            if (ev.kvp && ev.kvp.length > 0) { total = ev.kvp[0] || total }
+            if (idx + 1 > total) total = idx + 1
             return { current: idx + 1, total }
           })
         }
