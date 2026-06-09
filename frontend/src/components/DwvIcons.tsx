@@ -12,9 +12,7 @@ export const DRAW_SHAPES = [
   { id: 'Circle', label: 'Круг', description: 'Круговая аннотация' },
   { id: 'Rectangle', label: 'Прямоугольник', description: 'Прямоугольная область' },
   { id: 'Ellipse', label: 'Эллипс', description: 'Эллиптическая область' },
-  { id: 'FreeHand', label: 'От руки', description: 'Произвольная линия' },
   { id: 'Arrow', label: 'Стрелка', description: 'Стрелочная аннотация' },
-  { id: 'Angle', label: 'Угол', description: 'Измерение угла' },
 ] as const
 
 export function ToolIcon({ id, className = 'w-4 h-4' }: { id: string; className?: string }): ReactNode {
