@@ -280,3 +280,74 @@ JWT-секрет и пароль админа захардкожены как de
 3. 🟡 useOrders нет AbortController
 4. 🟡 DoctorPage без polling
 5. 🟡 Нет тестов
+
+---
+
+## Волна 3: ревью DICOM Viewer (09.06)
+
+> Фокус: `useDwvViewer.ts`, `DwvViewer.tsx`, `ViewerPage.tsx`
+
+### ✅ Что хорошо
+
+| # | Файл | Что |
+|---|------|-----|
+| 1 | `useDwvViewer.ts:98` | `Draw: { options: DRAW_SHAPES }` — правильная конфигурация |
+| 2 | `useDwvViewer.ts:152-156` | `requestAnimationFrame` ожидание размеров контейнера |
+| 3 | `useDwvViewer.ts:120-134` | Загрузка DICOM через fetch+JWT → `loadFiles()` — надёжно |
+| 4 | `DwvViewer.tsx:153-225` | Сайдбар с вкладками, сериями, инфо-панелью |
+| 5 | `DwvViewer.tsx:228-237` | Статус-бар: Study UID, серия, срезов |
+| 6 | `ViewerPage.tsx` | Чистый, full-screen, без Layout |
+
+### 🟡 MEDIUM
+
+#### 34. `label: 'Cрезы'` — латинская C вместо кириллической С
+**Файл:** `useDwvViewer.ts:7`
+```typescript
+{ id: 'Scroll', label: 'Cрезы' },
+```
+Кириллица: `Срезы`. Латинская: `Cрезы`. Визуально одинаково, но технически разная буква. `DwvIcons.tsx` имеет правильные названия — расхождение.
+
+#### 35. `loadSeries` загружает инстансы последовательно, не параллельно
+**Файл:** `useDwvViewer.ts:122-130`
+```typescript
+for (const inst of series.instances) {
+  const resp = await fetch(...)
+  buffers.push(await resp.arrayBuffer())
+}
+```
+10 срезов × ~200ms = 2 секунды. Для 100+ срезов — заметно. Заменить на `Promise.all`.
+
+#### 36. `loadend` читает `activeTool`/`activeShape` из стейла
+**Файл:** `useDwvViewer.ts:192`
+```typescript
+if (activeTool === 'Draw') {
+  try { app.setToolFeatures({ shapeName: activeShape }) } catch {...}
+}
+```
+`activeTool` и `activeShape` — state-переменные в замыкании эффекта. Могут быть стейловыми при повторных загрузках. Использовать рефы (`activeToolRef`, `activeShapeRef`).
+
+#### 37. `useEffect` dep `[loadSeries, onError]` — потенциальный перезапуск
+**Файл:** `useDwvViewer.ts:293`
+`loadSeries` зависит от `onError`. Если родитель пересоздаёт `onError`, эффект перезапускается и DWV пересоздаётся. `onError` приходит из `ViewerPage` как `setError` — стабилен, но нет гарантии.
+
+### 🔵 LOW
+
+#### 38. `v.appRef.current` в render — ESLint react-hooks/refs
+**Файл:** `DwvViewer.tsx:76`
+```typescript
+disabled={!v.appRef.current}
+```
+Чтение ref.current в JSX. Флаг ESLint, не влияет на работу.
+
+#### 39. Unicode emoji `⬡` в ViewerPage
+**Файл:** `ViewerPage.tsx:30`
+Нестандартно для проекта, но допустимо для empty-state.
+
+### Обновлённый итог
+
+| Волна | 🔴 | 🟠 | 🟡 | 🔵 |
+|-------|----|----|----|-----|
+| Первая | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
+| Вторая | 0 | 2 → ✅2 | 13 → ✅10 | 2 |
+| Третья (viewer) | 0 | 0 | 4 | 2 |
+| **Осталось** | **0** | **0** | **10** | **4** |

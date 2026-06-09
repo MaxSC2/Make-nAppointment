@@ -4,7 +4,7 @@ import type { DicomWebLoadOptions, PositionEvent } from 'dwv'
 import { getToken } from '../api/client'
 
 export const TOOLS = [
-  { id: 'Scroll', label: 'Cрезы' },
+  { id: 'Scroll', label: 'Срезы' },
   { id: 'WindowLevel', label: 'Окно' },
   { id: 'ZoomAndPan', label: 'Зум' },
   { id: 'Draw', label: 'Рис.' },
@@ -117,17 +117,17 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     setLoading(true)
     setError(null)
 
-    // Load DICOM files manually with JWT, then pass to DWV as files
     try {
-      const buffers: ArrayBuffer[] = []
-      for (const inst of series.instances) {
-        const resp = await fetch(
-          `/api/v1/instances/${inst.orthanc_id}/dicom`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        )
-        if (!resp.ok) throw new Error(`DICOM load failed: ${resp.status}`)
-        buffers.push(await resp.arrayBuffer())
-      }
+      const buffers = await Promise.all(
+        series.instances.map(async inst => {
+          const resp = await fetch(
+            `/api/v1/instances/${inst.orthanc_id}/dicom`,
+            { headers: { Authorization: `Bearer ${token}` } },
+          )
+          if (!resp.ok) throw new Error(`DICOM load failed: ${resp.status}`)
+          return resp.arrayBuffer()
+        })
+      )
       const files = buffers.map((buf, i) =>
         new File([buf], `slice_${i}.dcm`, { type: 'application/dicom' })
       )
