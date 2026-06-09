@@ -26,6 +26,7 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Талон</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Приоритет</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Пациент</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Полис</th>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Кабинет</th>
@@ -39,6 +40,21 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
             <tr key={ticket.id} className="hover:bg-gray-50 transition-colors">
               <td className="px-4 py-3 font-mono text-sm font-medium text-gray-900">
                 {ticket.ticket_number}
+              </td>
+              <td className="px-4 py-3">
+                {ticket.priority === 'stat' && (
+                  <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-xs font-semibold rounded">
+                    ЭКСТРЕННЫЙ
+                  </span>
+                )}
+                {ticket.priority === 'urgent' && (
+                  <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded">
+                    Срочный
+                  </span>
+                )}
+                {!ticket.priority || ticket.priority === 'normal' ? (
+                  <span className="text-xs text-gray-400">Плановый</span>
+                ) : null}
               </td>
               <td className="px-4 py-3 text-sm text-gray-700">{ticket.patient.full_name}</td>
               <td className="px-4 py-3 text-sm text-gray-500">{ticket.patient.policy_number}</td>

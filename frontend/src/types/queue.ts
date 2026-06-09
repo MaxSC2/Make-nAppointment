@@ -31,6 +31,7 @@ export interface TicketOut {
 export interface TicketDetail extends TicketOut {
   patient: PatientOut
   cabinet: CabinetOut
+  priority?: 'normal' | 'urgent' | 'stat' | null
 }
 
 export interface TicketEventOut {
@@ -48,6 +49,7 @@ export interface TicketCreateRequest {
   cabinet_code: string
   phone?: string | null
   birth_date?: string | null
+  priority?: 'normal' | 'urgent' | 'stat'
 }
 
 export interface NextCallRequest {

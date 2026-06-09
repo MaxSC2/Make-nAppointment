@@ -117,18 +117,18 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     )
 
     const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
-    const headers: Record<string, string> = {}
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`
-    }
+    const requestHeaders = token
+      ? [{ name: 'Authorization', value: `Bearer ${token}` }]
+      : [{ name: 'Accept', value: 'application/dicom' }]
     const options: DicomWebLoadOptions = {
-      requestHeaders: headers,
+      requestHeaders,
       forceLoader: 'dicom',
     }
 
     setLoaded(false)
     setLoading(true)
     setError(null)
+    console.log('DWV loadURLs:', urls.length, 'instances, token:', token ? token.substring(0, 20) + '...' : 'MISSING')
     appRef.current.loadURLs(urls, options)
   }, [])
 
