@@ -289,6 +289,10 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   }, [studyUid, loadSeries])
 
   const setTool = useCallback((tool: typeof TOOLS[number]['id']) => {
+    // Reset WindowLevel state when switching away
+    if (activeToolRef.current === 'WindowLevel' && tool !== 'WindowLevel') {
+      try { appRef.current?.setToolFeatures({}) } catch {}
+    }
     setActiveTool(tool)
     activeToolRef.current = tool
     setShowShapes(tool === 'Draw')
