@@ -102,7 +102,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     return app
   }, [])
 
-  const loadSeries = useCallback((seriesUid: string) => {
+  const loadSeries = useCallback(async (seriesUid: string) => {
     const data = studyDataRef.current
     if (!data || !appRef.current) return
 
@@ -112,25 +112,33 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       return
     }
 
-    const urls: string[] = series.instances.map(
-      inst => `/api/v1/instances/${inst.orthanc_id}/dicom`,
-    )
-
     const token = getToken() ?? localStorage.getItem('mp_access_token') ?? ''
-    const requestHeaders = token
-      ? [{ name: 'Authorization', value: `Bearer ${token}` }]
-      : [{ name: 'Accept', value: 'application/dicom' }]
-    const options: DicomWebLoadOptions = {
-      requestHeaders,
-      forceLoader: 'dicom',
-    }
-
     setLoaded(false)
     setLoading(true)
     setError(null)
-    console.log('DWV loadURLs:', urls.length, 'instances, token:', token ? token.substring(0, 20) + '...' : 'MISSING')
-    appRef.current.loadURLs(urls, options)
-  }, [])
+
+    // Load DICOM files manually with JWT, then pass to DWV as files
+    try {
+      const buffers: ArrayBuffer[] = []
+      for (const inst of series.instances) {
+        const resp = await fetch(
+          `/api/v1/instances/${inst.orthanc_id}/dicom`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        if (!resp.ok) throw new Error(`DICOM load failed: ${resp.status}`)
+        buffers.push(await resp.arrayBuffer())
+      }
+      const files = buffers.map((buf, i) =>
+        new File([buf], `slice_${i}.dcm`, { type: 'application/dicom' })
+      )
+      appRef.current.loadFiles(files)
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      setError('Ошибка загрузки DICOM: ' + msg)
+      setLoading(false)
+      onError?.(msg)
+    }
+  }, [onError])
 
   // Init dwv App
   useEffect(() => {
