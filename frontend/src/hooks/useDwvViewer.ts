@@ -10,7 +10,7 @@ export const TOOLS = [
   { id: 'Draw', label: 'Рис.' },
 ] as const
 
-export const DRAW_SHAPES = ['Ruler', 'Circle', 'Rectangle', 'Ellipse', 'FreeHand', 'Arrow', 'Angle']
+export const DRAW_SHAPES = ['Ruler', 'Circle', 'Rectangle', 'Ellipse', 'Arrow']
 
 export const LOAD_TIMEOUT_MS = 15000
 
@@ -165,7 +165,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       setLoading(false)
       setLoaded(true)
       try {
-        const vc = app.getViewController()
+        const vc = 'getViewController' in app ? app.getViewController() : null
         if (vc && typeof vc.getNumberOfSlices === 'function') {
           const total = vc.getNumberOfSlices()
           setSliceInfo({ current: 1, total })
