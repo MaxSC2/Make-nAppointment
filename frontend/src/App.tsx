@@ -53,6 +53,14 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
+        path="/viewer/:studyUid"
+        element={
+          <ProtectedRoute roles={['doctor', 'admin', 'viewer']}>
+            <ViewerPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         element={
           <ProtectedRoute>
             <Layout />
@@ -97,14 +105,6 @@ function AppRoutes() {
           element={
             <ProtectedRoute roles={['doctor', 'admin', 'viewer']}>
               <StudiesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/viewer/:studyUid"
-          element={
-            <ProtectedRoute roles={['doctor', 'admin', 'viewer']}>
-              <ViewerPage />
             </ProtectedRoute>
           }
         />
