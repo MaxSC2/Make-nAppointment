@@ -121,11 +121,19 @@ async def link_study_to_order(
     и для него работает ProtocolPage.
     """
     try:
-        orthanc_study = await pacs_facade._orthanc_get_json(f"studies/{orthanc_id}")
+        orthanc_study = await pacs_facade._orthanc_get_json(f"studies/{orthanc_id}?expand")
     except pacs_facade.PACSError as e:
         raise HTTPException(status_code=e.status_code, detail=e.message)
 
     summary = pacs_facade._build_study_summary(orthanc_study)
+    series_list = orthanc_study.get("Series") or []
+    series_count = len(series_list)
+    instance_count = 0
+    if "Instances" in orthanc_study:
+        instance_count = len(orthanc_study.get("Instances") or [])
+    else:
+        for s in series_list:
+            instance_count += len(s.get("Instances") or [])
     patient_name = summary.get("patient_name_dicom") or f"Пациент снимка {orthanc_id[:8]}"
     patient_id_dicom = summary.get("patient_id_dicom")
 
@@ -180,6 +188,8 @@ async def link_study_to_order(
         orthanc_id=orthanc_id,
         is_uploaded=True,
         uploaded_at=now,
+        series_count=series_count,
+        instance_count=instance_count,
     ))
 
     await db.commit()
