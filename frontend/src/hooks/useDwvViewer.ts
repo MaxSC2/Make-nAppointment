@@ -350,6 +350,37 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     }
   }, [activeSeriesUid, loadSeries, studyUid])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      const app = appRef.current
+      if (!app) return
+
+      const key = e.key.toLowerCase()
+      // Tools
+      if (key === '1') { setTool('Scroll'); e.preventDefault() }
+      if (key === '2') { setTool('WindowLevel'); e.preventDefault() }
+      if (key === '3') { setTool('ZoomAndPan'); e.preventDefault() }
+      if (key === '4') { setTool('Draw'); e.preventDefault() }
+      // Shapes
+      if (key === 'r' && !e.ctrlKey) { setShape('Ruler'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if (key === 'c' && !e.ctrlKey) { setShape('Circle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if (key === 't' && !e.ctrlKey) { setShape('Rectangle'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if (key === 'e' && !e.ctrlKey) { setShape('Ellipse'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      if (key === 'a' && !e.ctrlKey) { setShape('Arrow'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
+      // Navigation
+      if (key === 'arrowup') { try { app.stepSlice(-1) } catch {} e.preventDefault() }
+      if (key === 'arrowdown') { try { app.stepSlice(1) } catch {} e.preventDefault() }
+      if (key === 'arrowleft' && e.ctrlKey) { try { app.setSeries(activeSeriesUidRef.current) } catch {} }
+      // Actions
+      if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
+      if (key === 'i' && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [setTool, setShape, reset])
+
   return {
     containerRef,
     fileInputRef,

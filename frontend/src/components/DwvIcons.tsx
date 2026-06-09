@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 
 export const TOOLS = [
-  { id: 'Scroll', label: 'Срезы', description: 'Прокрутка срезов' },
-  { id: 'WindowLevel', label: 'Окно', description: 'Яркость и контраст' },
-  { id: 'ZoomAndPan', label: 'Масштаб', description: 'Масштаб и перемещение' },
-  { id: 'Draw', label: 'Рисование', description: 'Аннотации и измерения' },
+  { id: 'Scroll', label: 'Срезы', description: 'Прокрутка срезов (1, ↑↓, колесо)' },
+  { id: 'WindowLevel', label: 'Окно', description: 'Яркость и контраст (2, drag)' },
+  { id: 'ZoomAndPan', label: 'Масштаб', description: 'Масштаб и перемещение (3, Ctrl+колесо)' },
+  { id: 'Draw', label: 'Рисование', description: 'Аннотации и измерения (4)' },
 ] as const
 
 export const DRAW_SHAPES = [
