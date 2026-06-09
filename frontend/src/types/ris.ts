@@ -64,6 +64,10 @@ export interface PatientStudy {
   orthanc_id: string | null
   is_uploaded: boolean
   preview_url: string | null
+  study_description?: string | null
+  study_date?: string | null
+  description?: string | null
+  ris_order_status?: string | null
 }
 
 export interface ModalityOut {
