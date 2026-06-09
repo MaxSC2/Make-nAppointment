@@ -108,7 +108,11 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
   const loadSeries = useCallback(async (seriesUid: string) => {
     const data = studyDataRef.current
-    if (!data || !appRef.current) return
+    console.log('loadSeries called, appRef:', !!appRef.current, 'data:', !!data, 'seriesUid:', seriesUid)
+    if (!data || !appRef.current) {
+      console.log('loadSeries: early return — missing data or app')
+      return
+    }
 
     const series = data.series.find(s => s.series_uid === seriesUid)
     if (!series || series.instances.length === 0) {
@@ -152,7 +156,9 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     // Wait for container to have dimensions before init
     const tryInit = () => {
       const rect = container.getBoundingClientRect()
+      console.log('DWV init: container size', rect.width, 'x', rect.height)
       if (rect.width === 0 || rect.height === 0) {
+        console.log('DWV init: waiting for dimensions...')
         requestAnimationFrame(tryInit)
         return
       }
