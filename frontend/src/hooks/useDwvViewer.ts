@@ -195,13 +195,16 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       })
 
       app.addEventListener('positionchange', (event) => {
-        const ev = event as dwv.PositionEvent
+        const ev = event as { position?: { slice?: { number?: number; index?: number; total?: number } } }
         const pos = ev.position
         if (pos?.slice) {
-          setSliceInfo({
-            current: pos.slice.number ?? pos.slice.index + 1,
-            total: pos.slice.total,
-          })
+          const s = pos.slice
+          setSliceInfo(prev => ({
+            current: s.number ?? (s.index ?? 0) + 1,
+            total: s.total ?? prev.total,
+          }))
+        }
+      })
         }
       })
     }
