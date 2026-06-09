@@ -371,12 +371,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       if (key === 'e' && !e.ctrlKey) { setShape('Ellipse'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
       if (key === 'a' && !e.ctrlKey) { setShape('Arrow'); if (activeToolRef.current !== 'Draw') setTool('Draw'); e.preventDefault() }
       // Navigation
-      if (key === 'arrowup') { try { app.stepSlice(-1) } catch {} e.preventDefault() }
-      if (key === 'arrowdown') { try { app.stepSlice(1) } catch {} e.preventDefault() }
-      if (key === 'arrowleft' && e.ctrlKey) { try { app.setSeries(activeSeriesUidRef.current) } catch {} }
+      if (key === 'arrowup') { try { app.stepSlice(-1) } catch {}; setSliceInfo(p => p.total ? {...p, current: Math.max(1, p.current-1)} : p); e.preventDefault() }
+      if (key === 'arrowdown') { try { app.stepSlice(1) } catch {}; setSliceInfo(p => p.total ? {...p, current: Math.min(p.total, p.current+1)} : p); e.preventDefault() }
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
       if (key === 'i' && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
+      if (key === '0' && e.ctrlKey) { try { app.setZoom(1, 0, 0) } catch {}; e.preventDefault() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
