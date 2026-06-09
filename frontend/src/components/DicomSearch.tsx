@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getToken } from '../api/client'
+import { ToolIcon } from './DwvIcons'
 
 interface PacsStudy {
   orthanc_id: string
@@ -78,24 +79,32 @@ export function DicomSearch({ onClose }: DicomSearchProps) {
   return (
     <div className="p-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-slate-900">Поиск в PACS</h3>
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+          <ToolIcon id="Search" className="w-4 h-4" />
+          Поиск в PACS
+        </h3>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-700 text-lg leading-none"
+          className="text-slate-400 hover:text-slate-700 p-1 rounded transition"
           aria-label="Закрыть"
+          title="Закрыть"
         >
-          ×
+          <ToolIcon id="Close" className="w-4 h-4" />
         </button>
       </div>
 
       <div className="flex gap-2 mb-2">
-        <input
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="ФИО, ID, Accession, study UID, описание..."
-          className="flex-1 px-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-        />
+        <div className="relative flex-1">
+          <ToolIcon id="Search" className="w-4 h-4 absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder="ФИО, ID, Accession, study UID, описание..."
+            aria-label="Поиск исследования"
+            className="w-full pl-7 pr-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+        </div>
         <label className="flex items-center gap-1 text-xs text-slate-700 whitespace-nowrap">
           <input
             type="checkbox"

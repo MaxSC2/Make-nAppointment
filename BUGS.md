@@ -163,6 +163,7 @@
 3. Все эндпоинты требуют JWT-токен
 **Статус:** На фронт уже добавлены `LoginPage` и `AuthContext` — инфраструктура для JWT есть, но не проверена интеграция с API-клиентами (`api/queue.ts`). Контракты `api/queue.ts` ещё могут не соответствовать новым форматам.
 **Надо:** Доработать `api/client.ts` (авто-подстановка токена) и `api/queue.ts` (новый формат tickets/next).
+**Статус:** ✅ **ИСПРАВЛЕНО 09.06** — `api/queue.ts` уже использует правильный формат `callNext({cabinet_code})`.
 
 ---
 
@@ -182,6 +183,38 @@ alembic revision --autogenerate -m "queue model updates"
 alembic upgrade head
 ```
 Проверить, что БД не расходится с моделями.
+
+---
+
+## 🔴 Orders endpoints были БЕЗ JWT (найдено 09.06.2026)
+
+**Найдено:** 09.06.2026 (через тесты!)
+**Где:** `backend/ris/routers/orders.py:87, 171, 215, 224`
+**Что:** `GET /api/orders`, `GET /api/orders/{id}`, `GET /orders/{id}/studies`, `GET /studies` — все были **без `Depends(get_current_user)`**!
+**Критичность:** 🔴 Любой анонимный пользователь мог читать заказы всех пациентов (медицинские данные).
+**Статус:** ✅ **ИСПРАВЛЕНО** — добавлен `user: Annotated[User, Depends(get_current_user)]` во все 4 эндпоинта.
+**Урок:** Добавить `test_unauthorized_without_token` для КАЖДОГО защищённого эндпоинта в начале разработки.
+
+## 🔴 PATCH /orders/{id}/status не читал body (найдено 09.06.2026)
+
+**Найдено:** 09.06.2026 (через тесты!)
+**Где:** `backend/ris/routers/orders.py:184-211`
+**Что:** Функция имела `status: str = "scheduled"` — FastAPI трактовал это как **query-параметр с дефолтом**, а не как поле JSON-тела. Фронт отправлял `{"status": "in_progress"}` в JSON-теле, но бэкенд **игнорировал** его и использовал "scheduled" из дефолта!
+**Критичность:** 🔴 API-контракт сломан — врач не мог перевести заказ в `in_progress` или `completed` через фронт.
+**Статус:** ✅ **ИСПРАВЛЕНО** — заменил на `body: dict` и `body.get("status")`. Покрыто тестами.
+**Урок:** Pydantic body model для всех PATCH/POST — не использовать `param: str` напрямую.
+
+## 🔴 Frontend risPatch отправлял status в QUERY а не BODY (найдено 09.06.2026)
+
+**Найдено:** 09.06.2026 (после фикса backend, через ревью кода)
+**Где:** `frontend/src/api/ris.ts:27-29` + `frontend/src/api/client.ts:70-73`
+**Что:** `updateOrderStatus(orderId, status)` вызывал `risPatch(path, {status})` — это превращалось в `PATCH /orders/{id}/status?status=in_progress`. После того как я починил backend на чтение из тела (`body.get("status")`), фронт **всё ещё слал в query** — запросы ломались с 400 "Invalid status: None".
+**Критичность:** 🔴 API-контракт сломан между frontend и backend после правки.
+**Статус:** ✅ **ИСПРАВЛЕНО 09.06**:
+- В `client.ts` добавлена новая функция `risPatchBody<T>(path, body)` (PATCH + JSON-body)
+- В `ris.ts:28` `updateOrderStatus` теперь использует `risPatchBody(...)` с body `{status}`
+- Добавлен regression-тест `test_patch_order_status_reads_from_body_not_query` в `test_tickets.py`
+**Урок:** При правке API-контракта на backend **обязательно** проверять фронт — там может быть код, который отправлял данные в старом формате.
 
 ---
 

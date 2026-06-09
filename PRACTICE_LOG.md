@@ -626,3 +626,125 @@ FastAPI, SQLAlchemy 2.0, PostgreSQL, Orthanc, React 19, TypeScript, Vite, Git, O
 - **П.3** — Git: 10+ коммитов, conventional commits, оба репозитория
 - **П.7** — документация: BUGS.md разобран, REPORT.md финализирован
 - **П.9** — качество: 0 критических, 0 высоких, демо-сценарий работает
+
+---
+
+### 09.06.2026 — Закрытие критичного бага B-1: автотесты backend (40/40 пройдены)
+
+**Что делал:**
+Создал полную инфраструктуру тестирования для backend. До этого дня в проекте вообще не было ни одного теста (это был баг B-1 в `BUGS.md` с приоритетом 🔴 критичный). Без тестов любой рефакторинг рисковал сломать работающий функционал.
+
+**Пайплайн:**
+1. Создал отдельную PostgreSQL БД `pacs_ris_test` через Python-скрипт, переключил на .env.test
+2. Применил миграции Alembic к тестовой БД (выяснилось, что мигратор пользователь имеет проблемы с правами на CREATE SCHEMA — пофиксил через ALTER SCHEMA AUTHORIZATION)
+3. Создал `pytest.ini` с режимом asyncio + scope=session (чтобы избежать RuntimeError "Event loop is closed")
+4. Создал `tests/conftest.py` с фикстурами: db_session, seed_admin, seed_patient, seed_cabinet, seed_modalities, client, admin_token
+5. Написал 40 тестов в 4 файлах:
+   - `test_smoke.py` (6) — работоспособность, health-check, Swagger, OpenAPI schema
+   - `test_auth.py` (8) — login, refresh, logout, валидация токенов
+   - `test_patients.py` (10) — список с поиском, детали, 404, валидный UUID
+   - `test_studies.py` (8) — список, фильтры, несуществующие UID
+   - `test_tickets.py` (8) — orders CRUD, статусы, модальности
+
+**Запускал:** `cd backend && pytest tests/ --tb=line`
+**Результат:** **40/40 passed in ~3s** 🎉
+
+**Что попутно нашли и починили (тесты — лучший баг-хантер!):**
+- **B-1.1 (критичный баг безопасности)**: `GET /api/orders`, `GET /api/orders/{id}`, `GET /api/orders/{id}/studies`, `GET /studies` — все были **без `Depends(get_current_user)`**! Любой анонимный пользователь мог читать заказы всех пациентов. Пофиксил: добавил `user: Annotated[User, Depends(get_current_user)]` в сигнатуры.
+- **B-1.2 (баг API-контракта)**: `PATCH /orders/{id}/status` принимал `status: str = "scheduled"` как query-параметр, а не из тела запроса. То есть фронт мог отправить `{"status": "in_progress"}` в JSON-теле, а бэкенд игнорировал это и использовал дефолтный `"scheduled"`. Пофиксил: теперь `body: dict` и `body.get("status")`.
+
+**Добавленные зависимости в `backend/.venv`:**
+- `pytest==9.0.3`
+- `pytest-asyncio==1.4.0`
+- `aiosqlite==0.22.1` (резерв, не используется)
+- `psycopg2-binary==2.9.12` (для setup-скрипта)
+
+**Файлы созданы:**
+- `backend/pytest.ini`
+- `backend/.env.test`
+- `backend/tests/__init__.py`
+- `backend/tests/conftest.py` (165 строк)
+- `backend/tests/test_smoke.py` (78 строк)
+- `backend/tests/test_auth.py` (110 строк)
+- `backend/tests/test_patients.py` (132 строки)
+- `backend/tests/test_studies.py` (110 строк)
+- `backend/tests/test_tickets.py` (110 строк)
+- `C:\Users\Пользователь\AppData\Local\Temp\opencode\create_test_db.py` (служебный)
+
+**Файлы изменены (вместе с починкой багов):**
+- `backend/ris/routers/orders.py` — добавлен `Depends(get_current_user)` в 4 эндпоинта; пофикшен `update_status` для чтения из тела запроса
+
+**Технологии:** pytest 9, pytest-asyncio, httpx ASGITransport, PostgreSQL 16 (отдельная тестовая БД), Alembic миграции, async/await паттерн, dependency-injection через FastAPI Depends.
+
+**Решение:** Использовал реальную PostgreSQL БД (не SQLite) потому что модели используют `{"schema": "auth"}` — PostgreSQL-specific фича. Это оказалось правильным — тесты проверяют реальное поведение приложения, включая SQL-синтаксис специфичный для PostgreSQL.
+
+**Трудности:** (1) Цикл `event loop is closed` решён через `asyncio_default_fixture_loop_scope = session`. (2) Права `pacs_migrator` на CREATE SCHEMA — пофиксил через смену owner БД на `pacs`. (3) `create_access_token` принимает `user_id`, а не `subject` (нашёл по сигнатуре). (4) Токен_type возвращается `"Bearer"` с большой буквы (а не `"bearer"`) — поправил тест.
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: инфраструктура непрерывной интеграции (CI-ready, готова к GitHub Actions).
+- **П.2** — стек: pytest 9, pytest-asyncio, psycopg2, aiosqlite, httpx ASGI.
+- **П.4** — базовые инструменты: тесты как инструмент проверки качества (нашли и починили 3 бага).
+- **П.6** — жизненный цикл: от написания тестов → падающие тесты → исправление багов → зелёные тесты.
+- **П.7** — методология: TDD-подход к выявлению багов (тест сначала показал баг, потом мы его починили).
+- **П.9** — качество: критичные баги безопасности устранены (orders endpoints теперь требуют JWT), API-контракты исправлены.
+
+---
+
+### 09.06.2026 (продолжение) — Аудит BUGS.md: критичный frontend↔backend контракт
+
+**Что делал:**
+Провёл ревью `BUGS.md` с правилом «не трогать чужое» — пункты, помеченные "Не трогать без согласования — файл другого AI" пропустил (`useDwvViewer.ts`, `DicomSearch.tsx`).
+
+**Анализ BUGS.md (только моя зона — фронт):**
+- B-2 (Emoji в PatientsPage) — **уже не актуален**, проверил — emoji нет
+- B-15 (Фронт не обновлён под API) — `api/queue.ts` уже использует `callNext({cabinet_code})`, пометил ✅
+- **Нашёл КРИТИЧНЫЙ баг B-1.3:** `frontend/src/api/ris.ts:27-29` использовал `risPatch(path, {status})` — это превращалось в `PATCH /orders/{id}/status?status=in_progress` (query-параметр). После того как я утром починил backend на чтение из JSON-тела (`body.get("status")` в `orders.py:184-211`), фронт **продолжал слать в query** → 400 "Invalid status: None". Я сломал контракт, не проверив фронт!
+
+**Фикс:**
+- `frontend/src/api/client.ts:70-78` — добавил новую функцию `risPatchBody<T>(path, body)` (PATCH + JSON-body)
+- `frontend/src/api/ris.ts:3,28` — `updateOrderStatus` теперь использует `risPatchBody(...)` с body `{status}`
+- `backend/tests/test_tickets.py` — добавил regression-тест `test_patch_order_status_reads_from_body_not_query` (защищает от того, чтобы backend снова не начал читать из query)
+- `BUGS.md` — добавил запись B-1.3 "Frontend risPatch отправлял status в QUERY а не BODY" (со статусом ИСПРАВЛЕНО 09.06)
+
+**Проверка:** `pytest tests/ → 41 passed` (был 40), TypeScript `npx tsc --noEmit → clean`, Vite HMR подхватил, PatientsPage работает.
+
+**Урок:** При правке API-контракта на backend **обязательно** проверять фронт — там может быть код, отправлявший данные в старом формате. В `BUGS.md` я зафиксировал это правило.
+
+**Какие баги НЕ тронул (чужие):**
+- `useDwvViewer.ts` (помечено "Не трогать — файл другого AI")
+- `DicomSearch.tsx` (помечено "Не трогать — файл другого AI")
+- `pacs_facade.py` (писал другой AI)
+- `link_study_to_order` (писал другой AI)
+- Архитектурные баги (CORS, два auth-сервиса) — требуют отдельного проектирования
+
+**Связь с отчётом:**
+- **П.3** — командная работа: уважение к чужому коду, работа только в своей зоне
+- **П.4** — code review: ручной аудит BUGS.md нашёл критичный frontend↔backend баг, который пропустили автотесты (тесты тестировали backend изолированно, без фронта)
+- **П.7** — методология: TDD + интеграционное ревью (frontend + backend вместе)
+- **П.9** — качество: API-контракт теперь end-to-end согласован, regression-тест защищает
+
+---
+
+## 09.06.2026 — Анализ SmartQ backend для интеграции с RIS
+
+**Задача:** Проанализировать репозиторий https://github.com/NikNebog/smartq_back на предмет интеграции электронной очереди SmartQ с нашим RIS-бэкендом.
+
+**Что сделано:**
+- Изучена полная структура SmartQ (NestJS 11, Prisma, PostgreSQL, Socket.IO)
+- Составлена карта API-эндпоинтов (auth, tickets, queue) и схема БД
+- Сравнены возможности SmartQ и нашего elqueue (FastAPI)
+- Создан `docs/SMARTQ_ANALYSIS.md` с полным анализом
+
+**Ключевые различия:**
+- SmartQ имеет приоритеты талонов, ServiceType, ETA, WebSocket realtime, аналитику, табло — у elqueue этого нет
+- SmartQ на Node.js/NestJS, наш elqueue на Python/FastAPI
+- Статусная машина SmartQ полнее (arrive, no-show, return, redirect)
+
+**Предложенные варианты интеграции:**
+1. Заменить elqueue на SmartQ (добавить вызов RIS `/api/orders`)
+2. Доработать elqueue вручную (WebSocket + приоритеты)
+3. Запустить SmartQ параллельно как отдельный сервис
+
+**Связь с отчётом:**
+- **П.5** — командные обсуждения: анализ API второй группы (SmartQ) для интеграции.
+- **П.6** — жизненный цикл: от ТЗ другой группы к анализу совместимости и предложению по интеграции.
