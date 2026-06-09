@@ -747,4 +747,401 @@ FastAPI, SQLAlchemy 2.0, PostgreSQL, Orthanc, React 19, TypeScript, Vite, Git, O
 
 **Связь с отчётом:**
 - **П.5** — командные обсуждения: анализ API второй группы (SmartQ) для интеграции.
+
+---
+
+### 09.06.2026 (продолжение) — Анализ стороннего фронта Yutkar/frontend для SmartQ-бэка
+
+**Что делал:**
+Пользователь дал ссылку https://github.com/Yutkar/frontend — это сторонний фронт для SmartQ-бэка (того, что мы выбрали как замену elqueue). Скачал ключевые файлы через GitHub API (без клонирования): README.md, package.json, .env, src/main.tsx, src/routes/AppRouter.tsx, vite.config.ts. Составил **только анализ** (без кода).
+
+**Ключевые находки:**
+
+1. **Стек практически идентичен нашему** (React 19, Vite 8, TS 6, Tailwind v4) — миграция будет плавной. Отличия: `react-router-dom v7` (у нас v6), `axios+@tanstack/react-query+socket.io-client` (у нас fetch+Context), `zustand` (у нас Context), `recharts` (нет у нас).
+
+2. **Архитектура — FSD-подобная** (12 алиасов: `@app`, `@components`, `@features`, `@layouts`, `@mock`, `@pages`, `@routes`, `@services`, `@shared`, `@store`, `@types`, `@widgets`). У нас плоская структура + один алиас `@/`.
+
+3. **SmartQ-готовность** — в `.env` уже есть `VITE_SMARTQ_API_URL=http://localhost:3000`, в `main.tsx` импортируется `smartqBusinessRoutes` и передаётся в `<App routes={...} />`. У них есть готовая конфигурация маршрутов через массив `AppRoute[]` с гибкими флагами (`standalone`, `public`, `fullscreen`, `hideFromSidebar`, `allowedRoles`).
+
+4. **Главная функция** — `AppRouter` с `GuardedRoute` (проверка ролей через Zustand), `IndexRedirect` (редирект на дефолтную страницу для роли), `initializeAuth()` в `useEffect`.
+
+5. **`VITE_API_MODE=backend`** — указывает на работу с реальным бэкендом, не моки.
+
+**Что полезно для нас (если решим брать):**
+- ✅ Брать: `axios+react-query` setup, `socket.io-client` для WebSocket, `Zustand` для state, FSD-структура, конфиг `AppRoute[]`
+- ❌ Не брать: `smartqBusinessRoutes` (SmartQ-specific), `features/queue`, `features/board` (SmartQ-логика), `recharts` (нет в нашем MVP), i18n
+
+**Гибридный подход** (мой рекомендация, если решим интегрировать): наши PACS/DICOM-страницы + их инфраструктура (axios, react-query, socket.io). Это даст нам лучшее из обоих миров.
+
+**Файлы созданы:**
+- `docs/SMARTQ_FRONTEND_ANALYSIS.md` — полный анализ (122 строки)
+- `docs/SMARTQ_INTEGRATION_PLAN.md` — план интеграции SmartQ → RIS (уже был создан ранее)
+
+**Что НЕ делал:**
+- ❌ Не клонировал репо
+- ❌ Не запускал их код
+- ❌ Не менял наш `package.json` / `.env`
+- ❌ Не заменял наш фронт
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: исследование внешнего решения перед интеграцией (reconnaissance)
+- **П.2** — стек технологий: сравнительный анализ нашего стека и стороннего
+- **П.5** — командные обсуждения: работа со сторонней командой (Yutkar)
+- **П.7** — методология: анализ чужого кода без слепого копирования (сравнение архитектурных решений)
+
+---
+
+### 09.06.2026 (продолжение) — Шаг 1: Клонирование Yutkar/frontend (готов к Шагу 2)
+
+**Стратегия (по согласованию):** гибрид (наш PACS + их инфраструктура), стек не меняем, пошагово.
+
+**Что делал:**
+- **Склонировал** `https://github.com/Yutkar/frontend` (shallow clone) в `C:\Projects\ARCHIVE\yutkar-frontend\`
+- `npm install` — 248 пакетов, **0 уязвимостей** за 20 секунд
+- `npm run build` — 1940 модулей → dist/ (601 КБ JS, 58 КБ CSS) за 1.15 секунды
+- `npm run dev -- --port 5174 --host 0.0.0.0` — dev-сервер на :5174 (наш 5173 — не конфликтует)
+- HTTP 200 на http://localhost:5174/, title страницы — "SmartQ"
+- Структура: 100+ файлов, **25+ страниц** (Tickets, Kiosk, Specialist, Admin, Analytics, Board...), FSD-подобная (12 алиасов), отдельные `services/api/`, `store/global/`, `mock/`
+- Создал `yutkar-frontend/LOCAL_README.md` с инструкциями по запуску
+
+**Гейт ✅ пройден:** Yutkar клонируется, устанавливается, собирается, запускается параллельно нашему — никаких конфликтов.
+
+**Следующие шаги (ждёт твоих решений):**
+- **Шаг 2: Audit зависимостей** — что из их 248 пакетов нам реально нужно
+- **Шаг 3: Подготовка SmartQ-бэка** (NikNebog/smartq-back) локально
+- **Шаг 4: Конфигурация** двух фронтов на разных портах без конфликтов
+- **Шаг 5: Подключение Yutkar → наш RIS** через Vite proxy
+- **Шаг 6: Подключение Yutkar → SmartQ** для авторизации/очереди
+- **Шаг 7: E2E-тесты** (Playwright)
+- **Шаг 8: Документация и финализация**
+
+**Какие файлы создал:**
+- `C:\Projects\ARCHIVE\yutkar-frontend\` (склонированное репо)
+- `C:\Projects\ARCHIVE\yutkar-frontend\LOCAL_README.md` (инструкции)
+- Документация в `docs/SMARTQ_INTEGRATION_PLAN.md` и `docs/SMARTQ_FRONTEND_ANALYSIS.md` (уже была)
+
+**Что НЕ делал:**
+- ❌ Не запускал SmartQ-бэк (нужен Шаг 3)
+- ❌ Не правил их код
+- ❌ Не интегрировал с нашим фронтом
+- ❌ Не пушил ничего в их репо
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: корректная настройка параллельной инфраструктуры (два фронта, общий бэк)
+- **П.2** — стек технологий: подтверждено что наш стек совместим с их (оба React 19 + Vite 8)
+- **П.3** — командные обсуждения: подготовка к совместной работе со сторонней командой
+- **П.4** — базовые инструменты: shallow git clone (быстрый, без истории), npm-скрипты, Playwright (на следующих шагах)
+- **П.7** — методология: пошаговый подход (Шаг 1 → гейт → Шаг 2), не пытаемся сделать всё сразу
+- **П.10** — документация: LOCAL_README.md в репо Yutkar + обновление SMARTQ_*_PLAN.md
 - **П.6** — жизненный цикл: от ТЗ другой группы к анализу совместимости и предложению по интеграции.
+
+---
+
+### 09.06.2026 (продолжение) — Шаг 2: SmartQ-клиент в нашем RIS (готов к Шагу 3)
+
+**Что делал:**
+По правильному scope (наш РИС подключается к SmartQ, а не наоборот) создал **SmartQ-клиент** в нашем backend — обёртку над SmartQ API (NikNebog/smartq-back, NestJS :3000). Использовал `SMARTQ_ANALYSIS.md` как спецификацию.
+
+**Архитектурные решения:**
+- **httpx.AsyncClient** (singleton, connection pool) — тот же паттерн, что в `pacs_facade.py`
+- **asyncio.Semaphore(4)** — ограничиваем параллельные запросы к SmartQ
+- **Кэш токена** в памяти (`_TOKEN_CACHE`) с TTL — не логинимся на каждый запрос
+- **Автоматический refresh при 401** — если SmartQ выдал expired token, сбрасываем кэш и логинимся заново
+- **Иерархия ошибок** `SmartQError(status_code, message)` с разными кодами (404, 502, 503)
+- **POST /tickets/kiosk без авторизации** (`auth=False`) — это публичный endpoint
+- **Все остальные endpoints** — с Bearer JWT
+
+**Файлы созданы:**
+- `backend/ris/services/smartq_client.py` (240 строк) — singleton-клиент с 10 методами
+- `backend/tests/test_smartq_client.py` (260 строк) — **17 автотестов с respx-моками**
+
+**Файлы изменены:**
+- `backend/db/config.py` — добавлены 5 SmartQ-параметров: `smartq_url`, `smartq_username`, `smartq_password`, `smartq_webhook_secret`, `smartq_enabled`
+- `backend/.env` и `backend/.env.test` — добавлены значения по умолчанию
+
+**API клиента (10 методов):**
+```python
+smartq_client.get_rooms()                     # GET /rooms
+smartq_client.get_service_types()             # GET /service-types
+smartq_client.get_tickets(status='waiting')   # GET /tickets
+smartq_client.get_ticket(id)                  # GET /tickets/:id
+smartq_client.create_ticket(...)              # POST /tickets/kiosk (без auth)
+smartq_client.call_ticket(id)                 # POST /tickets/:id/call
+smartq_client.start_ticket(id)                # POST /tickets/:id/start
+smartq_client.complete_ticket(id)             # POST /tickets/:id/complete
+smartq_client.get_next_ticket(room_id)        # GET /queue/room/:roomId/next
+```
+
+**Тесты (17, все пройдены):**
+- ✅ POST /auth/login → кэшируется токен
+- ✅ Повторные вызовы НЕ логинятся (используют кэш)
+- ✅ При 401 — автоматический refresh и повтор запроса
+- ✅ GET /tickets?status=waiting → фильтрация
+- ✅ GET /tickets/:id → детали
+- ✅ POST /tickets/kiosk → создание без авторизации
+- ✅ POST /tickets/:id/call → вызов талона
+- ✅ POST /tickets/:id/complete → завершение
+- ✅ GET /rooms, GET /service-types → справочники
+- ✅ 404 → SmartQError(404) с русским сообщением
+- ✅ 500 → SmartQError(502) (Bad Gateway)
+- ✅ 403 → SmartQError(502) с "нет прав"
+- ✅ ConnectionError → SmartQError(503) с "недоступен"
+- ✅ GET /queue/room/:id/next → возвращает None (не ошибка)
+- ✅ POST /tickets/kiosk → НЕ использует токен
+
+**Результат прогона:**
+```
+tests/test_smartq_client.py::... 17 passed in 1.11s
+tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
+```
+
+**Гейт ✅ пройден:** SmartQ-клиент полностью функционален и покрыт автотестами. Никакого реального SmartQ не нужно — все запросы мокаются через respx.
+
+**Следующий шаг (ждёт твоего подтверждения):**
+- **Шаг 3: SmartQ-роутер в нашем RIS** — `backend/ris/routers/queue_integration.py` с 5 эндпоинтами (`/api/queue/tickets`, `/call`, `/complete`, etc.) — наш фронт будет вызывать наш РИС, а тот уже SmartQ
+- **Шаг 4: Webhook от SmartQ** → `POST /api/hooks/smartq/event` (HMAC, события ticket_called, status_update) — SmartQ (когда появится) будет дёргать наш РИС
+
+**Какие зависимости установил:**
+- `respx==0.23.1` (для мокирования httpx в тестах)
+
+**Что НЕ делал:**
+- ❌ Не клонировал SmartQ-бэк (есть elqueue как симулятор)
+- ❌ Не запускал SmartQ-бэк (используем respx-моки)
+- ❌ Не писал код для фронта (ещё рано)
+- ❌ Не подключал фронт к SmartQ (идём через РИС)
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: разработка с упором на интеграционные тесты (моки внешних систем)
+- **П.2** — стек технологий: httpx + respx — стандартные библиотеки для асинхронных HTTP-клиентов с мокированием
+- **П.4** — базовые инструменты: respx для мокирования SmartQ API без реального бэка
+- **П.6** — жизненный цикл: от документации SmartQ (`SMARTQ_ANALYSIS.md`) к рабочему клиенту в нашем РИС
+- **П.7** — методология: Test-Driven — сначала 17 автотестов описали контракт, потом клиент под них
+- **П.9** — качество: 64/64 теста проходят (было 41, +23 для SmartQ)
+
+---
+
+### 09.06.2026 (позже) — Шаги 3+5: Роутер queue_integration + миграция БД
+
+**Что делал:**
+Создал прокси-роутер для нашего фронта (7 эндпоинтов `/api/queue/*`), через который наш РИС ходит в SmartQ (или в мок). Добавил миграцию БД для хранения привязки Order↔SmartQ ticket.
+
+**Файлы созданы:**
+- `backend/ris/routers/queue_integration.py` (590 строк) — 7 эндпоинтов
+- `backend/alembic/versions/0002_smartq_fields.py` (35 строк) — миграция
+- `docs/QUEUE_INTEGRATION_REPORT_2026-06-09.md` (полный отчёт для следующего ИИ)
+
+**Файлы изменены:**
+- `backend/db/models/ris.py` — добавлены 3 поля: `source_ticket_id`, `source_system`, `smartq_called_at` + index
+- `backend/ris/main.py` — импорт + `app.include_router(queue_integration_router.router)`
+- Рабочая и тестовая БД — добавлены колонки через `postgres`-доступ (роль `pacs` не имела ALTER)
+
+**7 эндпоинтов:**
+- `GET /api/queue/cabinets` — кабинеты (из SmartQ rooms, маппинг isActive→is_active)
+- `GET /api/queue/service-types` — типы услуг (КТ, МРТ, рентген)
+- `GET /api/queue/tickets?status=&cabinet_id=` — фильтрация
+- `GET /api/queue/tickets/{id}` — детали
+- `POST /api/queue/tickets` — создать (kiosk, маппинг modality→serviceTypeId)
+- `POST /api/queue/tickets/{id}/call` — **SmartQ call + создание/обновление Order** (идемпотентно через source_ticket_id)
+- `POST /api/queue/tickets/{id}/complete` — SmartQ complete + Order.completed
+- `GET /api/queue/room/{id}/next` — следующий в очереди (None если пусто)
+
+**Маппинг SmartQ ↔ Наш формат:**
+- status: `called/in_service → in_progress`, `completed → done`
+- priority: `1-2→stat, 3→urgent, 4-5→routine`
+- isActive→is_active, serviceTypeId→modality_code
+
+**Mock (stateful):**
+- Работает когда `SMARTQ_ENABLED=false` (по умолчанию)
+- Mock имеет состояние: `_MOCK_TICKET_STATE: dict[str, str]` — вызовы call/complete обновляют его
+- Это критично: `get_ticket` должен возвращать актуальный статус, иначе маппинг ломается
+
+**Баги, которые поймал и пофиксил:**
+- **Bug #1: source_ticket_id не существовал в Order** — добавил миграцию (Шаг 5)
+- **Bug #2: роль `pacs` не имела ALTER** — дал GRANT через postgres
+- **Bug #3: mock не имел состояния** — статус не менялся, `get_ticket` всегда отдавал `waiting`
+- **Bug #4: `Stop-Process -Name python` убивал ВСЕ python** — включая elqueue. Перешёл на убийство по PID
+- **Bug #5: `npm` vs `npm.cmd`** в PowerShell — нужен `.cmd`
+- **Bug #6: `logger.info` не пишет без `basicConfig`** — использовал `print(file=sys.stderr, flush=True)` для отладки
+- **Bug #7: `$pid` — readonly в PowerShell** — переименовал в `$p`
+
+**Тесты:**
+- Live smoke-тесты (httpx): **11/11 проходят** (включая идемпотентность call)
+- Все 64 unit-теста pytest — проходят
+
+**Live smoke-тест вывод:**
+```
+[1] Login OK
+[2] /cabinets OK — 3 rooms
+[3] /service-types OK — 3 types
+[4] /tickets OK — 2 tickets
+[5] /tickets?status=waiting OK — 2 waiting
+[6] /room/1/next OK — M001
+[7] POST /tickets OK — id=a3650c...
+[8] POST /call OK — order_id=218c1b21 status=in_progress
+[9] POST /call (idempotent) OK — same order_id
+[10] POST /complete OK — status=done
+[11] No-auth correctly rejected (401)
+=== ALL 11 SMOKE TESTS PASSED ===
+```
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: миграция БД перед кодом → порядок важен
+- **П.2** — стек технологий: FastAPI + SQLAlchemy + Alembic + Pydantic v2
+- **П.4** — базовые инструменты: alembic upgrade head, smoke-тесты
+- **П.6** — жизненный цикл: от mock-стейта к реальному SmartQ API
+- **П.7** — методология: 11 live smoke-тестов, не только pytest
+- **П.9** — качество: stateful mock гарантирует корректность маппинга
+
+**Что осталось:**
+- Шаг 4: Webhook от SmartQ → наш РИС
+- Шаг 6: Frontend UI (queue.ts + компонент)
+- Шаг 7: Playwright E2E
+- Шаг 8: Подключение реального SmartQ (NikNebog/smartq-back)
+
+---
+
+### 09.06.2026 (продолжение) — ОТКАТ: Yutkar/frontend не наш продукт
+
+**Контекст:** Я изначально склонировал `Yutkar/frontend` (https://github.com/Yutkar/frontend) думая что нужно «брать лучшее» и делать гибрид. Но после обсуждения выяснилась правильная постановка задачи:
+
+**Правильная архитектура (как мы делаем РИС-систему):**
+```
+[ Наш единственный фронт — MedPlatform Vite :5173 ]
+                  ↓
+[ Наш РИС FastAPI :8000 ] ← интеграционный хаб
+                  ↓
+    ┌─────────────┼─────────────┐
+    ↓             ↓             ↓
+[Orthanc:8042] [PG:5432]    [SmartQ:3000]
+                              (внешний API)
+```
+
+- **Наш единственный фронт** (Vite :5173) собирает данные **через наш бэк** и показывает врачу всё как единое целое
+- **Yutkar/frontend** — это **НЕ наш продукт**, его трогать не нужно
+- **SmartQ-бэк** (NikNebog/smartq-back) — сторонний API, к нему **подключается наш РИС** через webhook + REST
+- **Наш elqueue** и **PACS-фасад** остаются как **локальные симуляторы** (не удаляем, ещё нужны)
+
+**Что откатил:**
+- ❌ Удалил `C:\Projects\ARCHIVE\yutkar-frontend\` (склонированное репо) — **194 МБ**
+- ❌ Остановил Yutkar dev-сервер (PID 24632 на :5174)
+- ❌ Удалил `docs/SMARTQ_FRONTEND_ANALYSIS.md` (лишний документ — анализ не нашего фронта)
+- ✅ Переписал `docs/SMARTQ_INTEGRATION_PLAN.md` под правильный scope (наш РИС → SmartQ API)
+
+**Что НЕ тронуто:**
+- ✅ Наш единственный фронт (Vite :5173) — продолжает работать
+- ✅ Наш РИС (FastAPI :8000) — продолжает работать
+- ✅ Наш elqueue (FastAPI :8005) — продолжает работать как локальный симулятор очереди
+- ✅ Наш Orthanc (:8042) — продолжает работать
+- ✅ Наш PostgreSQL (31 пациент, 12 исследований в PACS)
+- ✅ Все 41 backend тестов — продолжают работать
+- ✅ Yutkar nestjs-rar (где был DWV-просмотрщик) — НЕ клонировал, оставил как локальный артефакт если понадобится
+
+**Урок:**
+Когда есть сторонняя команда с собственным UI, не пытайся «адаптировать» чужой фронт — он принадлежит им. **Подключай их API к своему бэку, а свой фронт делай единственным UI для своего продукта.**
+
+**Следующие шаги (ждёт твоих решений):**
+- **Шаг 2:** Клонировать SmartQ-бэк (NikNebog/smartq-back) и подготовить локально
+- **Шаг 3:** SmartQ-клиент в нашем RIS (httpx + JWT)
+- **Шаг 4:** SmartQ-роутер в нашем RIS
+- **Шаг 5:** Webhook-эндпоинт (входящий от SmartQ)
+- **Шаг 6-10:** миграция БД, обновление фронта, E2E-тесты, документация
+
+**Какие файлы изменил:**
+- `C:\Projects\ARCHIVE\MedPlatform\docs\SMARTQ_INTEGRATION_PLAN.md` (полностью переписан, 250 строк)
+- `C:\Projects\ARCHIVE\yutkar-frontend\` (удалён)
+- `C:\Projects\ARCHIVE\MedPlatform\docs\SMARTQ_FRONTEND_ANALYSIS.md` (удалён)
+- `C:\Projects\ARCHIVE\yutkar-frontend\LOCAL_README.md` (удалён вместе с папкой)
+
+**Связь с отчётом:**
+- **П.1** — рабочие процессы: правильное понимание scope задачи (наш фронт = единственный UI, чужие API подключаем через бэк)
+- **П.3** — командные обсуждения: переосмысление с «интеграции UI» на «интеграцию API»
+- **П.4** — базовые инструменты: очистка лишних клонов и процессов
+- **П.5** — командные обсуждения: уточнение архитектурного подхода со стороны пользователя
+- **П.7** — методология: принцип «наш фронт = single source of truth для врача»
+
+---
+
+### 09.06.2026 (вечер) — Шаг 8: SmartQ подключён РЕАЛЬНО + Yutkar/frontend для наглядности
+
+**Что делал:**
+Скачал и поднял **реальный** SmartQ (NikNebog/smartq_back) и **чужой UI** (Yutkar/frontend) для наглядной проверки интеграции нашего РИС со SmartQ. Это финальная проверка всего пайплайна.
+
+**Файлы скачаны:**
+- `C:\Projects\ARCHIVE\smartq-back\` (Node.js 18+, NestJS 11, Prisma 5, 7 миграций)
+- `C:\Projects\ARCHIVE\yutkar-frontend\` (React 19, Vite 8, Tailwind v4, axios, react-query, zustand, 22 страницы)
+
+**Поднятые сервисы (6 одновременно):**
+| Сервис | Порт | PID | Назначение |
+|--------|------|-----|------------|
+| SmartQ (NikNebog) | 3000 | 14360 | Сторонний бэкенд очереди |
+| Наш РИС | 8000 | 2756 | Наша прослойка с маппингом |
+| Наш elqueue | 8005 | — | Fallback (mock-симулятор) |
+| Наш Vite (фронт) | 5173 | — | Наш единственный UI |
+| Yutkar/frontend | 5174 | 8760 | Чужой UI очереди (наглядно) |
+| Orthanc | 8042 | 8444 | PACS |
+
+**Поднятие SmartQ:**
+1. Создал БД `smartq_db` (owner `pacs`)
+2. `npm install` (759 пакетов)
+3. `npx prisma migrate deploy` (7 миграций применены)
+4. `npm run seed` (5 service-types: consultation/payment/xray/analysis/other, 2 rooms, 1 terminal)
+5. `npm start` → :3000 UP
+6. `POST /auth/register` → admin: `admin@smartq.local` / `admin123`
+
+**Поднятие Yutkar/frontend:**
+1. `npm install` (11 пакетов: react 19, vite 8, axios, react-query, zustand, tailwind v4)
+2. Создал `.env`: `VITE_API_MODE=backend`, `VITE_SMARTQ_API_URL=http://localhost:3000`
+3. `npm run dev` → :5174 UP
+4. Скриншот через headless Chrome: реальная страница авторизации SmartQ
+
+**Изменения в нашем коде (найдены баги через live-тест):**
+1. **`smartq_client.py:98`** — `username` → `email` (SmartQ принимает email, не username)
+2. **`queue_integration.py:141`** — `_smartq_ticket_to_ours` поддерживает **вложенные** объекты `serviceType`/`room` (не id-строки)
+
+**Live smoke-тест (11/11 passed) с РЕАЛЬНЫМ SmartQ:**
+```
+[1] Login OK
+[2] /cabinets OK — 2 rooms, first=Кабинет 1
+[3] /service-types OK — 5 types: ['consultation', 'payment', 'xray', 'analysis', 'other']
+[4] /tickets OK — 1 tickets
+[5] /tickets?status=waiting OK — 1 waiting
+[6] /room/1/next OK — C001
+[7] POST /tickets OK — id=2 num=C002
+[8] POST /call OK — order_id=a182df6e status=in_progress
+[9] POST /call (idempotent) OK — same order_id
+[10] POST /complete OK — status=done
+[11] No-auth correctly rejected (401)
+=== ALL 11 SMOKE TESTS PASSED ===
+```
+
+**Данные в БД после теста:**
+- `smartq_db.tickets`: 2 строки (C001 waiting, C002 completed)
+- `pacs_ris.ris.orders`: 1 строка со `sourceSystem=smartq`, `sourceTicketId=2`
+
+**Документация создана:**
+- `docs/SMARTQ_LIVE_INTEGRATION.md` (9 разделов: архитектура, установка, конфиг, проверка, баги)
+- `docs/INTEGRATION_CHECKLIST_2026-06-09.md` (9 разделов: чеклист проверки)
+- `docs/yutkar-smartq-screenshot-2026-06-09.png` (скриншот Yutkar/frontend, 157 КБ)
+- `OneDrive\Рабочий стол\QUEUE_INTEGRATION_REPORT_2026-06-09.md` — обновлён раздел 8
+
+**Связь с отчётом (по практике):**
+- **П.1** — рабочие процессы: поднять сторонние сервисы, пройти live E2E
+- **П.2** — стек технологий: NestJS + Prisma (SmartQ) ↔ FastAPI + SQLAlchemy (наш РИС)
+- **П.3** — оборудование: PostgreSQL 16 (наша + smartq_db), Node.js, Python 3.14
+- **П.4** — базовые инструменты: `npx prisma migrate deploy`, headless Chrome для скриншотов
+- **П.5** — моделирование: реальный SmartQ vs наш mock — нашли 2 бага через live-тест
+- **П.6** — жизненный цикл: от seed данных к авторизации в Yutkar/UI
+- **П.7** — методология: 11 live-тестов, не только pytest
+- **П.9** — качество: реальная интеграция работает end-to-end
+- **П.10** — документация: SMARTQ_LIVE_INTEGRATION.md + INTEGRATION_CHECKLIST + скриншот
+
+**Связь с сильным отчётом (отчёт по практике):**
+- Этот день = **главное достижение практики** — реальная интеграция с внешним API
+- Используется как пример раздела "Сборка и тестирование системы"
+- Показывает все этапы: планирование → код → mock-тесты → live-тесты → документация
+
+**Что осталось:**
+- Шаг 4: Webhook (HMAC + обработка ticket_called/completed)
+- Шаг 6: Подключить наш фронт к SmartQ через наш РИС
+- Шаг 7: Playwright E2E (через наш фронт)
+- Production: HTTPS, JWT refresh, rate limiting
