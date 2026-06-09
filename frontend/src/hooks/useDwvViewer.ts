@@ -168,20 +168,14 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         }, LOAD_TIMEOUT_MS)
       })
 
+      let sliceRef = { current: 1, total: 0 }
+
       app.addEventListener('loadend', () => {
         clearLoadTimeout()
         setLoading(false)
         setLoaded(true)
-        setSliceInfo(prev => {
-          const activeSeries = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)
-          const total = activeSeries?.instance_count || prev.total || 0
-          return { current: prev.current || 1, total }
-        })
-        if (activeToolRef.current === 'Draw') {
-          try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { console.error('DwvViewer: failed to set Draw shape') }
-        }
-        // Activate default tool after load
-        try { app.setTool(activeToolRef.current) } catch { console.error('DwvViewer: failed to activate tool') }
+        const total = seriesListRef.current.find(s => s.series_uid === activeSeriesUidRef.current)?.instance_count || 0
+        setSliceInfo({ current: 1, total })
       })
 
       app.addEventListener('error', (event) => {
@@ -196,25 +190,27 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         onErrorRef.current?.(message)
       })
 
-      app.addEventListener('positionchange', (event) => {
-        const ev = event as { value?: number[]; kvp?: number[] }
-        if (ev.value && ev.value.length >= 3 && typeof ev.value[2] === 'number' && !isNaN(ev.value[2])) {
-          const idx = Math.round(ev.value[2])
-          setSliceInfo(prev => {
-            // total from positionchange if kvp available, else max seen
-            let total = prev.total || idx + 1
-            if (ev.kvp && ev.kvp.length > 0) { total = ev.kvp[0] || total }
-            if (idx + 1 > total) total = idx + 1
-            return { current: idx + 1, total }
-          })
-        }
+      app.addEventListener('positionchange', () => {
+        // DWV v0.36 positionchange doesn't have reliable frame index
+        // Counter is tracked manually via wheel/keyboard events
       })
     }
 
     tryInit()
 
+    // Manual slice counter via wheel
+    const onWheel = (e: WheelEvent) => {
+      setSliceInfo(prev => {
+        if (!prev.total) return prev
+        const dir = e.deltaY > 0 ? 1 : -1
+        return { ...prev, current: Math.max(1, Math.min(prev.total, prev.current + dir)) }
+      })
+    }
+    container.addEventListener('wheel', onWheel, { passive: true })
+
     return () => {
       clearLoadTimeout()
+      container.removeEventListener('wheel', onWheel)
       const app = appRef.current as dwv.App
       if (app) {
         try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
