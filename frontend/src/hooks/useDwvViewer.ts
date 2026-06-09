@@ -228,9 +228,13 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     studyDataRef.current = null
     setSeriesList([])
     setActiveSeriesUid('')
+    activeSeriesUidRef.current = ''
     setStudyInfo(null)
     setLoaded(false)
+    setSliceInfo({ current: 0, total: 0 })
     setError(null)
+    // Clear previous DWV canvas
+    try { appRef.current?.reset() } catch { /* ignore */ }
 
     const fetchStudy = async () => {
       try {
