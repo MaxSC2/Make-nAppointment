@@ -175,6 +175,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       }
 
       app.addEventListener('loadstart', () => {
+        console.log('DWV loadstart')
         setLoading(true)
         setLoaded(false)
         setError(null)
@@ -188,6 +189,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       })
 
       app.addEventListener('loadend', () => {
+        console.log('DWV loadend')
         clearLoadTimeout()
         setLoading(false)
         setLoaded(true)
