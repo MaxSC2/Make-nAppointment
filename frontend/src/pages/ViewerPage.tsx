@@ -44,9 +44,7 @@ export default function ViewerPage() {
       )}
 
       {studyUid && (
-        <div className="flex-1 min-h-0">
-          <DwvViewer studyUid={studyUid} onError={setError} />
-        </div>
+        <DwvViewer studyUid={studyUid} onError={setError} />
       )}
     </div>
   )
