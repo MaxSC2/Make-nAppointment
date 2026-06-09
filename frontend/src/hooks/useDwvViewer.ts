@@ -180,6 +180,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         if (activeToolRef.current === 'Draw') {
           try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { console.error('DwvViewer: failed to set Draw shape') }
         }
+        // Activate default tool after load
+        try { app.setTool(activeToolRef.current) } catch { console.error('DwvViewer: failed to activate tool') }
       })
 
       app.addEventListener('error', (event) => {
