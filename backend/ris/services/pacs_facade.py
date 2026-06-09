@@ -38,7 +38,7 @@ from db.models.ris import Order, OrderStatus, Study
 
 # ======================== НИЗКОУРОВНЕВЫЙ КЛИЕНТ ========================
 
-ORTHANC_TIMEOUT = 10.0
+ORTHANC_TIMEOUT = 60.0
 _ORTHANC_CONCURRENCY = 8  # ограничиваем параллельные запросы к Orthanc
 
 
@@ -581,22 +581,30 @@ async def get_patient_studies(db: AsyncSession, patient_id: uuid.UUID) -> list[d
     if not db_studies:
         return []
 
-    # 3. Загружаем только нужные исследования из Orthanc (параллельно)
+    # 3. Загружаем только нужные исследования из Orthanc (последовательно, с обработкой ошибок)
     orthanc_ids = [s.orthanc_id for s in db_studies if s.orthanc_id]
     if not orthanc_ids:
         return []
 
-    tasks = [_orthanc_get_json(f"studies/{oid}?expand") for oid in orthanc_ids]
-    orthanc_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-    # 4. Сборка результатов
     result: list[dict] = []
-    for db_study, orth_data in zip(db_studies, orthanc_results):
-        if isinstance(orth_data, BaseException):
-            logger.warning("Orthanc недоступен для study %s: %s", db_study.orthanc_id, orth_data)
+    for db_study in db_studies:
+        if not db_study.orthanc_id:
             continue
-        summary = _build_study_summary(orth_data)
-        summary = await _join_with_ris(db, summary)
+        try:
+            orth_data = await _orthanc_get_json(f"studies/{db_study.orthanc_id}?expand")
+        except PACSError as e:
+            logger.warning("Orthanc недоступен для study %s: %s", db_study.orthanc_id, e)
+            continue
+        except Exception as e:
+            logger.warning("Ошибка загрузки study %s: %s", db_study.orthanc_id, e)
+            continue
+
+        try:
+            summary = _build_study_summary(orth_data)
+            summary = await _join_with_ris(db, summary)
+        except Exception as e:
+            logger.warning("Ошибка сборки study %s: %s", db_study.orthanc_id, e)
+            continue
 
         # Счётчики из реальных данных
         summary["series_count"] = len(orth_data.get("Series") or [])
@@ -604,6 +612,10 @@ async def get_patient_studies(db: AsyncSession, patient_id: uuid.UUID) -> list[d
             len(orth_data.get("Instances") or [])
             or sum(len(s.get("Instances") or []) for s in (orth_data.get("Series") or []))
         )
+
+        # Сохраняем study_description и study_date для UI карточки
+        summary["study_description"] = summary.get("study_description") or orth_data.get("StudyDescription", "")
+        summary["study_date"] = summary.get("study_date") or orth_data.get("StudyDate", "")
 
         result.append(summary)
 
