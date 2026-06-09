@@ -198,10 +198,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
       app.addEventListener('positionchange', (event) => {
         const ev = event as { value?: number[] }
-        // DWV v0.36: value = [x_mm, y_mm, slice_index_0based]
-        if (ev.value && ev.value.length >= 3 && sliceInfo.total > 0) {
+        if (ev.value && ev.value.length >= 3 && typeof ev.value[2] === 'number' && !isNaN(ev.value[2])) {
           const idx = Math.round(ev.value[2])
-          setSliceInfo(prev => ({ current: idx + 1, total: prev.total }))
+          setSliceInfo(prev => {
+            const total = idx + 1 > prev.total ? idx + 1 : (prev.total || idx + 1)
+            return { current: idx + 1, total }
+          })
         }
       })
     }
