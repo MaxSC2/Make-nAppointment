@@ -95,14 +95,12 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     }
   }
 
-  const initApp = useCallback((containerId: string): dwv.App => {
-    const viewConfig = new dwv.ViewConfig(containerId)
-    viewConfig.defaultCharacterSet = 'utf-8'
-    const options = new dwv.AppOptions({ '*': [viewConfig] })
-    options.tools = { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } }
-    options.viewOnFirstLoadItem = false
+  const initApp = useCallback((container: HTMLDivElement): dwv.App => {
     const app = new dwv.App()
-    app.init(options)
+    app.init({
+      containerDiv: container,
+      tools: { Scroll: {}, WindowLevel: {}, ZoomAndPan: {}, Draw: { options: DRAW_SHAPES } },
+    })
     return app
   }, [])
 
@@ -165,7 +163,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
       let app: dwv.App
       try {
-        app = initApp(containerId)
+        app = initApp(container)
         appRef.current = app
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
