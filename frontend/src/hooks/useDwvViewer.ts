@@ -71,6 +71,10 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
   const studyDataRef = useRef<StudyData | null>(null)
   const seriesListRef = useRef<SeriesItem[]>([])
   const activeSeriesUidRef = useRef('')
+  const activeToolRef = useRef<typeof TOOLS[number]['id']>('Scroll')
+  const activeShapeRef = useRef('Ruler')
+  const onErrorRef = useRef(onError)
+  onErrorRef.current = onError
   const loadTimeoutRef = useRef<number | null>(null)
 
   const [loading, setLoading] = useState(false)
@@ -136,9 +140,9 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       const msg = e instanceof Error ? e.message : String(e)
       setError('Ошибка загрузки DICOM: ' + msg)
       setLoading(false)
-      onError?.(msg)
+      onErrorRef.current?.(msg)
     }
-  }, [onError])
+  }, [])
 
   // Init dwv App
   useEffect(() => {
@@ -163,7 +167,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
         setError('Не удалось инициализировать DWV: ' + msg)
-        onError?.(msg)
+        onErrorRef.current?.(msg)
         return
       }
 
@@ -176,7 +180,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           const msg = `Таймаут загрузки (${LOAD_TIMEOUT_MS / 1000}с). Проверьте подключение.`
           setError(msg)
           setLoading(false)
-          onError?.(msg)
+          onErrorRef.current?.(msg)
         }, LOAD_TIMEOUT_MS)
       })
 
@@ -189,8 +193,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           const total = activeSeries?.instance_count || prev.total || 0
           return { current: prev.current || 1, total }
         })
-        if (activeTool === 'Draw') {
-          try { app.setToolFeatures({ shapeName: activeShape }) } catch { console.error('DwvViewer: failed to set Draw shape') }
+        if (activeToolRef.current === 'Draw') {
+          try { app.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { console.error('DwvViewer: failed to set Draw shape') }
         }
       })
 
@@ -203,7 +207,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           : data?.message ?? 'Ошибка загрузки DICOM'
         setError(message)
         setLoading(false)
-        onError?.(message)
+        onErrorRef.current?.(message)
       })
 
       app.addEventListener('positionchange', (event) => {
@@ -230,7 +234,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       studyDataRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initApp, onError])
+  }, [initApp])
 
   // Fetch study data
   useEffect(() => {
@@ -283,33 +287,29 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         if (!cancelled) {
           const msg = e instanceof Error ? e.message : String(e)
           setError('Ошибка загрузки: ' + msg)
-          onError?.(msg)
+          onErrorRef.current?.(msg)
         }
       }
     }
 
     void fetchStudy()
     return () => { cancelled = true }
-  }, [studyUid, loadSeries, onError])
+  }, [studyUid, loadSeries])
 
   const setTool = useCallback((tool: typeof TOOLS[number]['id']) => {
     setActiveTool(tool)
+    activeToolRef.current = tool
     setShowShapes(tool === 'Draw')
-    try {
-      appRef.current?.setTool(tool)
-    } catch { console.error('DwvViewer: tool not ready') }
+    try { appRef.current?.setTool(tool) } catch { console.error('DwvViewer: tool not ready') }
     if (tool === 'Draw') {
-      try {
-        appRef.current?.setToolFeatures({ shapeName: activeShape })
-      } catch { console.error('DwvViewer: tool not initialized') }
+      try { appRef.current?.setToolFeatures({ shapeName: activeShapeRef.current }) } catch { console.error('DwvViewer: tool not initialized') }
     }
-  }, [activeShape])
+  }, [])
 
   const setShape = useCallback((shape: string) => {
     setActiveShape(shape)
-    try {
-      appRef.current?.setToolFeatures({ shapeName: shape })
-    } catch { console.error('DwvViewer: tool not initialized') }
+    activeShapeRef.current = shape
+    try { appRef.current?.setToolFeatures({ shapeName: shape }) } catch { console.error('DwvViewer: tool not initialized') }
   }, [])
 
   const setSeries = useCallback((seriesUid: string) => {
