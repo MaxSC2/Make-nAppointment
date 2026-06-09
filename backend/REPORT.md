@@ -471,6 +471,14 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 3. RIS остановлен — elqueue сохраняет талон локально (degraded mode)
 4. PostgreSQL остановлен — оба сервиса падают (БД критична)
 
+**Сценарий F: Сквозной демо-сценарий v2.2 (пройден 08.06)**
+1. ✅ Регистрация пациента «Демо Пациент 09.06» → талон A2CA1D
+2. ✅ Поиск пациента на /patients → найден по UUID
+3. ✅ Карточка пациента /patients/:id → имя, полис, исследования (1 шт.)
+4. ✅ DICOM-исследование: 1 серия, 1 инстанс, превью доступно
+5. ✅ Кабинет врача: вызов (FIFO), завершение → статус done
+6. ✅ series_count и instance_count — правка: теперь берутся из Orthanc (?expand)
+
 ### 5.2. Сводка результатов
 
 | № | Требование | Статус |
@@ -569,6 +577,7 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | 8 | `useOrders`: нет AbortController — race condition при смене фильтра | `useOrders.ts:23` | — |
 | 9 | `get_patient_studies()`: загружает ВСЕ исследования → фильтрует одного | `pacs_facade.py:539` | — |
 | 10 | `asyncio.sleep(0, result=None)` — нестандартный dummy-awaitable | `pacs_facade.py:295` | — |
+| 11 | `series_count` и `instance_count` всегда 0 | `studies.py:178` | ✅ из Orthanc ?expand |
 | 11 | Токены в 2 хранилищах (in-memory + localStorage) | `AuthContext.tsx` | — |
 | 12 | `localStorage.getItem` для токена в `api/client.ts` | `client.ts:5-13` | — |
 | 13 | DoctorPage без polling — ручное обновление очереди | `DoctorPage.tsx` | — |
@@ -587,8 +596,8 @@ loadURLs(urls, { requestHeaders: { Authorization: `Bearer ${token}` } })
 | Волна | 🔴 | 🟠 | 🟡 | 🔵 |
 |-------|----|----|----|-----|
 | Первая (утро) | 3 → ✅3 | 6 → ✅4 | 8 | 7 |
-| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅6 | 2 |
-| **Осталось** | **0** | **0** | **7** | **2** |
+| Вторая (полный обход) | 0 | 2 → ✅2 | 13 → ✅7 | 2 |
+| **Осталось** | **0** | **0** | **6** | **2** |
 
 ---
 
@@ -798,7 +807,7 @@ npm run dev
 |---|---|---|
 | v1.0 | 2026-05 | Первая итерация на SQLite, без аутентификации |
 | v2.0 | 2026-06 | Миграция на PostgreSQL 16, JWT, RBAC, PACS-фасад, React 19, DWV, code review |
-| v2.1 | 2026-06-08 | Аудит безопасности + исправление 10 уязвимостей: Vite proxy bypass, download_study JWT, complete_ticket race, W/L params, print→logging, silent excepts, RBAC, httpx pool, patient API. Добавлены PatientsPage, PatientCardPage. Отчёт дополнен разделами 5.3–5.4. |
+| v2.2 | 2026-06-08 | Вторая волна ревью (17 замечаний) + исправлено 8: PACSError logging, пароль в лог, DwvViewer catch, ViewerPage кнопка, AuthContext/useQueue catch, series_count/instance_count из Orthanc. Сквозной демо-сценарий пройден. |
 
 ## ПРИЛОЖЕНИЕ 5. СООТВЕТСТВИЕ КРИТЕРИЯМ СИЛЛАБУСА
 
