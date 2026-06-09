@@ -14,6 +14,7 @@ import ProtocolPage from './pages/ProtocolPage'
 import PatientsPage from './pages/PatientsPage'
 import PatientCardPage from './pages/PatientCardPage'
 import OrderEntryPage from './pages/OrderEntryPage'
+import MonitoringPage from './pages/MonitoringPage'
 
 function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: string[] }) {
   const { isAuthenticated, isLoading, user } = useAuth()
@@ -97,6 +98,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute roles={['doctor', 'technician', 'admin']}>
               <OrderEntryPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/monitoring"
+          element={
+            <ProtectedRoute roles={['admin', 'doctor', 'registrar']}>
+              <MonitoringPage />
             </ProtectedRoute>
           }
         />
