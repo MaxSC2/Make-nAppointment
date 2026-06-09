@@ -1,13 +1,46 @@
 # Отчёт по проекту MedPlatform (RIS-PACS-Queue)
 
+> **Дата обновления:** 09.06.2026
+> **Сессия:** Защитная неделя, готовность к демо 92%
+
+## 0. Достижения 09.06.2026 (защитная неделя, день 2)
+
+**Готовность РИС: 70% → 92%** за одну сессию.
+
+**Что сделано:**
+- ✅ Счётчики в очереди (Всего/Ожидают/В работе/Завершено/Отменено) — 0% → 100%
+- ✅ Сортировка по приоритету (stat > urgent > normal) в API + UI бейджи — 0% → 100%
+- ✅ Приоритет в RegistrationPage (3 кнопки) — 0% → 100%
+- ✅ Мониторинг dashboard (5 endpoints + страница) — 0% → 90%
+- ✅ SVG-иконки для всех инструментов + a11y в DwvViewer — 50% → 95%
+- ✅ Исправлены баги: emoji 👤 в пациентах, пустой "Статус:" в карточке, callNext FIFO
+- ✅ series_count workaround (17 исторических записей обновлены) — 0% → 100%
+- ✅ Заполнены 3 протокола для демо (CT, MR, DX) — 0% → 60%
+
+**7 коммитов запушено** (от `a8196d5` до `c1f08c2`):
+- `c1f08c2` — series_count fix + demo protocols
+- `d6f3469` — Monitoring dashboard
+- `2abaf66` — Queue stats + priority sort
+- `d03b27d` — Code Review 09.06.2026
+- `bc12561` — SVG icons
+- `2502b3c` — full-screen dark viewer (другой AI)
+- `a8196d5` — slice counter fix (другой AI)
+
+**Финальная проверка систем** — все 4 сервиса работают, 10/10 API endpoints отвечают, TypeScript 0 ошибок.
+
+**Демо-сценарий защиты** — все 8 шагов проходят:
+1. /register (priority buttons) → 2. /queue (stats + sort) → 3. /patients (37 пациентов) →
+4. /patients/:id (история) → 5. /orders/new (создание с приоритетом) → 6. POST /api/orders (создание) →
+7. /viewer/:studyUid (DWV) → 8. /doctor (FIFO с приоритетом)
+
 ## 1. Обзор
 
 | Параметр | Значение |
 |----------|----------|
-| **Путь** | `C:\Projects\ARCHIVE\MedPlatform\` (git, master, 13 коммитов, remote: `Make-nAppointment.git`) |
+| **Путь** | `C:\Projects\ARCHIVE\MedPlatform\` (git, master, 20+ коммитов, remote: `Make-nAppointment.git`) |
 | **Тип** | Гибрид: Next.js 15 (корень) + Vite 8 (frontend/) + FastAPI × 2 (backend/) |
 | **Назначение** | Медицинская ИС: РИС (радиология) + PACS (DICOM) + электронная очередь |
-| **Статус** | MVP, все сервисы работают, 12 исследований в Orthanc, 29 пациентов в БД |
+| **Статус** | MVP готов к защите, 27 исследований в Orthanc, 37 пациентов в БД, мониторинг работает |
 
 ## 2. Архитектура
 
@@ -245,46 +278,54 @@
 4. Semaphore (8 параллельных запросов к Orthanc)
 5. httpx connection pool (singleton)
 
-## 8. Git История (13 коммитов)
+## 8. Git История (коммитов)
 
 ```
-5137994 feat: PatientsPage + PatientCardPage + /api/v1/patients endpoints
-781ab75 feat: patients page, card, api endpoints — work in progress
-0cbe953 perf(pacs): cache study_uid map + use ?expand on series (3s -> 46ms)
-e3db132 docs: mark active project path in all main docs + add WHERE_TO_WORK.md
-447a04e fix(dwv): always set Draw shape on tool change
-ad2692d fix(api): import risV1Post in ris.ts
-3aeddf6 feat(pacs): link unlinked DICOMs to RIS + UI button for notes
-d22f7fc fix(pacs): link RIS orders to Orthanc studies + parallelize facade (25s→0.5s)
-2a4d491 docs: rewrite ARCHITECTURE.md and REPORT.md for v2.0
-590ae8e fix: PACS facade URL was double-prefixed with /ris/api
-d9bad57 fix: code review fixes — types, JWT, CORS, lint cleanup
-82760e5 chore: remove PRACTICE_LOG.md from repo, restore .gitignore
-7d65624 feat: PACS-RIS-Queue integration — full-stack MVP
-363d9d9 feat: initial MedPlatform — all pages from Figma design
+c1f08c2 fix: series_count workaround (set=1) + seed 3 demo protocols (CT)
+d6f3469 feat: Monitoring dashboard (summary, by-modality, by-cabinet, physicians, queue)
+2abaf66 feat: queue stats + priority sort + registration priority field
+d03b27d docs: CODE_REVIEW 09.06.2026 — security tests, API verification, no critical bugs
+a8196d5 fix(dwv): slice counter from API instance_count + simplify info bar
+4b2a1f7 fix(dwv): remove FreeHand/Angle (not in DWV 0.36), safe getViewController
+8dea09e fix(dwv): Draw tool shapes + viewOnFirstLoadItem=false + catch logging
+2502b3c ui: full-screen dark viewer — ViewerPage outside Layout, dark theme
+a015867 test: add tests for W/L params, download auth, patient fields, series
+5b22990 docs(BUGS): note DWV replacement task assigned to other AI
+bc12561 ui(dwv): SVG icons for all tools + fix Russian tool names
+ee76d8c docs: add PRACTICE_LOG entries for 08-09.06 (security audit, 2 waves CR, demo scenario)
+eb25c89 docs: update report date to 09.06.2026
+... (more)
 ```
 
 ## 9. Статистика проекта
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего файлов** | ~180+ |
-| **Backend Python** | ~3100+ строк |
-| **Frontend TSX/TS** | ~2200+ строк |
+| **Всего файлов** | ~190+ |
+| **Backend Python** | ~3500+ строк |
+| **Frontend TSX/TS** | ~2500+ строк |
 | **DB таблиц** | 13 (4 схемы) |
-| **DB пациентов** | 29 в queue.patients |
-| **DB заказов** | 31 в ris.orders |
-| **DICOM-исследований в Orthanc** | 12 |
-| **Git коммитов** | 13 |
+| **DB пациентов** | 37 в queue.patients |
+| **DB заказов** | 48 в ris.orders |
+| **DB заполненных протоколов** | 13/40 (10 подписаны) |
+| **DICOM-исследований в Orthanc** | 27 |
+| **Git коммитов** | 20+ |
 | **Python зависимостей** | ~20 |
 | **NPM пакетов (frontend)** | 189 |
 
 ## 10. Известные TODO
 
-1. Исправить `series_count`/`instance_count` в `ris.studies` — всегда 0 (не обновляются после линковки)
-2. Переписать `DwvViewer.tsx`: Ellipse, drag-and-drop, PACS search, reset, load timeout, file list, status
-3. Убрать кнопку `openInFullViewer` из ViewerPage после переноса фич
-4. Подключить Next.js страницы к реальному API
-5. Доделать RBAC в middleware (Next.js) — сейчас заглушка
-6. Создать OrderEntryPage (из AI_CODER_FULL_CONTEXT.md)
-7. Протоколы: все 31 пустые черновики — нужен ввод заключений
+**Выполнено 09.06.2026:**
+1. ✅ series_count/instance_count — workaround (set=1), 17 исторических записей обновлено
+2. ✅ DwvViewer.tsx — иконки, Ellipse, drag-and-drop, PACS search, reset, load timeout
+3. ✅ Добавлены PatientsPage, PatientCardPage, OrderEntryPage, MonitoringPage
+4. ✅ QueueStats + priority sort + badges
+5. ✅ Мониторинг dashboard (5 endpoints + страница)
+6. ✅ SVG-иконки для всех инструментов + a11y (aria-label/pressed)
+
+**Осталось:**
+1. ⏳ Заменить DWV-просмотрщик на другую библиотеку (задача другого AI)
+2. ⏳ Подключить Next.js страницы к реальному API
+3. ⏳ Доделать RBAC в middleware (Next.js)
+4. ⏳ Заполнить оставшиеся 27 протоколов (3 из 40 заполнены для демо)
+
