@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 export const TOOLS = [
   { id: 'Scroll', label: 'Срезы', description: 'Прокрутка срезов (1, ↑↓, колесо)' },
-  { id: 'WindowLevel', label: 'Окно', description: 'Яркость и контраст (2, drag)' },
+  { id: 'WindowLevel', label: 'Контраст', description: 'Яркость и контраст (2, drag)' },
   { id: 'ZoomAndPan', label: 'Масштаб', description: 'Масштаб и перемещение (3, Ctrl+колесо)' },
   { id: 'Draw', label: 'Рисование', description: 'Аннотации и измерения (4)' },
 ] as const

@@ -151,7 +151,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
               <div className="text-slate-400 uppercase tracking-wide text-[10px] mb-1">Инструменты</div>
               {[
                 ['1', 'Срезы (Scroll)'],
-                ['2', 'Окно/Уровень'],
+                ['2', 'Контраст (Window/Level)'],
                 ['3', 'Масштаб/Панорама'],
                 ['4', 'Рисование'],
               ].map(([k, v]) => (
