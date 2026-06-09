@@ -104,7 +104,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       {/* ═══ INFO BAR ═══ */}
       <div className="flex items-center justify-between px-3 py-1 bg-slate-800/50 border-b border-slate-800 text-xs flex-shrink-0">
         <span className="text-slate-400 truncate">
-          {v.studyInfo ? `${v.studyInfo.name} · ${v.studyInfo.id}` : studyUid}
+          {v.studyInfo ? v.studyInfo.name : studyUid}
         </span>
         <label className="text-slate-400 hover:text-white cursor-pointer flex items-center gap-1 flex-shrink-0 transition">
           <input ref={v.fileInputRef} type="file" accept=".dcm,.dicom,application/dicom" multiple
