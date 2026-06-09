@@ -806,7 +806,7 @@ npm run dev
 |---|---|---|
 | v1.0 | 2026-05 | Первая итерация на SQLite, без аутентификации |
 | v2.0 | 2026-06 | Миграция на PostgreSQL 16, JWT, RBAC, PACS-фасад, React 19, DWV, code review |
-| v2.3 | 2026-06-09 | httpx connection pool (5 мест), DoctorPage polling, useOrders AbortController, регистрация get_current_user, series_count из Orthanc. Осталось 3🟡 2🔵. |
+| v2.3 | 2026-06-09 | DICOM Viewer v2: тёмный full-screen, DWV 0.36 слой layerGroup0, горячие клавиши (лат+рус), счётчик кадров, 8 реальных DICOM (BBMRI и др.), httpx pool, DoctorPage polling, useOrders AbortController, auth через api/client, 33 теста, все 🟡 закрыты. |
 
 ## ПРИЛОЖЕНИЕ 5. СООТВЕТСТВИЕ КРИТЕРИЯМ СИЛЛАБУСА
 
