@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }).catch(async () => {
         if (refresh && access) {
           try {
-            const rr = await fetch('/elqueue/api/auth/refresh', {
+            const rr = await fetch('/ris/api/auth/refresh', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ refresh_token: refresh }),
             })
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setClientToken(pair.access_token)
     localStorage.setItem(STORAGE_ACCESS, pair.access_token)
     localStorage.setItem(STORAGE_REFRESH, pair.refresh_token)
-    const me = await fetch('/elqueue/api/auth/me', {
+    const me = await fetch('/ris/api/auth/me', {
       headers: { Authorization: `Bearer ${pair.access_token}` },
     })
     if (me.ok) {
