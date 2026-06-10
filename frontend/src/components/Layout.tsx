@@ -98,7 +98,7 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 overflow-y-auto">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         <Outlet />
       </main>
 
