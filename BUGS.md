@@ -329,6 +329,13 @@ const resp = await fetch('/api/v1/studies/', { headers: { Authorization: `Bearer
 | 27 | **elqueue PATCH params→json** (09.06) | ✅ |
 | 28 | **OrdersPage пагинация** (09.06) | ✅ |
 | 29 | **SmartQ не возвращает fullName** (10.06) | ✅ |
+| 30 | **CORS `["*"]` + credentials** (10.06) | ✅ |
+| 31 | **`updated_at` без onupdate** (10.06) | ✅ |
+| 32 | **SmartQ mock маскирует 404** (10.06) | ✅ |
+| 33 | **Study constraint роняет Order** (10.06) | ✅ |
+| 34 | **httpx clients утечка** (10.06) | ✅ |
+| 35 | **Polling race condition useQueue** (10.06) | ✅ |
+| 36 | **elqueue commit до HTTP-RIS** (10.06) | ✅ |
 
 ---
 
@@ -360,3 +367,80 @@ const resp = await fetch('/api/v1/studies/', { headers: { Authorization: `Bearer
 **Симптом:** В очереди отображались талоны без ФИО пациента и полиса.
 **Статус:** ✅ ИСПРАВЛЕНО — в `create_ticket` endpoint добавлено: если SmartQ вернул пустые, подставляем из запроса. Для `get_tickets` (список) — ФИО не отображается (ограничение SmartQ API).
 **Урок:** При интеграции со внешним API проверять поля ответа до начала маппинга.
+
+---
+
+## 🔴 CORS `allow_origins=["*"]` + `allow_credentials=True` (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review в FULL_REPORT_2026-06-10.md)
+**Где:** `backend/ris/main.py:73`
+**Что:** CORS-спецификация запрещает `*` с `allow_credentials=True`. Браузер блокирует авторизованные запросы с другого origin. На демо работало через Vite proxy, на прямом обращении упало бы.
+**Симптом:** Неявный — на проде CORS-ошибки при прямых запросах с фронта к RIS.
+**Статус:** ✅ ИСПРАВЛЕНО — `allow_origins=["http://localhost:5173","http://127.0.0.1:5173","http://localhost:3000"]`.
+**Урок:** dev-режим ≠ prod. Если включены credentials — origins должны быть явными.
+
+---
+
+## 🟠 `updated_at` без onupdate (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `backend/db/models/ris.py:119,189`
+**Что:** `updated_at` имеет `server_default=func.now()`, но нет `onupdate=func.now()`. Поле никогда не обновляется при изменении строки — Audit Log теряет реальное время модификации.
+**Симптом:** `updated_at` всегда равен `created_at` — бесполезное поле.
+**Статус:** ✅ ИСПРАВЛЕНО — добавлен `onupdate=func.now()` в Order и Protocol.
+**Урок:** `updated_at` без `onupdate` = `created_at`. Проверять модели после генерации.
+
+---
+
+## 🟠 SmartQ _safe_smartq_call маскирует 404 моком (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `backend/ris/routers/queue_integration.py:218`
+**Что:** `_safe_smartq_call` перехватывает любую ошибку SmartQ и возвращает мок-данные. Если талон не найден (404) или невалидный запрос (400) — фронт видит "фантомные" мок-талоны вместо ошибки.
+**Симптом:** Пользователь не видит реальных ошибок SmartQ — система показывает мок-данные.
+**Статус:** ✅ ИСПРАВЛЕНО — semantic-ошибки (404/400/409) пробрасываются на фронт; мок только при connection error или disabled.
+**Урок:** Исключения нужно делить по типам. 404 ≠ connection error.
+
+---
+
+## 🟠 Study constraint violation откатывает Order (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `backend/ris/routers/orders.py:232`
+**Что:** Создание Study (связь с Orthanc) находится в try, но сам `db.commit()` — снаружи. Если Study упадёт с constraint violation, откатится и Order.
+**Симптом:** Пользователь создал заказ — 500-я ошибка, заказ не сохранился, хотя данные валидны.
+**Статус:** ✅ ИСПРАВЛЕНО — commit обёрнут в try/rollback/commit: Order сохраняется даже без Orthanc.
+**Урок:** Commit должен быть максимально близко к данным. Побочные эффекты (Orthanc) — в отдельном try.
+
+---
+
+## 🟡 httpx.AsyncClient не закрывается (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `ris/routers/orders.py` / `ris/services/pacs_facade.py` / `ris/services/smartq_client.py` / `ris/routers/dicomweb.py`
+**Что:** 4 глобальных `httpx.AsyncClient` создаются как singleton, но никогда не закрываются — утечка соединений до перезапуска сервиса.
+**Симптом:** Рост числа TCP-соединений при длительной работе сервиса.
+**Статус:** ✅ ИСПРАВЛЕНО — все 4 клиента закрываются в lifespan shutdown (`ris/main.py:59`).
+**Урок:** `httpx.AsyncClient` — управляемый ресурс. Если создаётся singleton — должен быть lifespan cleanup.
+
+---
+
+## 🟡 Polling race condition в useQueue (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `frontend/src/hooks/useQueue.ts:23`
+**Что:** `setInterval` не ждёт завершения fetch. Если ответ сервера > pollInterval (10с), запросы накладываются — race condition, дублирующиеся обновления состояния.
+**Симптом:** При тормозах SmartQ — мерцание очереди, двойные обновления.
+**Статус:** ✅ ИСПРАВЛЕНО — `setInterval` заменён на рекурсивный `setTimeout` в `.finally()`.
+**Урок:** `setInterval` для async-операций — антипаттерн. Только рекурсивный `setTimeout`.
+
+---
+
+## 🟡 elqueue commit до вызова RIS (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (code review)
+**Где:** `backend/elqueue/routers/tickets.py:218`
+**Что:** `db.commit()` происходит до HTTP-вызова `_create_ris_order`. Если RIS упадёт — талон сохранён, а заказ в RIS — нет. Система в несогласованном состоянии.
+**Симптом:** Талон есть, заказа нет — пациент в очереди, но исследование не создано.
+**Статус:** ✅ ИСПРАВЛЕНО — вызов RIS обёрнут в try/except: при ошибке талон создаётся без заказа, ошибка логируется и аудитируется.
+**Урок:** commit → внешний вызов — опасный паттерн. Нужен либо Saga pattern, либо try вокруг внешнего вызова.

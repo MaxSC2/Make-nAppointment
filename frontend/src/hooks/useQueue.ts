@@ -6,7 +6,7 @@ export function useQueue(cabinet?: string, pollInterval = 10000) {
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -21,11 +21,14 @@ export function useQueue(cabinet?: string, pollInterval = 10000) {
   }, [cabinet])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchTickets()
-    intervalRef.current = setInterval(fetchTickets, pollInterval)
+    const poll = () => {
+      fetchTickets().finally(() => {
+        timeoutRef.current = setTimeout(poll, pollInterval)
+      })
+    }
+    poll()
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
     }
   }, [fetchTickets, pollInterval])
 

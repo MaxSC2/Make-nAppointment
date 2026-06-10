@@ -1344,4 +1344,21 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.10 — документация:** код-ревью зафиксирован в FULL_REPORT_2026-06-10.md + BUGS.md
 - **П.4 — инструменты:** CORS-тестирование curl, code review checklist, статический анализ Python (ast)
 
+## 10.06.2026 (21:00–21:30) — Medium фиксы: polling race + commit до HTTP
+
+### Что сделал:
+1. **Polling race condition** — `useQueue.ts:23`: заменил `setInterval` на рекурсивный `setTimeout` в `.finally()` — следующий poll только после завершения текущего fetch
+2. **Commit до HTTP-RIS** — `elqueue/tickets.py:218`: обернул `_create_ris_order` в try/except — при недоступности RIS талон создаётся без заказа, ошибка логируется
+3. **BUGS.md** — добавлены #35 (polling race) и #36 (commit before HTTP) с описаниями
+
+### Какие файлы создал/изменил:
+- `frontend/src/hooks/useQueue.ts` — setInterval → recursive setTimeout
+- `backend/elqueue/routers/tickets.py` — try/except вокруг _create_ris_order
+- `BUGS.md` — 2 новых бага (#35, #36)
+
+### Что это дало для отчёта:
+- **П.9 — качество:** устранены 2 race condition — polling не накладывается, талон не теряется при недоступности RIS
+- **П.7 — методология:** Saga-подобный паттерн (commit + retry/compensation) для межсервисных вызовов
+- **П.4 — инструменты:** понимание разницы setInterval vs recursive setTimeout для async polling
+
 

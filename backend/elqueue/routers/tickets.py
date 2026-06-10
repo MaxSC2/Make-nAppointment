@@ -222,15 +222,19 @@ async def register_ticket(
     # 4. Заказ в RIS (через REST). Если RIS недоступен — запись всё равно сохранится.
     # Пробрасываем токен пользователя, чтобы RIS не возвращал 401.
     auth_header = request.headers.get("authorization")
-    order_id, study_uid = await _create_ris_order(
-        body.full_name, patient.id, cabinet.modality, auth_header, body.priority,
-    )
-
-    if order_id:
-        ticket.order_id = order_id
-        ticket.study_uid = study_uid
-        await db.commit()
-        await db.refresh(ticket)
+    try:
+        order_id, study_uid = await _create_ris_order(
+            body.full_name, patient.id, cabinet.modality, auth_header, body.priority,
+        )
+        if order_id:
+            ticket.order_id = order_id
+            ticket.study_uid = study_uid
+            await db.commit()
+            await db.refresh(ticket)
+    except Exception as e:
+        logger.warning("RIS недоступен — талон #%s создан без заказа: %s", ticket.ticket_number, e)
+        await _audit(request, db, action="ris_failed",
+                     resource_type="ticket", resource_id=ticket.ticket_number)
 
     await _audit(request, db, action=AuditAction.TICKET_CREATED.value,
                  resource_type="ticket", resource_id=ticket.ticket_number)
