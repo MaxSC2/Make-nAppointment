@@ -19,7 +19,13 @@
     "noData": "Нет данных",
     "retry": "Повторить",
     "all": "Все",
-    "status": "Статус",
+    "status": {
+      "confirmed": "Подтверждено",
+      "pending": "Ожидание",
+      "pendingConfirmation": "Ожидание подтверждения",
+      "active": "Активен",
+      "completed": "Завершён"
+    },
     "date": "Дата",
     "actions": "Действия",
     "name": "Название",
@@ -38,13 +44,6 @@
       "taken": "Взят",
       "ordered": "Назначен",
       "inProgress": "В процессе"
-    },
-    "status": {
-      "confirmed": "Подтверждено",
-      "pending": "Ожидание",
-      "pendingConfirmation": "Ожидание подтверждения",
-      "active": "Активен",
-      "completed": "Завершён"
     },
     "specialties": {
       "therapist": "Терапевт",
@@ -175,12 +174,27 @@
     },
     "emk": {
       "title": "Электронная медицинская карта",
-      "visits": "История посещений",
+      "visits": {
+        "title": "Последние визиты",
+        "pageTitle": "История визитов",
+        "viewAll": "Все визиты",
+        "searchPlaceholder": "Поиск по врачу или диагнозу...",
+        "notFound": "Визиты не найдены",
+        "prescriptionsLink": "Назначения ({count})"
+      },
       "visitHistory": "История визитов",
       "visitHistoryShort": "Визиты",
       "prescriptions": "Назначения",
       "prescriptionsShort": "Назначения",
-      "labResults": "Результаты анализов",
+      "labResults": {
+        "title": "Результаты анализов",
+        "empty": "Нет готовых результатов",
+        "tableName": "Название",
+        "tableValue": "Значение",
+        "tableReference": "Референс",
+        "tableDoctor": "Врач",
+        "tableDate": "Дата"
+      },
       "allergy": "Аллергии",
       "bloodGroup": "Группа крови",
       "bloodType": "Третья положительная (B Rh+)",
@@ -203,14 +217,6 @@
         "allergyPenicillin": "Аллергия: Пенициллин",
         "allergyPollen": "Аллергия: Пыльца"
       },
-      "visits": {
-        "title": "Последние визиты",
-        "pageTitle": "История визитов",
-        "viewAll": "Все визиты",
-        "searchPlaceholder": "Поиск по врачу или диагнозу...",
-        "notFound": "Визиты не найдены",
-        "prescriptionsLink": "Назначения ({count})"
-      },
       "documents": {
         "title": "Прикреплённые документы"
       },
@@ -223,15 +229,6 @@
         "referrals": "Направления на анализы",
         "noReferrals": "Нет активных направлений",
         "noReferralsHint": "Врач пока не назначил анализы"
-      },
-      "labResults": {
-        "title": "Результаты анализов",
-        "empty": "Нет готовых результатов",
-        "tableName": "Название",
-        "tableValue": "Значение",
-        "tableReference": "Референс",
-        "tableDoctor": "Врач",
-        "tableDate": "Дата"
       }
     },
     "laboratory": {
@@ -270,7 +267,9 @@
     },
     "patients": "Пациенты",
     "schedule": "Расписание",
-    "appointments": "Записи к врачу"
+    "appointments": "Записи к врачу",
+    "orderTest": "Order a test",
+    "selectTestType": "Select test type"
   },
   "admin": {
     "users": "Пользователи",

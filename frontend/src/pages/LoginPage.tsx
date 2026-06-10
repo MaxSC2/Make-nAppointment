@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 
 export default function LoginPage() {
@@ -45,6 +46,9 @@ export default function LoginPage() {
           {t('nav.risQueue')}
         </div>
         <div className="rounded-2xl bg-white p-8 shadow-lg border border-gray-100">
+          <div className="mb-4 flex justify-end">
+            <LanguageSwitcher />
+          </div>
           <h1 className="mb-1 text-xl font-semibold text-gray-900">{t('nav.risQueue')}</h1>
           <p className="mb-6 text-sm text-gray-500">{t('login.subtitle')}</p>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">

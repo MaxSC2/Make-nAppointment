@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Панель врача — Электронная очередь</title>
+    <title>{{ _("Панель врача — Электронная очередь") }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -39,45 +39,53 @@
         .ticket button:hover { background: #0069d9; }
         .ticket button.danger { background: #dc3545; }
         .ticket button.danger:hover { background: #c82333; }
+        .lang-row { display: inline-flex; gap: 4px; margin-left: 12px; vertical-align: middle; }
+        .lang-row button { background: none; border: 1px solid #ddd; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; color: #555; }
+        .lang-row button.active { background: #218838; color: white; border-color: #218838; }
         .empty { text-align: center; color: #999; padding: 20px; font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>👨‍⚕️ Панель врача</h1>
-            <p>Управление потоком пациентов</p>
+            <h1>{{ _("👨‍⚕️ Панель врача") }}</h1>
+            <p>{{ _("Управление потоком пациентов") }}</p>
         </div>
 
         <div class="nav">
             <div>
-                <a href="/">Регистратура</a>
-                <a href="/admin">Панель врача</a>
+                <a href="/">{{ _("Регистратура") }}</a>
+                <a href="/admin">{{ _("Панель врача") }}</a>
             </div>
             <div class="user" id="userBox">
-                <a href="/login">🔐 Войти</a>
+                <a href="/login">{{ _("🔐 Войти") }}</a>
+                <span class="lang-row" id="langRow">
+                    <button onclick="switchLang('ru')">RU</button>
+                    <button onclick="switchLang('en')">EN</button>
+                    <button onclick="switchLang('kk')">KK</button>
+                </span>
             </div>
         </div>
 
         <div class="toolbar">
-            <label>Кабинет:
+            <label>{{ _("Кабинет:") }}
                 <select id="cabinetSelect" style="margin-left: 8px;"></select>
             </label>
-            <button id="btnNext" onclick="callNext()">📢 Вызвать следующего</button>
-            <a href="http://localhost:8000/studies" target="_blank">📋 Исследования (RIS)</a>
+            <button id="btnNext" onclick="callNext()">{{ _("📢 Вызвать следующего") }}</button>
+            <a href="http://localhost:8000/studies" target="_blank">{{ _("📋 Исследования (RIS)") }}</a>
         </div>
 
         <div class="columns" style="margin-top: 20px;">
             <div class="col in_progress">
-                <h3>🔵 На приёме</h3>
+                <h3>{{ _("🔵 На приёме") }}</h3>
                 <div id="colInProgress"></div>
             </div>
             <div class="col waiting">
-                <h3>⏳ Ожидают</h3>
+                <h3>{{ _("⏳ Ожидают") }}</h3>
                 <div id="colWaiting"></div>
             </div>
             <div class="col done">
-                <h3>✅ Завершённые</h3>
+                <h3>{{ _("✅ Завершённые") }}</h3>
                 <div id="colDone"></div>
             </div>
         </div>
@@ -94,6 +102,13 @@
         async post(url, body) { return (await fetch(url, { method: "POST", headers: this.headers(), body: JSON.stringify(body) })).json(); },
     };
 
+    function getLang() { return document.cookie.replace(/(?:(?:^|.*;\s*)NEXT_LOCALE\s*\=\s*([^;]*).*$)|^.*$/, "$1") || "ru"; }
+    function switchLang(lang) { document.cookie = "NEXT_LOCALE=" + lang + "; path=/; max-age=31536000"; location.reload(); }
+    document.addEventListener("DOMContentLoaded", function() {
+        var lang = getLang();
+        var buttons = document.querySelectorAll("#langRow button");
+        if (buttons.length) buttons.forEach(function(b) { if (b.textContent.toLowerCase() === lang) b.classList.add("active"); });
+    });
     function fmtTime(iso) { return iso ? iso.substring(11, 16) : "—"; }
 
     async function loadCabinets() {
@@ -106,15 +121,15 @@
 
     function renderTicket(t, status) {
         const viewer = t.study_uid
-            ? `<button onclick="window.open('http://localhost:8000/viewer/${t.study_uid}', '_blank')">🖼 Снимки</button>`
+            ? `<button onclick="window.open('http://localhost:8000/viewer/${t.study_uid}', '_blank')">{{ _("🖼 Снимки") }}</button>`
             : "";
         const completeBtn = status === "in_progress"
-            ? `<button class="danger" onclick="complete('${t.ticket_number}')">Завершить</button>`
+            ? `<button class="danger" onclick="complete('${t.ticket_number}')">{{ _("Завершить") }}</button>`
             : "";
         return `<div class="ticket ${status}">
             <div class="num">${t.ticket_number}</div>
             <div class="name">${t.patient.full_name}</div>
-            <div class="time">Создан: ${fmtTime(t.created_at)}${t.called_at ? " · Вызван: " + fmtTime(t.called_at) : ""}</div>
+            <div class="time">{{ _("Создан:") }} ${fmtTime(t.created_at)}${t.called_at ? " · {{ _("Вызван:") }} " + fmtTime(t.called_at) : ""}</div>
             ${completeBtn} ${viewer}
         </div>`;
     }
@@ -130,7 +145,7 @@
         document.getElementById("colInProgress").innerHTML =
             inProg.length ? inProg.map(t => renderTicket(t, "in_progress")).join("") : '<div class="empty">—</div>';
         document.getElementById("colWaiting").innerHTML =
-            waiting.length ? waiting.map(t => renderTicket(t, "waiting")).join("") : '<div class="empty">Нет ожидающих</div>';
+            waiting.length ? waiting.map(t => renderTicket(t, "waiting")).join("") : '<div class="empty">{{ _("Нет ожидающих") }}</div>';
         document.getElementById("colDone").innerHTML =
             done.length ? done.map(t => renderTicket(t, "done")).join("") : '<div class="empty">—</div>';
 
@@ -158,11 +173,11 @@
             const has = (r) => u.role_codes.includes(r);
             if (!has("doctor") && !has("technician") && !has("admin")) {
                 document.getElementById("userBox").innerHTML =
-                    `<span style="color:#dc3545">Нет прав: нужна роль doctor/technician/admin</span>`;
+                    `<span style="color:#dc3545">{{ _("Нет прав: нужна роль doctor/technician/admin") }}</span>`;
             }
             document.getElementById("userBox").innerHTML =
                 `<span>👤 ${u.full_name} (${u.role_codes.join(", ")})</span>
-                 <button onclick="logout()">Выйти</button>`;
+                 <button onclick="logout()">{{ _("Выйти") }}</button>`;
         } catch { localStorage.removeItem("access_token"); }
     }
     function logout() {
@@ -175,7 +190,7 @@
         await loadCabinets();
         await refresh();
         await loadUser();
-        setInterval(refresh, 10000);  // автообновление каждые 10 сек
+        setInterval(refresh, 10000);
     })();
     </script>
 </body>

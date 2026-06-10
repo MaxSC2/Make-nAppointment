@@ -2,17 +2,20 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Menu, X } from "lucide-react";
-
-const navLinks = [
-  { label: "Главная", href: "#hero" },
-  { label: "Услуги", href: "#features" },
-  { label: "Врачи", href: "#ehr" },
-  { label: "Контакты", href: "#footer" },
-];
+import { useTranslations } from "next-intl";
 
 export function LandingHeader() {
+  const t = useTranslations("landing");
   const [open, setOpen] = useState(false);
+
+  const navLinks = [
+    { label: t("nav.home"), href: "#hero" },
+    { label: t("nav.services"), href: "#features" },
+    { label: t("nav.doctors"), href: "#ehr" },
+    { label: t("nav.contacts"), href: "#footer" },
+  ];
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/90 backdrop-blur-md">
@@ -34,11 +37,12 @@ export function LandingHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageSwitcher light />
           <Link href="/login" className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-cyan-200 hover:text-cyan-700">
-            Вход
+            {t("header.login")}
           </Link>
           <Link href="/register" className="rounded-lg bg-cyan-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-800">
-            Регистрация
+            {t("header.register")}
           </Link>
         </div>
 
@@ -61,10 +65,10 @@ export function LandingHeader() {
             ))}
             <hr className="my-2 border-gray-100" />
             <Link href="/login" onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:text-cyan-700">
-              Вход
+              {t("header.login")}
             </Link>
             <Link href="/register" onClick={() => setOpen(false)} className="rounded-lg bg-cyan-700 px-3 py-2 text-sm font-medium text-white text-center hover:bg-cyan-800">
-              Регистрация
+              {t("header.register")}
             </Link>
           </nav>
         </div>

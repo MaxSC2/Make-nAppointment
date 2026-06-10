@@ -24,18 +24,13 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, Suspense } from "react";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Eye, EyeOff } from "lucide-react";
 import { validateLoginForm, type ValidationErrors } from "@/lib/validation";
 import { FORM_FIELDS } from "@/lib/formConstants";
 
 type LoginRole = "patient" | "doctor" | "admin" | "labtech";
-
-const roleLabels: Record<LoginRole, string> = {
-  patient: "Пациент",
-  doctor: "Врач",
-  admin: "Администратор",
-  labtech: "Лаборант",
-};
 
 const defaultRedirect: Record<LoginRole, string> = {
   patient: "/dashboard",
@@ -53,6 +48,7 @@ function setAuthCookie(role: LoginRole = "patient") {
 }
 
 function LoginForm() {
+  const t = useTranslations("auth");
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
@@ -61,6 +57,13 @@ function LoginForm() {
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const roleLabels: Record<LoginRole, string> = {
+    patient: t("rolePatient"),
+    doctor: t("roleDoctor"),
+    admin: t("roleAdmin"),
+    labtech: t("roleLabTechnician"),
+  };
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -96,11 +99,11 @@ function LoginForm() {
 
       setAuthCookie(selectedRole);
       form.reset();
-      alert("Успешный вход");
+      alert(t("success"));
       const redirect = searchParams.get("redirect") || defaultRedirect[selectedRole];
       router.push(redirect);
     } catch {
-      setServerError("Произошла ошибка при входе");
+      setServerError(t("loginError"));
     } finally {
       setIsLoading(false);
     }
@@ -123,10 +126,11 @@ function LoginForm() {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           MedPlatform
         </Link>
+        <div className="mb-8 flex justify-center"><LanguageSwitcher light /></div>
 
         <div className="rounded-xl border border-border bg-card p-5 md:p-8">
-          <h1 className="mb-1 text-h2 font-extrabold text-foreground">Войти</h1>
-          <p className="mb-6 text-body text-muted-foreground">Войдите в свой аккаунт MedPlatform</p>
+          <h1 className="mb-1 text-h2 font-extrabold text-foreground">{t("login")}</h1>
+          <p className="mb-6 text-body text-muted-foreground">{t("loginTitle")} MedPlatform</p>
 
           <form className="flex flex-col gap-5" onSubmit={handleLogin} noValidate>
             {serverError && (
@@ -136,13 +140,13 @@ function LoginForm() {
             )}
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">ИИН или Email</label>
-              <input type="text" name={FORM_FIELDS.LOGIN} className={inputClass("login")} placeholder="Введите ИИН или email" />
+              <label className="text-label font-medium text-muted-foreground">{t("iinOrEmail")}</label>
+              <input type="text" name={FORM_FIELDS.LOGIN} className={inputClass("login")} placeholder={t("iinOrEmailPlaceholder")} />
               <ErrorMsg field="login" />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">Пароль</label>
+              <label className="text-label font-medium text-muted-foreground">{t("password")}</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -159,14 +163,14 @@ function LoginForm() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2 text-label text-muted-foreground">
                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="rounded border-border text-primary focus:ring-primary" />
-                Запомнить меня
+                {t("rememberMe")}
               </label>
               <button
                 type="button"
-                onClick={() => alert("Восстановление пароля временно недоступно")}
+                onClick={() => alert(t("forgotPasswordAlert"))}
                 className="text-label font-medium text-primary hover:underline"
               >
-                Забыли пароль?
+                {t("forgotPassword")}
               </button>
             </div>
 
@@ -196,13 +200,13 @@ function LoginForm() {
                   : "bg-primary hover:opacity-90"
               }`}
             >
-              {isLoading ? "Вход…" : "Войти"}
+              {isLoading ? t("loggingIn") : t("login")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-label text-muted-foreground">
-            Нет аккаунта?{' '}
-            <Link href="/register" className="font-semibold text-primary hover:underline">Зарегистрироваться</Link>
+            {t("noAccount")}{' '}
+            <Link href="/register" className="font-semibold text-primary hover:underline">{t("registerLink")}</Link>
           </p>
         </div>
       </div>

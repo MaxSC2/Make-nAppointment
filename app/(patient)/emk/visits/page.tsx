@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { useTranslations } from "next-intl";
 
 const visits = [
   {
@@ -89,6 +90,8 @@ export default function VisitHistoryPage() {
   const [yearFilter, setYearFilter] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
 
   const filtered = visits.filter((v) => {
     if (filter === "active" && !v.active) return false;
@@ -107,7 +110,7 @@ export default function VisitHistoryPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-h2 font-extrabold text-foreground">История визитов</h1>
+      <h1 className="mb-5 text-h2 font-extrabold text-foreground">{t("emk.visits.pageTitle")}</h1>
 
       {/* Filters */}
       <div className="mb-5 rounded-xl border border-border bg-card p-3 md:p-4">
@@ -118,7 +121,7 @@ export default function VisitHistoryPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Поиск по врачу или диагнозу..."
+              placeholder={t("emk.visits.searchPlaceholder")}
               className="w-full rounded-lg border border-border bg-background py-2 pl-8 pr-3 text-label text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
           </div>
@@ -145,7 +148,7 @@ export default function VisitHistoryPage() {
               onChange={(e) => setYearFilter(e.target.value)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="">Все года</option>
+              <option value="">{tc("allYears")}</option>
               <option value="2024">2024</option>
               <option value="2023">2023</option>
             </select>
@@ -154,7 +157,7 @@ export default function VisitHistoryPage() {
               onChange={(e) => setSpecialtyFilter(e.target.value)}
               className="rounded-lg border border-border bg-background px-3 py-2 text-label text-foreground focus:border-primary focus:outline-none"
             >
-              <option value="">Все специальности</option>
+              <option value="">{tc("allSpecialties")}</option>
               <option value="Терапевт">Терапевт</option>
               <option value="Кардиолог">Кардиолог</option>
             </select>
@@ -165,9 +168,9 @@ export default function VisitHistoryPage() {
       {/* Filter tabs */}
       <div className="mb-6 flex flex-wrap gap-2 md:gap-1 md:border-b md:border-border">
         {[
-          { key: "all", label: "Все" },
-          { key: "active", label: "Активные" },
-          { key: "completed", label: "Завершённые" },
+          { key: "all", label: tc("all") },
+          { key: "active", label: tc("active") },
+          { key: "completed", label: tc("completed") },
         ].map((tab) => (
           <button
             key={tab.key}
@@ -186,8 +189,8 @@ export default function VisitHistoryPage() {
       {/* Timeline */}
       {filtered.length === 0 ? (
         <div className="py-16 text-center">
-          <div className="text-h3 font-semibold text-foreground">Визиты не найдены</div>
-          <p className="mt-1 text-body text-muted-foreground">Попробуйте изменить фильтры</p>
+          <div className="text-h3 font-semibold text-foreground">{t("emk.visits.notFound")}</div>
+          <p className="mt-1 text-body text-muted-foreground">{tc("tryChangeFilters")}</p>
         </div>
       ) : (
         <div className="relative md:pl-[104px]">
@@ -217,12 +220,12 @@ export default function VisitHistoryPage() {
                 </div>
                 <div className="mb-2 break-words text-label text-muted-foreground md:mb-2.5">{v.notes}</div>
                 <div className="flex gap-3 text-label">
-                  <button type="button" className="whitespace-nowrap font-medium text-primary hover:underline">Подробнее</button>
+                  <button type="button" className="whitespace-nowrap font-medium text-primary hover:underline">{tc("moreDetails")}</button>
                   {v.prescriptions > 0 && (
                     <>
                       <span className="text-border">·</span>
                       <Link href="/emk/prescriptions" className="whitespace-nowrap font-medium text-primary hover:underline">
-                        Назначения ({v.prescriptions})
+                        {t("emk.visits.prescriptionsLink", {count: v.prescriptions})}
                       </Link>
                     </>
                   )}

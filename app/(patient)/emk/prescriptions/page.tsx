@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FlaskConical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/Badge";
 
 const medications = [
@@ -73,6 +74,8 @@ const referrals = [
 ];
 
 export default function PrescriptionsPage() {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
   const [tab, setTab] = useState("active");
 
   const filtered = medications.filter((m) => {
@@ -83,14 +86,14 @@ export default function PrescriptionsPage() {
 
   return (
     <div>
-      <h1 className="mb-5 text-h2 font-extrabold text-foreground">Назначения и рецепты</h1>
+      <h1 className="mb-5 text-h2 font-extrabold text-foreground">{t("emk.prescriptionsPage.title")}</h1>
 
       {/* Tabs */}
       <div className="mb-5 flex flex-wrap gap-2 md:gap-1 md:border-b-2 md:border-border">
         {[
-          { key: "active", label: "Активные" },
-          { key: "completed", label: "Завершённые" },
-          { key: "all", label: "Все" },
+          { key: "active", label: tc("active") },
+          { key: "completed", label: tc("completed") },
+          { key: "all", label: tc("all") },
         ].map((t) => (
           <button
             key={t.key}
@@ -119,16 +122,16 @@ export default function PrescriptionsPage() {
             </div>
 
             <div className="mb-3 grid grid-cols-[110px_1fr] gap-x-4 gap-y-1.5 text-label">
-              <span className="text-muted-foreground">Дозировка:</span>
+              <span className="text-muted-foreground">{t("emk.prescriptionsPage.dosage")}</span>
               <span className="font-medium text-foreground">{m.dosage}</span>
-              <span className="text-muted-foreground">Длительность:</span>
+              <span className="text-muted-foreground">{t("emk.prescriptionsPage.duration")}</span>
               <span className="font-medium text-foreground">{m.duration}</span>
-              <span className="text-muted-foreground">Назначил:</span>
+              <span className="text-muted-foreground">{t("emk.prescriptionsPage.prescribedBy")}</span>
               <span className="font-medium text-foreground">{m.doctor} ({m.date})</span>
             </div>
 
             <div className="mb-1 flex justify-between text-micro">
-              <span className="text-muted-foreground">Прогресс курса</span>
+              <span className="text-muted-foreground">{t("emk.prescriptionsPage.courseProgress")}</span>
               <span className="font-semibold text-foreground">{m.day}</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-primary/10">
@@ -142,12 +145,12 @@ export default function PrescriptionsPage() {
       </div>
 
       {/* Referrals */}
-      <h2 className="mb-4 text-h3 font-bold text-foreground">Направления на анализы</h2>
+      <h2 className="mb-4 text-h3 font-bold text-foreground">{t("emk.prescriptionsPage.referrals")}</h2>
       {referrals.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-12 text-center">
           <FlaskConical className="h-8 w-8 text-muted-foreground" />
-          <div className="text-body font-semibold text-foreground">Нет активных направлений</div>
-          <p className="text-label text-muted-foreground">Врач пока не назначил анализы</p>
+          <div className="text-body font-semibold text-foreground">{t("emk.prescriptionsPage.noReferrals")}</div>
+          <p className="text-label text-muted-foreground">{t("emk.prescriptionsPage.noReferralsHint")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

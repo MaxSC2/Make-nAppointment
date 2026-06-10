@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>PACS — Исследования (RIS)</title>
+    <title>{{ _("PACS — Исследования (RIS)") }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: white; padding: 20px; }
@@ -29,21 +29,21 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📋 Исследования (RIS)</h1>
+            <h1>{{ _("📋 Исследования (RIS)") }}</h1>
             <div class="links">
-                <a href="/studies">Все</a>
+                <a href="/studies">{{ _("Все") }}</a>
                 <a href="http://localhost:8005">Очередь</a>
                 <a href="http://localhost:8042">Orthanc</a>
             </div>
-            <div class="user" id="userBox"><a href="/login" style="color:#4fc3f7">🔐 Войти</a></div>
+            <div class="user" id="userBox"><a href="/login" style="color:#4fc3f7">{{ _("🔐 Войти") }}</a></div>
         </div>
 
         <div class="filters">
-            <input id="searchInput" placeholder="🔍 Поиск по описанию / ID заказа">
-            <select id="modalityFilter"><option value="">Все модальности</option></select>
+            <input id="searchInput" placeholder="{{ _("🔍 Поиск по описанию / ID заказа") }}">
+            <select id="modalityFilter"><option value="">{{ _("Все модальности") }}</option></select>
         </div>
 
-        <div id="list"><div class="empty">⏳ Загрузка…</div></div>
+        <div id="list"><div class="empty">{{ _("⏳ Загрузка…") }}</div></div>
     </div>
 
     <script>
@@ -74,17 +74,17 @@
             ? data.filter(o => (o.study_description || "").toLowerCase().includes(q) || o.id.includes(q))
             : data;
         const list = document.getElementById("list");
-        if (!filtered.length) { list.innerHTML = '<div class="empty">Исследований не найдено</div>'; return; }
+        if (!filtered.length) { list.innerHTML = '<div class="empty">{{ _("Исследований не найдено") }}</div>'; return; }
         list.innerHTML = filtered.map(o => `
             <div class="study-card">
                 <div class="study-info">
-                    <h3>${o.study_description || "(без описания)"} — ${o.modality}</h3>
+                    <h3>${o.study_description || "{{ _("(без описания)") }}"} — ${o.modality}</h3>
                     <p>Order: <code>${o.id}</code> · Study UID: <code>${o.study_uid.substring(0, 30)}…</code> · ${fmt(o.created_at)} · <b>${o.status}</b></p>
                 </div>
                 <div class="study-actions">
-                    <a href="/viewer/${o.study_uid}">🖼 Просмотр</a>
-                    <a class="alt" href="/api/studies/download/${o.study_uid}">⬇ ZIP</a>
-                    <a class="alt" href="/orders/${o.id}/protocol">📝 Протокол</a>
+                    <a href="/viewer/${o.study_uid}">{{ _("🖼 Просмотр") }}</a>
+                    <a class="alt" href="/api/studies/download/${o.study_uid}">{{ _("⬇ ZIP") }}</a>
+                    <a class="alt" href="/orders/${o.id}/protocol">{{ _("📝 Протокол") }}</a>
                 </div>
             </div>
         `).join("");
@@ -97,7 +97,7 @@
             const u = await api.get("/api/auth/me");
             document.getElementById("userBox").innerHTML =
                 `<span>👤 ${u.full_name}</span>
-                 <button onclick="logout()">Выйти</button>`;
+                 <button onclick="logout()">{{ _("Выйти") }}</button>`;
         } catch { localStorage.removeItem("access_token"); }
     }
     function logout() {

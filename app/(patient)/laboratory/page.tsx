@@ -15,31 +15,36 @@ import { Header, MobileHeader } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Badge } from "@/components/ui/Badge";
 import { useQuery } from "@/lib/api/hooks";
+import { useTranslations } from "next-intl";
 import { fetchLabTests, fetchLabReferrals } from "@/lib/api";
 
 const DEMO_PATIENT_ID = "patient-1";
 
-const statusLabels: Record<string, { label: string; variant: "green" | "amber" | "blue" }> = {
-  Готов: { label: "Готов", variant: "green" },
-  Взят: { label: "Взят", variant: "amber" },
-  Назначен: { label: "Назначен", variant: "blue" },
-};
-
-const tabs = [
-  { key: "all", label: "Все анализы" },
-  { key: "referrals", label: "Направления" },
-];
+const tabKeys = ["all", "referrals"] as const;
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded-lg bg-border/60 ${className ?? ""}`} />;
 }
 
 export default function LaboratoryPage() {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const testsQuery = useQuery(fetchLabTests, []);
   const referralsQuery = useQuery(fetchLabReferrals, []);
+
+  const statusLabels: Record<string, { label: string; variant: "green" | "amber" | "blue" }> = {
+    Готов: { label: t("laboratory.ready"), variant: "green" },
+    Взят: { label: t("laboratory.taken"), variant: "amber" },
+    Назначен: { label: t("laboratory.assigned"), variant: "blue" },
+  };
+
+  const tabs = [
+    { key: "all", label: t("laboratory.tabAll") },
+    { key: "referrals", label: t("laboratory.tabReferrals") },
+  ];
 
   const filteredTests = useMemo(
     () =>
@@ -69,7 +74,7 @@ export default function LaboratoryPage() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-label font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          Повторить
+          {tc("retry")}
         </button>
       </div>
     );
@@ -98,9 +103,9 @@ export default function LaboratoryPage() {
 
       <main className="mx-auto max-w-[1280px] px-4 pb-20 pt-7 md:px-6 md:pb-12">
         <div className="mb-6">
-          <h1 className="text-h2 font-extrabold text-foreground">Лаборатория</h1>
+          <h1 className="text-h2 font-extrabold text-foreground">{t("laboratory.title")}</h1>
           <p className="mt-0.5 text-body text-muted-foreground">
-            Результаты анализов и направления
+            {t("laboratory.subtitle")}
           </p>
         </div>
 
@@ -128,7 +133,7 @@ export default function LaboratoryPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Поиск по названию анализа..."
+            placeholder={t("laboratory.searchPlaceholder")}
             className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
@@ -161,15 +166,15 @@ export default function LaboratoryPage() {
                           {test.name}
                         </div>
                         <div className="mb-1 md:mb-2 text-label text-muted-foreground">
-                          {test.category} · Назначил: {test.doctorName}
+                          {test.category} · {t("laboratory.orderedBy", {doctorName: test.doctorName})}
                         </div>
                         <div className="flex flex-wrap items-center gap-2 md:gap-3 text-label">
                           <span className="text-muted-foreground">
-                            Заказан: {test.dateOrdered}
+                            {t("laboratory.orderedDate", {date: test.dateOrdered})}
                           </span>
                           {test.dateReady && (
                             <span className="text-muted-foreground">
-                              Готов: {test.dateReady}
+                              {t("laboratory.readyDate", {date: test.dateReady})}
                             </span>
                           )}
                         </div>
@@ -181,13 +186,13 @@ export default function LaboratoryPage() {
                         {test.hasFile && (
                           <>
                             <button
-                              onClick={() => alert("Функция в разработке")}
+                              onClick={() => alert(tc("comingSoon"))}
                               className="rounded-lg border border-border p-1.5 md:p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                             >
                               <Eye className="h-3.5 w-3.5 md:h-4 md:w-4" />
                             </button>
                             <button
-                              onClick={() => alert("Функция в разработке")}
+                              onClick={() => alert(tc("comingSoon"))}
                               className="rounded-lg border border-border p-1.5 md:p-2 text-muted-foreground transition-colors hover:border-primary hover:text-primary"
                             >
                               <Download className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -208,10 +213,10 @@ export default function LaboratoryPage() {
               <div className="py-16 text-center">
                 <FlaskConical className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
                 <div className="text-h3 font-semibold text-foreground">
-                  Анализы не найдены
+                  {t("laboratory.noTests")}
                 </div>
                 <p className="mt-1 text-body text-muted-foreground">
-                  Попробуйте изменить поисковый запрос
+                  {t("laboratory.noTestsHint")}
                 </p>
               </div>
             )}
@@ -243,14 +248,14 @@ export default function LaboratoryPage() {
                         {ref.testName}
                       </div>
                       <div className="mb-1 md:mb-2 text-label text-muted-foreground">
-                        Назначил: {ref.doctorName} · {ref.clinic}
+                        {t("laboratory.orderedBy", {doctorName: `${ref.doctorName} · ${ref.clinic}`})}
                       </div>
                       <span className="text-label text-muted-foreground">
                         {ref.date}
                       </span>
                     </div>
                     <Badge variant={ref.used ? "green" : "amber"}>
-                      {ref.used ? "Использовано" : "Ожидает сдачи"}
+                      {ref.used ? t("laboratory.used") : t("laboratory.pendingSubmission")}
                     </Badge>
                   </div>
                 </div>
@@ -259,10 +264,10 @@ export default function LaboratoryPage() {
               <div className="py-16 text-center">
                 <FileText className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
                 <div className="text-h3 font-semibold text-foreground">
-                  Направлений нет
+                  {t("laboratory.noReferrals")}
                 </div>
                 <p className="mt-1 text-body text-muted-foreground">
-                  Врач ещё не назначил анализы
+                  {t("laboratory.noReferralsHint")}
                 </p>
               </div>
             )}

@@ -20,15 +20,6 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     # ============================================================
-    # Схемы (idempotent — уже создаются в 01_schemas.sql,
-    # но дублируем, чтобы миграция была самодостаточной).
-    # ============================================================
-    op.execute("CREATE SCHEMA IF NOT EXISTS auth AUTHORIZATION pacs")
-    op.execute("CREATE SCHEMA IF NOT EXISTS queue AUTHORIZATION pacs")
-    op.execute("CREATE SCHEMA IF NOT EXISTS ris AUTHORIZATION pacs")
-    op.execute("CREATE SCHEMA IF NOT EXISTS audit AUTHORIZATION pacs")
-
-    # ============================================================
     # auth.roles
     # ============================================================
     op.create_table(

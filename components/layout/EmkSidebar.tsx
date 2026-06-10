@@ -7,7 +7,7 @@ import { User, Calendar, Pill } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 const navItems = [
-  { key: "patient.emk.visits", shortKey: "patient.emk.visitsShort", href: "/emk", icon: User },
+  { key: "patient.emk.patientCard", shortKey: "patient.emk.patientCardShort", href: "/emk", icon: User },
   { key: "patient.emk.visitHistory", shortKey: "patient.emk.visitHistoryShort", href: "/emk/visits", icon: Calendar },
   { key: "patient.emk.prescriptions", shortKey: "patient.emk.prescriptionsShort", href: "/emk/prescriptions", icon: Pill },
 ];

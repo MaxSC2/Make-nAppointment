@@ -1,9 +1,25 @@
 import { getRequestConfig } from 'next-intl/server'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+
+const locales = new Set(['ru', 'en', 'kk'])
+
+function parseAcceptLanguage(header: string | null): string | null {
+  if (!header) return null
+  const tags = header.split(',').map(t => {
+    const [tag] = t.trim().split(';')
+    return tag?.split('-')[0] || ''
+  })
+  return tags.find(t => locales.has(t)) || null
+}
 
 export default getRequestConfig(async () => {
   const cookieStore = await cookies()
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'ru'
+  const headersList = await headers()
+
+  const locale =
+    cookieStore.get('NEXT_LOCALE')?.value ||
+    parseAcceptLanguage(headersList.get('Accept-Language')) ||
+    'ru'
 
   return {
     locale,

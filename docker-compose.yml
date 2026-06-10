@@ -1,0 +1,128 @@
+x-backend-env: &backend-env
+  DATABASE_URL: postgresql+asyncpg://pacs:pacs_secret@postgres:5432/pacs_ris
+  DATABASE_MIGRATION_URL: postgresql+asyncpg://pacs_migrator:pacs_migrator_secret@postgres:5432/pacs_ris
+  DATABASE_SYNC_URL: postgresql+psycopg://pacs:pacs_secret@postgres:5432/pacs_ris
+  JWT_SECRET: change-me-in-production-please-this-is-not-secure-at-all
+  JWT_ALGORITHM: HS256
+  JWT_ACCESS_TTL_MINUTES: "60"
+  JWT_REFRESH_TTL_DAYS: "7"
+  ORTHANC_URL: http://orthanc:8042
+  RIS_URL: http://ris:8000
+  ELQUEUE_URL: http://elqueue:8005
+  RIS_PORT: "8000"
+  ELQUEUE_PORT: "8005"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pacs_ris_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pacs_ris
+      POSTGRES_USER: pacs
+      POSTGRES_PASSWORD: pacs_secret
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=ru_RU.UTF-8"
+      TZ: Europe/Moscow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/db/init/01_schemas.sql:/docker-entrypoint-initdb.d/01_schemas.sql:ro
+      - ./backend/db/init/02_roles.sql:/docker-entrypoint-initdb.d/02_roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pacs -d pacs_ris"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  orthanc:
+    image: jodogne/orthanc-plugins:latest
+    container_name: pacs_ris_orthanc
+    restart: unless-stopped
+    ports:
+      - "8042:8042"
+      - "4242:4242"
+    volumes:
+      - orthancdata:/var/lib/orthanc/db
+      - ./orthanc.json:/etc/orthanc/orthanc.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O- http://localhost:8042/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  init-db:
+    build:
+      context: ./backend
+    container_name: pacs_ris_init
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    command: >
+      sh -c "
+        python -m alembic upgrade head &&
+        python -m db.init_db
+      "
+
+  ris:
+    build:
+      context: ./backend
+    container_name: pacs_ris_ris
+    restart: unless-stopped
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+      orthanc:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    ports:
+      - "8000:8000"
+    command: uvicorn ris.main:app --host 0.0.0.0 --port 8000
+
+  elqueue:
+    build:
+      context: ./backend
+    container_name: pacs_ris_elqueue
+    restart: unless-stopped
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
+    environment:
+      <<: *backend-env
+    ports:
+      - "8005:8005"
+    command: uvicorn elqueue.main:app --host 0.0.0.0 --port 8005
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: pacs_ris_frontend
+    restart: unless-stopped
+    depends_on:
+      - ris
+      - elqueue
+    ports:
+      - "5173:80"
+
+  nextjs:
+    build:
+      context: .
+    container_name: pacs_ris_nextjs
+    restart: unless-stopped
+    depends_on:
+      - ris
+      - elqueue
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+
+volumes:
+  pgdata:
+    name: pacs_ris_pgdata
+  orthancdata:
+    name: pacs_ris_orthancdata

@@ -20,22 +20,24 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from locales import gettext
+
 
 # ======================== СПРАВОЧНИК ПЕРЕВОДОВ ========================
 
 _STATUS_TRANSLATIONS: dict[int, str] = {
-    400: "Некорректный запрос",
-    401: "Требуется авторизация. Войдите в систему.",
-    403: "Доступ запрещён. Недостаточно прав.",
-    404: "Ресурс не найден",
-    405: "Метод не разрешён",
-    409: "Конфликт. Ресурс уже существует или состояние несовместимо.",
-    422: "Ошибка валидации данных",
-    429: "Слишком много запросов. Попробуйте позже.",
-    500: "Внутренняя ошибка сервера. Попробуйте позже или обратитесь к администратору.",
-    502: "Ошибка связи с внешним сервисом (PACS/МИС)",
-    503: "Сервис временно недоступен. Попробуйте позже.",
-    504: "Превышено время ожидания от внешнего сервиса",
+    400: gettext("Некорректный запрос"),
+    401: gettext("Требуется авторизация. Войдите в систему."),
+    403: gettext("Доступ запрещён. Недостаточно прав."),
+    404: gettext("Ресурс не найден"),
+    405: gettext("Метод не разрешён"),
+    409: gettext("Конфликт. Ресурс уже существует или состояние несовместимо."),
+    422: gettext("Ошибка валидации данных"),
+    429: gettext("Слишком много запросов. Попробуйте позже."),
+    500: gettext("Внутренняя ошибка сервера. Попробуйте позже или обратитесь к администратору."),
+    502: gettext("Ошибка связи с внешним сервисом (PACS/МИС)"),
+    503: gettext("Сервис временно недоступен. Попробуйте позже."),
+    504: gettext("Превышено время ожидания от внешнего сервиса"),
 }
 
 logger = logging.getLogger("error_handler")
@@ -134,22 +136,22 @@ def _is_russian_or_neutral(text: str) -> bool:
 def _translate_validation_message(msg: str, err_type: str) -> str:
     """Перевод типовых pydantic-сообщений на русский."""
     if err_type == "missing":
-        return "поле обязательно"
+        return gettext("поле обязательно")
     if err_type == "string_too_short":
-        return "слишком короткое значение"
+        return gettext("слишком короткое значение")
     if err_type == "string_too_long":
-        return "слишком длинное значение"
+        return gettext("слишком длинное значение")
     if err_type.startswith("type_error") or err_type.startswith("value_error"):
-        return f"неверный тип/формат: {msg}"
+        return gettext("неверный тип/формат: ") + msg
     if err_type == "int_parsing" or err_type == "float_parsing":
-        return "ожидается число"
+        return gettext("ожидается число")
     if err_type == "uuid_parsing":
-        return "ожидается UUID"
+        return gettext("ожидается UUID")
     if err_type == "datetime_parsing" or err_type == "date_parsing":
-        return "ожидается дата/время"
+        return gettext("ожидается дата/время")
     if err_type == "json_invalid":
-        return "невалидный JSON"
-    return msg or "невалидное значение"
+        return gettext("невалидный JSON")
+    return msg or gettext("невалидное значение")
 
 
 # ======================== РЕГИСТРАЦИЯ ========================

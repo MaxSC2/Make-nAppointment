@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Вход в систему</title>
+    <title>{{ _("Вход в систему") }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -17,32 +17,48 @@
         .btn { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
         .btn:hover { background: #5a6fd6; }
         .error { color: #dc3545; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .lang-row { display: flex; justify-content: flex-end; gap: 4px; margin-bottom: 16px; }
+        .lang-row button { background: none; border: 1px solid #ddd; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; color: #555; }
+        .lang-row button.active { background: #667eea; color: white; border-color: #667eea; }
         .hint { background: #f8f9fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #666; margin-top: 16px; }
         .hint code { background: #eee; padding: 1px 6px; border-radius: 3px; }
     </style>
 </head>
 <body>
     <div class="login-card">
-        <h1>🔐 Вход</h1>
+        <div class="lang-row" id="langRow">
+            <button onclick="switchLang('ru')">RU</button>
+            <button onclick="switchLang('en')">EN</button>
+            <button onclick="switchLang('kk')">KK</button>
+        </div>
+        <h1>{{ _("🔐 Вход") }}</h1>
         <p>PACS-RIS-Queue</p>
         <form id="loginForm">
             <div class="field">
-                <label for="username">Имя пользователя</label>
+                <label for="username">{{ _("Имя пользователя") }}</label>
                 <input id="username" name="username" required autofocus autocomplete="username">
             </div>
             <div class="field">
-                <label for="password">Пароль</label>
+                <label for="password">{{ _("Пароль") }}</label>
                 <input id="password" name="password" type="password" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn">Войти</button>
+            <button type="submit" class="btn">{{ _("Войти") }}</button>
             <div class="error" id="error"></div>
         </form>
         <div class="hint">
-            Тестовый администратор: <code>admin</code> / <code>admin123</code>
+            {{ _("Тестовый администратор:") }} <code>admin</code> / <code>admin123</code>
         </div>
     </div>
 
     <script>
+    function getLang() { return document.cookie.replace(/(?:(?:^|.*;\s*)NEXT_LOCALE\s*\=\s*([^;]*).*$)|^.*$/, "$1") || "ru"; }
+    function switchLang(lang) { document.cookie = "NEXT_LOCALE=" + lang + "; path=/; max-age=31536000"; location.reload(); }
+    document.addEventListener("DOMContentLoaded", function() {
+        var lang = getLang();
+        document.querySelectorAll("#langRow button").forEach(function(b) {
+            if (b.textContent.toLowerCase() === lang) b.classList.add("active");
+        });
+    });
     document.getElementById("loginForm").addEventListener("submit", async function(e) {
         e.preventDefault();
         const err = document.getElementById("error");
@@ -58,14 +74,13 @@
                 body: JSON.stringify(body),
             });
             const data = await r.json();
-            if (!r.ok) { err.textContent = data.detail || "Ошибка входа"; return; }
+            if (!r.ok) { err.textContent = data.detail || "{{ _("Ошибка входа") }}"; return; }
             localStorage.setItem("access_token",  data.access_token);
             localStorage.setItem("refresh_token", data.refresh_token);
-            // Возвращаемся на исходную страницу или на главную
             const back = new URLSearchParams(location.search).get("next") || "/admin";
             location.href = back;
         } catch (e) {
-            err.textContent = "Сетевая ошибка: " + e.message;
+            err.textContent = "{{ _("Сетевая ошибка:") }} " + e.message;
         }
     });
     </script>

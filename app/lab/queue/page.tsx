@@ -6,6 +6,7 @@ import { useQuery } from "@/lib/api/hooks";
 import { fetchLabQueue, updateLabTestStatus, submitLabResult } from "@/lib/api";
 import { useState } from "react";
 import type { LabTest } from "@/types/laboratory";
+import { useTranslations } from "next-intl";
 
 const statusColor: Record<string, string> = {
   "Назначен": "text-amber-600 bg-amber-50",
@@ -14,6 +15,8 @@ const statusColor: Record<string, string> = {
 };
 
 function ResultModal({ test, onClose, onSubmit }: { test: LabTest; onClose: () => void; onSubmit: (id: string, value: number | string, unit: string, min: number, max: number) => Promise<void> }) {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
   const [value, setValue] = useState("");
   const [unit, setUnit] = useState("");
   const [min, setMin] = useState("");
@@ -38,7 +41,7 @@ function ResultModal({ test, onClose, onSubmit }: { test: LabTest; onClose: () =
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl">
-        <h2 className="mb-1 text-h3 font-bold text-foreground">Результат анализа</h2>
+        <h2 className="mb-1 text-h3 font-bold text-foreground">{t("laboratory.result")}</h2>
         <p className="mb-5 text-body text-muted-foreground">{test.name}</p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
@@ -60,9 +63,9 @@ function ResultModal({ test, onClose, onSubmit }: { test: LabTest; onClose: () =
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-border bg-background py-2.5 text-body font-medium text-muted-foreground transition-colors hover:text-foreground">Отмена</button>
+            <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-border bg-background py-2.5 text-body font-medium text-muted-foreground transition-colors hover:text-foreground">{tc("cancel")}</button>
             <button type="submit" disabled={saving} className="flex-1 rounded-lg bg-primary py-2.5 text-body font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-              {saving ? "Сохранение…" : "Сохранить"}
+              {saving ? "Сохранение…" : tc("save")}
             </button>
           </div>
         </form>
@@ -72,6 +75,9 @@ function ResultModal({ test, onClose, onSubmit }: { test: LabTest; onClose: () =
 }
 
 export default function LabQueuePage() {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
+  const ta = useTranslations("auth");
   const { data: queue, loading, error, refetch } = useQuery(fetchLabQueue);
   const [resultModalTest, setResultModalTest] = useState<LabTest | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -101,10 +107,10 @@ export default function LabQueuePage() {
       <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
         <div className="flex items-center gap-2">
           <FlaskConical className="h-5 w-5 text-primary" />
-          <span className="text-lg font-bold text-foreground">MedPlatform <span className="text-primary">· Лаборатория</span></span>
+          <span className="text-lg font-bold text-foreground">MedPlatform <span className="text-primary">· {t("laboratory.title")}</span></span>
         </div>
         <Link href="/login" onClick={() => { document.cookie = "auth_token=; path=/; max-age=0"; }} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-primary">
-          <LogOut className="h-4 w-4" /> Выйти
+          <LogOut className="h-4 w-4" /> {ta("logout")}
         </Link>
       </header>
 

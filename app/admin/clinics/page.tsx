@@ -4,8 +4,10 @@ import Link from "next/link";
 import { ArrowLeft, Phone, MapPin } from "lucide-react";
 import { useQuery } from "@/lib/api/hooks";
 import { fetchAdminClinics } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function AdminClinicsPage() {
+  const t = useTranslations("admin");
   const { data: clinics, loading } = useQuery(fetchAdminClinics);
 
   return (
@@ -14,7 +16,7 @@ export default function AdminClinicsPage() {
         <Link href="/admin/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Клиники</span>
+        <span className="text-lg font-bold text-foreground">{t("clinics")}</span>
       </header>
 
       <div className="mx-auto max-w-4xl px-6 py-8">

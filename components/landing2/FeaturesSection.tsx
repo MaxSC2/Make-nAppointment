@@ -1,6 +1,7 @@
 "use client";
 
 import { CalendarCheck, Files, FlaskConical, Shield } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type Feature, features } from "@/lib/landingData";
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -11,12 +12,13 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 export function FeaturesSection() {
+  const t = useTranslations("landing");
   return (
     <section id="features" className="bg-white py-16 md:py-24">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <h2 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">Возможности платформы</h2>
-          <p className="text-base text-gray-500">Всё необходимое для заботы о вашем здоровье в одном приложении</p>
+          <h2 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">{t("features.title")}</h2>
+          <p className="text-base text-gray-500">{t("features.subtitle")}</p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
