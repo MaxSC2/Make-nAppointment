@@ -5,8 +5,8 @@ import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [username, setUsername] = useState('admin')
+  const [password, setPassword] = useState('admin123')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -23,8 +23,8 @@ export default function LoginPage() {
     try {
       await login(username, password)
       navigate(from, { replace: true })
-    } catch {
-      setError(t('login.error'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('login.error'))
     } finally {
       setLoading(false)
     }
