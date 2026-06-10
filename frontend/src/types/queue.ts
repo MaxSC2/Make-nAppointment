@@ -32,6 +32,7 @@ export interface TicketDetail extends TicketOut {
   patient: PatientOut
   cabinet: CabinetOut
   priority?: 'normal' | 'urgent' | 'stat' | null
+  sourceTicketId?: string
 }
 
 export interface TicketEventOut {
@@ -54,4 +55,33 @@ export interface TicketCreateRequest {
 
 export interface NextCallRequest {
   cabinet_code: string
+}
+
+export interface RisRoomOut {
+  id: number
+  name: string
+  is_active: boolean
+  modality: string
+}
+
+export interface RisServiceTypeOut {
+  id: number
+  name: string
+  modality_code: string
+  average_duration_minutes: number
+}
+
+export interface RisTicketOut {
+  id: string
+  ticket_number: string
+  status: string
+  priority: string
+  modality: string
+  cabinet_id: number
+  cabinet_name: string
+  full_name: string
+  policy_number: string
+  created_at: string
+  called_at: string | null
+  completed_at: string | null
 }

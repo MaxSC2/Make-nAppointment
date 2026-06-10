@@ -72,7 +72,9 @@ export default function QueueTable({ tickets, onCall, onComplete, showActions }:
                 <td className="px-4 py-3 text-right space-x-2">
                   <button
                     onClick={() => navigate(`/patients/${ticket.patient_id}`)}
-                    className="text-sm bg-white text-teal-600 border border-teal-300 px-3 py-1 rounded hover:bg-teal-50 transition-colors"
+                    disabled={!ticket.patient_id}
+                    title={!ticket.patient_id ? 'Нет карты пациента для внешней очереди' : 'Карта пациента'}
+                    className="text-sm bg-white text-teal-600 border border-teal-300 px-3 py-1 rounded hover:bg-teal-50 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Карта пациента
                   </button>

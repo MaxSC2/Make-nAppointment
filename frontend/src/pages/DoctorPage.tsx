@@ -6,7 +6,7 @@ import QueueTable from '../components/QueueTable'
 
 export default function DoctorPage() {
   const { cabinets } = useCabinets()
-  const [cabinetCode, setCabinetCode] = useState('101')
+  const [cabinetCode, setCabinetCode] = useState('1')
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -33,18 +33,18 @@ export default function DoctorPage() {
     }
   }, [refresh])
 
-  const handleCall = useCallback(async () => {
+  const handleCall = useCallback(async (ticket: TicketDetail) => {
     try {
-      await queueApi.callNext(cabinetCode)
+      await queueApi.callTicket(ticket.sourceTicketId!)
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ошибка вызова')
     }
-  }, [cabinetCode, refresh])
+  }, [refresh])
 
   const handleComplete = useCallback(async (ticket: TicketDetail) => {
     try {
-      await queueApi.completeTicket(ticket.ticket_number)
+      await queueApi.completeTicket(ticket.sourceTicketId!)
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Ошибка завершения')

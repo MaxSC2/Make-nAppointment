@@ -9,7 +9,7 @@ export default function RegistrationPage() {
   const [form, setForm] = useState<TicketCreateRequest>({
     full_name: '',
     policy_number: '',
-    cabinet_code: '101',
+    cabinet_code: 'CT',
     phone: '',
     priority: 'normal',
   })
@@ -25,7 +25,7 @@ export default function RegistrationPage() {
     try {
       const ticket = await queueApi.registerTicket(form)
       setResult(ticket)
-      setForm({ full_name: '', policy_number: '', cabinet_code: '101', phone: '', priority: 'normal' })
+      setForm({ full_name: '', policy_number: '', cabinet_code: 'CT', phone: '', priority: 'normal' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка')
     } finally {
@@ -70,7 +70,7 @@ export default function RegistrationPage() {
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {cabinets.map((c) => (
-              <option key={c.code} value={c.code}>
+              <option key={c.code} value={c.modality}>
                 {c.name} ({c.modality})
               </option>
             ))}
