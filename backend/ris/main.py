@@ -21,12 +21,14 @@ from starlette.templating import _TemplateResponse
 
 from db.config import settings
 from db.error_handlers import register_error_handlers
+from db.session import async_session_maker
 from elqueue.routers import auth as auth_router
 from ris.routers import dicomweb as dicomweb_router
 from ris.routers import monitoring as monitoring_router
 from ris.routers import orders as orders_router
 from ris.routers import queue_integration as queue_integration_router
 from ris.routers import studies as studies_router
+from ris.services.smartq_listener import start_listener, stop_listener
 
 
 # ======================== ШАБЛОНЫ ========================
@@ -50,7 +52,9 @@ async def lifespan(app: FastAPI):
     logger.info("старт, шаблоны: %s", TEMPLATES_DIR)
     logger.info("БД: %s", settings.database_url.split('@')[-1])
     logger.info("Orthanc: %s", settings.orthanc_url)
+    await start_listener(async_session_maker)
     yield
+    await stop_listener()
     logger.info("остановлен")
 
 

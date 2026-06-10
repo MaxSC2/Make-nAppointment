@@ -33,11 +33,24 @@ class OrderOut(BaseModel):
     completed_at: datetime | None
     created_at: datetime
     updated_at: datetime
+    source_system: str | None = None
+    source_ticket_id: str | None = None
+    source_ticket_number: str | None = None
+    smartq_called_at: datetime | None = None
 
 
 class OrderStatusUpdate(BaseModel):
     status: str = Field(pattern=r"^(scheduled|in_progress|completed|cancelled)$")
     note: str | None = None
+
+
+class OrderListResponse(BaseModel):
+    """Ответ со списком заказов + пагинацией."""
+    items: list[OrderOut]
+    total: int = Field(description="Всего заказов, удовлетворяющих фильтру")
+    limit: int
+    offset: int
+    has_more: bool = Field(description="Есть ли ещё элементы")
 
 
 class StudyOut(BaseModel):

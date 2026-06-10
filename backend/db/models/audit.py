@@ -42,6 +42,7 @@ class AuditAction(str, Enum):
     ORDER_STATUS_CHANGED = "ris.order_status_changed"
     PROTOCOL_UPDATED = "ris.protocol_updated"
     PROTOCOL_SIGNED = "ris.protocol_signed"
+    PROTOCOL_REVOKED = "ris.protocol_revoked"
 
     # PACS
     STUDY_UPLOADED = "pacs.study_uploaded"
