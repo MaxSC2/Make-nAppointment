@@ -17,6 +17,7 @@ import { fetchDoctors, fetchAppointments } from "@/lib/api";
 import { validateAppointmentForm, type ValidationErrors } from "@/lib/validation";
 import { FORM_FIELDS } from "@/lib/formConstants";
 import type { Doctor, Appointment } from "@/types/appointment";
+import { useTranslations } from "next-intl";
 
 const specialties = [
   "",
@@ -39,6 +40,8 @@ function formatDate(d: Date): string {
 }
 
 export default function AppointmentPage() {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
   const [activeTab, setActiveTab] = useState<"doctors" | "my">("doctors");
   const [searchQuery, setSearchQuery] = useState("");
   const [specFilter, setSpecFilter] = useState("");
@@ -186,7 +189,7 @@ export default function AppointmentPage() {
           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-label font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          Повторить
+          {tc("retry")}
         </button>
       </div>
     );
@@ -202,10 +205,10 @@ export default function AppointmentPage() {
         {/* Title */}
         <div className="mb-6">
           <h1 className="text-h2 font-extrabold text-foreground">
-            Запись к врачу
+            {t("appointment.title")}
           </h1>
           <p className="mt-0.5 text-body text-muted-foreground">
-            Выберите специалиста и удобное время
+            {t("appointment.subtitle")}
           </p>
         </div>
 
@@ -219,7 +222,7 @@ export default function AppointmentPage() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Врачи
+            {t("appointment.tabDoctors")}
           </button>
           <button
             onClick={() => setActiveTab("my")}
@@ -229,7 +232,7 @@ export default function AppointmentPage() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Мои записи
+            {t("appointment.tabMyAppointments")}
           </button>
         </div>
 
@@ -244,7 +247,7 @@ export default function AppointmentPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Поиск"
+                  placeholder={t("appointment.search")}
                   className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-3 text-body text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                 />
               </div>
@@ -253,7 +256,7 @@ export default function AppointmentPage() {
                 onChange={(e) => setSpecFilter(e.target.value)}
                 className="rounded-lg border border-border bg-card px-3.5 py-2.5 text-body text-foreground focus:border-primary focus:outline-none"
               >
-                <option value="">Все специализации</option>
+                <option value="">{tc("allSpecialties")}</option>
                 {specialties
                   .filter(Boolean)
                   .map((s) => (
@@ -265,8 +268,8 @@ export default function AppointmentPage() {
                 onChange={(e) => setAvailFilter(e.target.value)}
                 className="rounded-lg border border-border bg-card px-3.5 py-2.5 text-body text-foreground focus:border-primary focus:outline-none"
               >
-                <option value="">Любой статус</option>
-                <option value="available">Можно записаться</option>
+                <option value="">{tc("anyStatus")}</option>
+                <option value="available">{t("appointment.available")}</option>
               </select>
             </div>
 
@@ -295,10 +298,10 @@ export default function AppointmentPage() {
                 <div className="col-span-full py-16 text-center">
                   <SearchX className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
                   <div className="text-h3 font-semibold text-foreground">
-                    Врачи не найдены
+                    {t("appointment.doctorsNotFound")}
                   </div>
                   <p className="mt-1 text-body text-muted-foreground">
-                    Попробуйте изменить фильтры
+                    {tc("tryChangeFilters")}
                   </p>
                 </div>
               )}
@@ -327,16 +330,16 @@ export default function AppointmentPage() {
               <div className="py-16 text-center">
                 <CalendarIcon className="mx-auto mb-4 h-8 w-8 text-muted-foreground" />
                 <div className="text-h3 font-semibold text-foreground">
-                  Записей пока нет
+                  {t("appointment.noAppointments")}
                 </div>
                 <p className="mt-1 mb-5 text-body text-muted-foreground">
-                  Запишитесь к врачу на вкладке «Врачи»
+                  {t("appointment.noAppointmentsHint")}
                 </p>
                 <button
                   onClick={() => setActiveTab("doctors")}
                   className="rounded-lg bg-primary px-6 py-2.5 text-body font-semibold text-white"
                 >
-                  Найти врача
+                  {t("appointment.findDoctor")}
                 </button>
               </div>
             ) : (
@@ -364,9 +367,9 @@ export default function AppointmentPage() {
                       </div>
                       <div className="mt-1 flex flex-wrap gap-1.5">
                         {appt.status === "confirmed" ? (
-                          <Badge variant="green">Подтверждено</Badge>
+                          <Badge variant="green">{tc("status.confirmed")}</Badge>
                         ) : (
-                          <Badge variant="amber">Ожидание</Badge>
+                          <Badge variant="amber">{tc("status.pending")}</Badge>
                         )}
                         <Badge variant="teal">{appt.doctor.clinic}</Badge>
                       </div>
@@ -376,13 +379,13 @@ export default function AppointmentPage() {
                         onClick={() => setDetailAppt(appt)}
                         className="rounded-lg border border-teal-200 bg-card px-3.5 py-1.5 text-label font-medium text-primary transition-all hover:bg-teal-50"
                       >
-                        Подробнее
+                        {tc("moreDetails")}
                       </button>
                       <button
                         onClick={() => handleCancelAppt(appt.id)}
                         className="rounded-lg border border-red-200 bg-card px-3.5 py-1.5 text-label font-medium text-red-600 transition-all hover:bg-red-50"
                       >
-                        Отменить
+                        {tc("cancel")}
                       </button>
                     </div>
                   </div>
@@ -410,25 +413,25 @@ export default function AppointmentPage() {
             </div>
             <div className="mb-4 space-y-2 rounded-lg bg-background p-4 text-label">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Клиника:</span>
+                <span className="text-muted-foreground">{t("appointment.clinic")}</span>
                 <span className="font-semibold text-foreground">{detailAppt.doctor.clinic}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Дата:</span>
+                <span className="text-muted-foreground">{tc("date")}</span>
                 <span className="font-semibold text-foreground">{detailAppt.date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Время:</span>
+                <span className="text-muted-foreground">{t("appointment.time")}</span>
                 <span className="font-semibold text-foreground">{detailAppt.time}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Статус:</span>
+                <span className="text-muted-foreground">{tc("status")}</span>
                 <Badge variant={detailAppt.status === "confirmed" ? "green" : "amber"}>
-                  {detailAppt.status === "confirmed" ? "Подтверждено" : "Ожидание"}
+                  {detailAppt.status === "confirmed" ? tc("status.confirmed") : tc("status.pending")}
                 </Badge>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Стоимость:</span>
+                <span className="text-muted-foreground">{t("appointment.price")}</span>
                 <span className="font-semibold text-foreground">{detailAppt.doctor.price}</span>
               </div>
             </div>
@@ -437,13 +440,13 @@ export default function AppointmentPage() {
                 onClick={() => handleCancelAppt(detailAppt.id)}
                 className="flex-1 rounded-lg border border-red-200 bg-card px-4 py-2.5 text-label font-medium text-red-600 transition-all hover:bg-red-50"
               >
-                Отменить запись
+                {t("appointment.cancelBooking")}
               </button>
               <button
                 onClick={() => setDetailAppt(null)}
                 className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-label font-semibold text-white transition-all hover:opacity-90"
               >
-                Закрыть
+                {tc("close")}
               </button>
             </div>
           </div>
@@ -475,7 +478,7 @@ export default function AppointmentPage() {
               {/* Step 1: Calendar */}
               {!selectedDate && (
                 <div>
-                  <div className="mb-3 text-body font-bold text-foreground">Выберите дату</div>
+                  <div className="mb-3 text-body font-bold text-foreground">{t("appointment.selectDate")}</div>
                   <CalendarGrid
                     selectedDate={selectedDate}
                     onSelectDate={handleSelectDate}
@@ -487,10 +490,10 @@ export default function AppointmentPage() {
               {selectedDate && !selectedSlot && (
                 <div>
                   <div className="mb-3 text-body font-bold text-foreground">
-                    Выберите время — {formatDate(selectedDate)}
+                    {t("appointment.selectTime", {date: formatDate(selectedDate)})}
                   </div>
                   <div className="mb-2 text-label font-semibold text-muted-foreground">
-                    Доступное время
+                    {t("appointment.availableSlots")}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {TIME_SLOTS.map((time) => {
@@ -518,7 +521,7 @@ export default function AppointmentPage() {
                     onClick={() => setSelectedDate(null)}
                     className="mt-4 text-label font-medium text-muted-foreground hover:text-foreground"
                   >
-                    ← Назад к выбору даты
+                    {t("appointment.backToDate")}
                   </button>
                 </div>
               )}
@@ -526,28 +529,28 @@ export default function AppointmentPage() {
               {/* Step 3: Booking Form */}
               {selectedDate && selectedSlot && (
                 <div>
-                  <div className="mb-4 text-body font-bold text-foreground">Подтверждение записи</div>
+                  <div className="mb-4 text-body font-bold text-foreground">{t("appointment.bookingConfirmation")}</div>
 
                   <div className="mb-4 rounded-lg border border-teal-200 bg-teal-50 p-3 md:p-4">
                     <div className="space-y-1.5 text-label">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Врач:</span>
+                        <span className="text-muted-foreground">{t("appointment.doctor")}</span>
                         <span className="font-semibold text-foreground">{bookingDoctor.name}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Специализация:</span>
+                        <span className="text-muted-foreground">{t("appointment.specialty")}</span>
                         <span className="font-semibold text-foreground">{bookingDoctor.specialty}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Дата:</span>
+                        <span className="text-muted-foreground">{tc("date")}</span>
                         <span className="font-semibold text-foreground">{formatDate(selectedDate)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Время:</span>
+                        <span className="text-muted-foreground">{t("appointment.time")}</span>
                         <span className="font-semibold text-foreground">{selectedSlot}</span>
                       </div>
                       <div className="flex justify-between border-t border-teal-200 pt-1.5">
-                        <span className="text-muted-foreground">Стоимость:</span>
+                <span className="text-muted-foreground">{t("appointment.price")}</span>
                         <span className="font-semibold text-foreground">{bookingDoctor.price}</span>
                       </div>
                     </div>
@@ -556,11 +559,11 @@ export default function AppointmentPage() {
                   <form ref={formRef} onSubmit={(e) => e.preventDefault()} noValidate>
                     <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                       <div className="flex flex-col gap-1">
-                        <label className="text-label font-medium text-muted-foreground">ФИО пациента</label>
+                        <label className="text-label font-medium text-muted-foreground">{t("appointment.patientFullName")}</label>
                         <input type="text" value="Асель Мухамеджанова" readOnly className="rounded-lg border border-border bg-background px-3 py-2.5 text-body text-foreground" />
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-label font-medium text-muted-foreground">Телефон</label>
+                        <label className="text-label font-medium text-muted-foreground">{t("appointment.phone")}</label>
                         <input
                           type="tel"
                           name={FORM_FIELDS.PHONE}
@@ -570,11 +573,11 @@ export default function AppointmentPage() {
                         {formErrors.phone && <span className="text-micro font-medium text-red-500">{formErrors.phone}</span>}
                       </div>
                       <div className="flex flex-col gap-1">
-                        <label className="text-label font-medium text-muted-foreground">Тип приёма</label>
+                        <label className="text-label font-medium text-muted-foreground">{t("appointment.visitType")}</label>
                         <select className="rounded-lg border border-border bg-card px-3 py-2.5 text-body text-foreground focus:border-primary focus:outline-none">
-                          <option>Первичный приём</option>
-                          <option>Повторный приём</option>
-                          <option>Консультация</option>
+                          <option>{t("appointment.visitTypes.initial")}</option>
+                          <option>{t("appointment.visitTypes.followUp")}</option>
+                          <option>{t("appointment.visitTypes.consultation")}</option>
                         </select>
                       </div>
                       <div className="flex flex-col gap-1">
@@ -583,10 +586,10 @@ export default function AppointmentPage() {
                       </div>
                     </div>
                     <div className="mb-4 flex flex-col gap-1">
-                      <label className="text-label font-medium text-muted-foreground">Жалобы / причина визита</label>
+                        <label className="text-label font-medium text-muted-foreground">{t("appointment.complaints")}</label>
                       <textarea
                         name={FORM_FIELDS.COMPLAINTS}
-                        placeholder="Опишите симптомы..."
+                        placeholder={t("appointment.complaintsPlaceholder")}
                         className={`min-h-[72px] rounded-lg border px-3 py-2.5 text-body text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary ${formErrors.complaints ? "border-red-400 bg-card" : "border-border bg-card"}`}
                       />
                       {formErrors.complaints && <span className="text-micro font-medium text-red-500">{formErrors.complaints}</span>}
@@ -599,14 +602,14 @@ export default function AppointmentPage() {
                       onClick={() => setSelectedSlot(null)}
                       className="rounded-lg border border-border bg-card px-5 md:px-6 py-2.5 text-body font-medium text-foreground transition-all hover:border-primary hover:text-primary"
                     >
-                      Назад
+                      {tc("back")}
                     </button>
                     <button
                       onClick={handleConfirmBooking}
                       disabled={isSubmitting}
                       className="rounded-lg bg-primary px-6 md:px-7 py-2.5 text-body font-semibold text-white transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isSubmitting ? "Загрузка..." : "Подтвердить запись"}
+                      {isSubmitting ? tc("loading") : t("appointment.confirmBooking")}
                     </button>
                   </div>
                 </div>
@@ -624,36 +627,36 @@ export default function AppointmentPage() {
               <Check className="h-8 w-8 stroke-green-700 stroke-[2.5]" />
             </div>
             <div className="mb-2 text-h3 font-extrabold text-foreground">
-              Запись подтверждена!
+              {t("appointment.bookingConfirmed")}
             </div>
             <p className="mb-6 text-body text-muted-foreground">
-              Вы записаны на приём. Мы пришлём напоминание за день до визита.
+              {t("appointment.reminderNote")}
             </p>
             <div className="mb-6 space-y-1.5 rounded-lg bg-background p-4 text-left text-label">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Врач:</span>
+                <span className="text-muted-foreground">{t("appointment.doctor")}</span>
                 <span className="font-semibold text-foreground">
                   {confirmedBooking.doctor.name}, {confirmedBooking.doctor.specialty}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Дата:</span>
+                <span className="text-muted-foreground">{tc("date")}</span>
                 <span className="font-semibold text-foreground">{confirmedBooking.date}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Время:</span>
+                <span className="text-muted-foreground">{t("appointment.time")}</span>
                 <span className="font-semibold text-foreground">{confirmedBooking.time}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Статус:</span>
-                <Badge variant="amber">Ожидание подтверждения</Badge>
+                <span className="text-muted-foreground">{tc("status")}</span>
+                <Badge variant="amber">{tc("status.pendingConfirmation")}</Badge>
               </div>
             </div>
             <button
               onClick={handleCloseSuccess}
               className="w-full rounded-lg bg-primary px-6 py-3 text-body font-semibold text-white"
             >
-              Перейти к моим записям
+              {t("appointment.goToMyAppointments")}
             </button>
           </div>
         </div>

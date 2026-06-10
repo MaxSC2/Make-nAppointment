@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Протокол исследования</title>
+    <title>{{ _("Протокол исследования") }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 20px; }
@@ -27,19 +27,19 @@
 </head>
 <body>
     <div class="container">
-        <div class="nav"><a href="/studies">← К списку исследований</a></div>
+        <div class="nav"><a href="/studies">{{ _("← К списку исследований") }}</a></div>
         <div class="card">
-            <h1>📝 Протокол исследования</h1>
-            <div id="orderMeta" class="meta">⏳ Загрузка…</div>
+            <h1>{{ _("📝 Протокол исследования") }}</h1>
+            <div id="orderMeta" class="meta">{{ _("⏳ Загрузка…") }}</div>
         </div>
         <div class="card">
-            <h3>Заключение</h3>
-            <textarea id="bodyField" placeholder="Описание исследования…"></textarea>
-            <h3>Вывод / рекомендации</h3>
-            <textarea id="impressionField" placeholder="Краткий вывод…" style="min-height:80px;"></textarea>
+            <h3>{{ _("Заключение") }}</h3>
+            <textarea id="bodyField" placeholder="{{ _("Описание исследования…") }}"></textarea>
+            <h3>{{ _("Вывод / рекомендации") }}</h3>
+            <textarea id="impressionField" placeholder="{{ _("Краткий вывод…") }}" style="min-height:80px;"></textarea>
             <div style="margin-top: 16px;">
-                <button class="btn" onclick="save()">💾 Сохранить (черновик)</button>
-                <button class="btn btn-sign" onclick="sign()">✓ Подписать</button>
+                <button class="btn" onclick="save()">{{ _("💾 Сохранить (черновик)") }}</button>
+                <button class="btn btn-sign" onclick="sign()">{{ _("✓ Подписать") }}</button>
             </div>
             <div id="statusBox" style="margin-top: 12px;"></div>
         </div>
@@ -60,18 +60,18 @@
         document.getElementById("orderMeta").innerHTML = `
             <span>Order ID:</span><span>${o.id}</span>
             <span>Study UID:</span><span>${o.study_uid}</span>
-            <span>Модальность:</span><span>${o.modality}</span>
-            <span>Описание:</span><span>${o.study_description || "—"}</span>
-            <span>Направитель:</span><span>${o.referring_physician || "—"}</span>
-            <span>Статус:</span><span>${o.status}</span>
-            <span>Приоритет:</span><span>${o.priority}</span>
+            <span>{{ _("Модальность:") }}</span><span>${o.modality}</span>
+            <span>{{ _("Описание:") }}</span><span>${o.study_description || "—"}</span>
+            <span>{{ _("Направитель:") }}</span><span>${o.referring_physician || "—"}</span>
+            <span>{{ _("Статус:") }}</span><span>${o.status}</span>
+            <span>{{ _("Приоритет:") }}</span><span>${o.priority}</span>
         `;
         const p = await api.get(`/api/orders/${ORDER_ID}/protocol`);
         if (p.body) document.getElementById("bodyField").value = p.body;
         if (p.impression) document.getElementById("impressionField").value = p.impression;
         if (!p.is_draft) {
             document.getElementById("statusBox").innerHTML = `<div class="signed">
-                ✅ Протокол подписан ${p.signed_at ? p.signed_at.substring(0, 16).replace("T", " ") : ""}
+                {{ _("✅ Протокол подписан") }} ${p.signed_at ? p.signed_at.substring(0, 16).replace("T", " ") : ""}
             </div>`;
             document.getElementById("bodyField").disabled = true;
             document.getElementById("impressionField").disabled = true;
@@ -84,11 +84,11 @@
             impression: document.getElementById("impressionField").value,
         });
         if (r.detail) { alert(r.detail); return; }
-        document.getElementById("statusBox").innerHTML = "<span style='color:green'>✓ Сохранено</span>";
+        document.getElementById("statusBox").innerHTML = "<span style='color:green'>{{ _("✓ Сохранено") }}</span>";
     }
 
     async function sign() {
-        if (!confirm("После подписания протокол нельзя редактировать. Продолжить?")) return;
+        if (!confirm("{{ _("После подписания протокол нельзя редактировать. Продолжить?") }}")) return;
         await save();
         const r = await api.post(`/api/orders/${ORDER_ID}/protocol/sign`, {});
         const data = await r.json();

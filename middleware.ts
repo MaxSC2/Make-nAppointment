@@ -22,10 +22,8 @@ const authRoutes = ["/login", "/register"];
 function getRoleFromCookie(request: NextRequest): Role | null {
   const token = request.cookies.get("auth_token")?.value;
   if (!token) return null;
-  // TODO: заменить на верификацию JWT и извлечение роли из payload
   const role = request.cookies.get("role")?.value as Role | undefined;
   if (role && role in roleRoutes) return role;
-  // fallback для старых сессий без роли
   return "patient";
 }
 

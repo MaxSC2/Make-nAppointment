@@ -3,9 +3,11 @@ import { useCabinets } from '../hooks/useQueue'
 import type { TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
 import QueueTable from '../components/QueueTable'
+import { useTranslation } from 'react-i18next'
 
 export default function DoctorPage() {
   const { cabinets } = useCabinets()
+  const { t } = useTranslation()
   const [cabinetCode, setCabinetCode] = useState('1')
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)
@@ -19,11 +21,11 @@ export default function DoctorPage() {
       const data = await queueApi.getTickets(cabinetCode)
       setTickets(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ошибка загрузки')
+      setError(e instanceof Error ? e.message : t('doctor.errorLoading'))
     } finally {
       setLoading(false)
     }
-  }, [cabinetCode])
+  }, [cabinetCode, t])
 
   useEffect(() => {
     refresh()
@@ -38,23 +40,23 @@ export default function DoctorPage() {
       await queueApi.callTicket(ticket.sourceTicketId!)
       await refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ошибка вызова')
+      setError(e instanceof Error ? e.message : t('doctor.errorCall'))
     }
-  }, [refresh])
+  }, [refresh, t])
 
   const handleComplete = useCallback(async (ticket: TicketDetail) => {
     try {
       await queueApi.completeTicket(ticket.sourceTicketId!)
       await refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Ошибка завершения')
+      setError(e instanceof Error ? e.message : t('doctor.errorComplete'))
     }
-  }, [refresh])
+  }, [refresh, t])
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold">Кабинет врача</h2>
+        <h2 className="text-2xl font-semibold">{t('doctor.cabinetTitle')}</h2>
         <div className="flex items-center gap-3">
           <select
             value={cabinetCode}
@@ -69,7 +71,7 @@ export default function DoctorPage() {
             onClick={refresh}
             className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-md text-sm hover:bg-gray-200 transition-colors"
           >
-            {loading ? '...' : 'Обновить'}
+            {loading ? '...' : t('doctor.refresh')}
           </button>
         </div>
       </div>

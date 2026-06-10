@@ -3,9 +3,11 @@ import { useCabinets } from '../hooks/useQueue'
 import type { TicketCreateRequest, TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
 import StatusBadge from '../components/StatusBadge'
+import { useTranslation } from 'react-i18next'
 
 export default function RegistrationPage() {
   const { cabinets } = useCabinets()
+  const { t } = useTranslation()
   const [form, setForm] = useState<TicketCreateRequest>({
     full_name: '',
     policy_number: '',
@@ -27,31 +29,37 @@ export default function RegistrationPage() {
       setResult(ticket)
       setForm({ full_name: '', policy_number: '', cabinet_code: 'CT', phone: '', priority: 'normal' })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка')
+      setError(err instanceof Error ? err.message : t('common.error'))
     } finally {
       setSubmitting(false)
     }
   }
 
+  const priorityOpts = [
+    { v: 'normal' as const, key: 'registration.priorityPlanned', cls: 'border-gray-300 hover:border-blue-400' },
+    { v: 'urgent' as const, key: 'registration.priorityUrgent', cls: 'border-amber-300 hover:border-amber-500' },
+    { v: 'stat' as const, key: 'registration.priorityEmergency', cls: 'border-rose-400 hover:border-rose-600' },
+  ]
+
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">Регистрация пациента</h2>
+      <h2 className="text-2xl font-semibold mb-6">{t('registration.title')}</h2>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ФИО пациента</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.patientName')}</label>
           <input
             type="text"
             required
             value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Иванов Иван Иванович"
+            placeholder={t('registration.patientNamePlaceholder')}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Номер полиса</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.policyNumber')}</label>
           <input
             type="text"
             required
@@ -63,7 +71,7 @@ export default function RegistrationPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Кабинет</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.cabinet')}</label>
           <select
             value={form.cabinet_code}
             onChange={(e) => setForm({ ...form, cabinet_code: e.target.value })}
@@ -78,7 +86,7 @@ export default function RegistrationPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.phone')}</label>
           <input
             type="tel"
             value={form.phone ?? ''}
@@ -88,13 +96,9 @@ export default function RegistrationPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Приоритет</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.priority')}</label>
           <div className="grid grid-cols-3 gap-2">
-            {([
-              { v: 'normal', label: 'Плановый', cls: 'border-gray-300 hover:border-blue-400' },
-              { v: 'urgent', label: 'Срочный', cls: 'border-amber-300 hover:border-amber-500' },
-              { v: 'stat', label: 'Экстренный', cls: 'border-rose-400 hover:border-rose-600' },
-            ] as const).map(opt => (
+            {priorityOpts.map(opt => (
               <button
                 key={opt.v}
                 type="button"
@@ -107,7 +111,7 @@ export default function RegistrationPage() {
                     : `bg-white text-gray-700 ${opt.cls}`
                 }`}
               >
-                {opt.label}
+                {t(opt.key)}
               </button>
             ))}
           </div>
@@ -118,7 +122,7 @@ export default function RegistrationPage() {
           disabled={submitting}
           className="w-full bg-blue-600 text-white py-2 rounded-md text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
         >
-          {submitting ? 'Регистрация...' : 'Зарегистрировать'}
+          {submitting ? t('registration.registering') : t('registration.registerButton')}
         </button>
       </form>
 
@@ -130,12 +134,12 @@ export default function RegistrationPage() {
 
       {result && (
         <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">Пациент зарегистрирован</h3>
+          <h3 className="text-lg font-semibold text-green-800 mb-2">{t('registration.successTitle')}</h3>
           <div className="space-y-1 text-sm text-green-700">
-            <p>Талон: <span className="font-mono font-bold">{result.ticket_number}</span></p>
-            <p>Пациент: {result.patient.full_name}</p>
-            <p>Кабинет: {result.cabinet.name}</p>
-            <p>Статус: <StatusBadge status={result.status} /></p>
+            <p>{t('registration.ticketLabel')} <span className="font-mono font-bold">{result.ticket_number}</span></p>
+            <p>{t('registration.patientLabel')} {result.patient.full_name}</p>
+            <p>{t('registration.cabinetLabel')} {result.cabinet.name}</p>
+            <p>{t('registration.statusLabel')} <StatusBadge status={result.status} /></p>
           </div>
         </div>
       )}

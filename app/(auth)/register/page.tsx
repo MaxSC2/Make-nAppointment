@@ -19,6 +19,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Eye, EyeOff } from "lucide-react";
 import { validateRegisterForm, type ValidationErrors } from "@/lib/validation";
 import { FORM_FIELDS } from "@/lib/formConstants";
@@ -31,6 +32,8 @@ function setAuthCookie() {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tc = useTranslations("common");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -92,8 +95,8 @@ export default function RegisterPage() {
         </Link>
 
         <div className="rounded-xl border border-border bg-card p-5 md:p-8">
-          <h1 className="mb-1 text-h2 font-extrabold text-foreground">Регистрация</h1>
-          <p className="mb-6 text-body text-muted-foreground">Создайте аккаунт для доступа к медицинским услугам</p>
+          <h1 className="mb-1 text-h2 font-extrabold text-foreground">{t("registerTitle")}</h1>
+          <p className="mb-6 text-body text-muted-foreground">{t("registerSubtitle")}</p>
 
           <form className="flex flex-col gap-5" onSubmit={handleRegister} noValidate>
             {serverError && (
@@ -104,39 +107,40 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="flex flex-col gap-1">
-                <label className="text-label font-medium text-muted-foreground">Фамилия</label>
+                <label className="text-label font-medium text-muted-foreground">{t("registerSurname")}</label>
                 <input type="text" name={FORM_FIELDS.SURNAME} placeholder="Мухамеджанова" className={inputClass("surname")} />
 
+                <label className="text-label font-medium text-muted-foreground">{t("registerName")}</label>
                 <input type="text" name={FORM_FIELDS.NAME} placeholder="Асель" className={inputClass("name")} />
                 <ErrorMsg field="name" />
               </div>
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">ИИН</label>
+              <label className="text-label font-medium text-muted-foreground">{t("iin")}</label>
               <input type="text" name={FORM_FIELDS.IIN} placeholder="920512450123" maxLength={12} className={inputClass("iin")} />
               <ErrorMsg field="iin" />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">Номер телефона</label>
+              <label className="text-label font-medium text-muted-foreground">{t("registerPhone")}</label>
               <input type="tel" name={FORM_FIELDS.PHONE} placeholder="+7 701 234 56 78" className={inputClass("phone")} />
               <ErrorMsg field="phone" />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">Email</label>
+              <label className="text-label font-medium text-muted-foreground">{t("email")}</label>
               <input type="email" name={FORM_FIELDS.EMAIL} placeholder="example@mail.kz" className={inputClass("email")} />
               <ErrorMsg field="email" />
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-label font-medium text-muted-foreground">Пароль</label>
+              <label className="text-label font-medium text-muted-foreground">{t("password")}</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   name={FORM_FIELDS.PASSWORD}
-                  placeholder="Минимум 8 символов"
+                  placeholder={t("registerPasswordPlaceholder")}
                   className={`${inputClass("password")} pr-10`}
                 />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -150,23 +154,23 @@ export default function RegisterPage() {
               <label className="flex items-start gap-2 text-label text-muted-foreground">
                 <input type="checkbox" name={FORM_FIELDS.ACCEPTED} className={`mt-0.5 rounded border-border text-primary focus:ring-primary ${errors.accepted ? "border-red-400" : ""}`} />
                 <span>
-                  Я принимаю{' '}
-                  <span className="cursor-not-allowed font-medium text-muted-foreground">условия использования</span>
-                  {' '}и{' '}
-                  <span className="cursor-not-allowed font-medium text-muted-foreground">политику конфиденциальности</span>
+                  {t("iAccept")}{' '}
+                  <span className="cursor-not-allowed font-medium text-muted-foreground">{t("termsOfUse")}</span>
+                  {' '}{tc("and")}{' '}
+                  <span className="cursor-not-allowed font-medium text-muted-foreground">{t("privacyPolicy")}</span>
                 </span>
               </label>
               <ErrorMsg field="accepted" />
             </div>
 
             <button type="submit" className="w-full rounded-lg bg-primary py-2.5 text-body font-semibold text-white transition-opacity hover:opacity-90">
-              Создать аккаунт
+              {t("registerSubmit")}
             </button>
           </form>
 
           <p className="mt-6 text-center text-label text-muted-foreground">
-            Уже есть аккаунт?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:underline">Войти</Link>
+            {t("hasAccount")}{' '}
+            <Link href="/login" className="font-semibold text-primary hover:underline">{t("loginLinkText")}</Link>
           </p>
         </div>
       </div>

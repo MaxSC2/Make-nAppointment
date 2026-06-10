@@ -6,13 +6,7 @@ import { Calendar, FlaskConical, FileText, Pill, ChevronRight } from "lucide-rea
 import { Header, MobileHeader } from "@/components/layout/Header";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Badge } from "@/components/ui/Badge";
-
-const quickActions = [
-  { icon: Calendar, label: "Запись к врачу", desc: "16 окт, 10:00", href: "/appointment", color: "text-primary" },
-  { icon: FlaskConical, label: "Лаборатория", desc: "Анализ готов", href: "/laboratory", color: "text-green-600" },
-  { icon: FileText, label: "Моя карта (ЭМК)", desc: "Обновлено 14 окт", href: "/emk", color: "text-blue-600" },
-  { icon: Pill, label: "Назначения", desc: "3 активных", href: "/emk/prescriptions", color: "text-amber-600" },
-];
+import { useTranslations } from "next-intl";
 
 const upcomingAppts = [
   {
@@ -40,6 +34,14 @@ const labResults = [
 ];
 
 export default function DashboardPage() {
+  const t = useTranslations("patient");
+  const tc = useTranslations("common");
+  const quickActions = [
+    { icon: Calendar, label: t("dashboard.bookAppointment"), desc: "16 окт, 10:00", href: "/appointment", color: "text-primary" },
+    { icon: FlaskConical, label: t("laboratory.title"), desc: "Анализ готов", href: "/laboratory", color: "text-green-600" },
+    { icon: FileText, label: t("dashboard.myCard"), desc: "Обновлено 14 окт", href: "/emk", color: "text-blue-600" },
+    { icon: Pill, label: t("dashboard.prescriptions"), desc: "3 активных", href: "/emk/prescriptions", color: "text-amber-600" },
+  ];
   return (
     <div className="min-h-screen bg-background pb-20 pt-14 md:pb-0 md:pt-0">
       <Header />
@@ -49,10 +51,10 @@ export default function DashboardPage() {
         {/* Hero Banner */}
         <div className="relative mb-6 overflow-hidden rounded-2xl bg-primary px-6 py-9 text-white md:px-10 md:py-9">
           <div className="mb-2 text-h2 font-extrabold">
-            Добрый день, Асель!
+            {t("dashboard.greeting", {name: "Асель"})}
           </div>
           <p className="mb-6 text-body text-white/85">
-            У вас запись к терапевту через 2 дня. Не забудьте взять анализы.
+            {t("dashboard.reminder")}
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -60,13 +62,13 @@ export default function DashboardPage() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-body font-semibold text-primary transition-opacity hover:opacity-90"
             >
               <Calendar className="h-4 w-4" />
-              Записаться к врачу
+              {t("dashboard.bookAppointment")}
             </Link>
             <Link
               href="/emk"
               className="inline-flex items-center rounded-lg border border-white/30 bg-white/15 px-5 py-2.5 text-body font-medium text-white transition-colors hover:bg-white/25"
             >
-              Моя карта
+              {t("dashboard.myCard")}
             </Link>
           </div>
         </div>
@@ -91,9 +93,9 @@ export default function DashboardPage() {
           {/* Upcoming Appointments */}
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-h3 font-bold text-foreground">Ближайшие записи</div>
+              <div className="text-h3 font-bold text-foreground">{t("dashboard.upcomingAppointments")}</div>
               <Link href="/appointment" className="text-label font-medium text-primary hover:underline">
-                Все записи
+                {t("dashboard.allAppointments")}
               </Link>
             </div>
             <div className="flex flex-col gap-4">
@@ -108,7 +110,7 @@ export default function DashboardPage() {
                       {appt.spec} · {appt.date}
                     </div>
                     <Badge variant={appt.status === "confirmed" ? "green" : "amber"}>
-                      {appt.status === "confirmed" ? "Подтверждено" : "Ожидание"}
+                      {appt.status === "confirmed" ? tc("status.confirmed") : tc("status.pending")}
                     </Badge>
                   </div>
                 </div>
@@ -119,9 +121,9 @@ export default function DashboardPage() {
           {/* Lab Results */}
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="mb-4 flex items-center justify-between">
-              <div className="text-h3 font-bold text-foreground">Результаты анализов</div>
+              <div className="text-h3 font-bold text-foreground">{t("dashboard.labResults")}</div>
               <Link href="/laboratory" className="text-label font-medium text-primary hover:underline">
-                Все
+                {tc("all")}
               </Link>
             </div>
             <div className="flex flex-col gap-3">

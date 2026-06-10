@@ -1,23 +1,25 @@
 "use client";
 
 import { Phone, Mail, MapPin } from "lucide-react";
-
-const footerLinks = [
-  {
-    title: "Услуги",
-    items: ["Запись к врачу", "Электронная карта", "Лаборатория", "Консультации"],
-  },
-  {
-    title: "Контакты",
-    items: ["+7 (7152) 50-00-00", "info@medplatform.kz", "г. Петропавловск"],
-  },
-  {
-    title: "Поддержка",
-    items: ["Центр помощи", "FAQ", "Обратная связь", "Политика конфиденциальности"],
-  },
-];
+import { useTranslations } from "next-intl";
 
 export function LandingFooter() {
+  const t = useTranslations("landing");
+
+  const footerLinks = [
+    {
+      title: t("footer.services.title"),
+      items: [t("footer.services.booking"), t("footer.services.emk"), t("footer.services.laboratory"), t("footer.services.consultations")],
+    },
+    {
+      title: t("footer.contacts.title"),
+      items: [t("footer.contacts.phone"), t("footer.contacts.email"), t("footer.contacts.address")],
+    },
+    {
+      title: t("footer.support.title"),
+      items: [t("footer.support.helpCenter"), t("footer.support.faq"), t("footer.support.feedback"), t("footer.support.privacy")],
+    },
+  ];
   return (
     <footer id="footer" className="border-t border-gray-100 bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-12 md:px-8 md:py-16">
@@ -31,9 +33,7 @@ export function LandingFooter() {
               MedPlatform
             </div>
             <p className="text-sm leading-relaxed text-gray-500">
-              MedPlatform — современная медицинская платформа, созданная для удобного взаимодействия пациентов и врачей.
-              Сервис предоставляет возможность записи к врачу, просмотра электронной медицинской карты и результатов
-              лабораторных исследований в одном приложении.
+              {t("footer.about")}
             </p>
           </div>
 
@@ -56,16 +56,16 @@ export function LandingFooter() {
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-6 md:flex-row">
           <div className="flex items-center gap-4 text-xs text-gray-400">
             <span className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5" /> +7 (7152) 50-00-00
+              <Phone className="h-3.5 w-3.5" /> {t("footer.contacts.phone")}
             </span>
             <span className="flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> info@medplatform.kz
+              <Mail className="h-3.5 w-3.5" /> {t("footer.contacts.email")}
             </span>
             <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5" /> г. Петропавловск
+              <MapPin className="h-3.5 w-3.5" /> {t("footer.contacts.address")}
             </span>
           </div>
-          <span className="text-xs text-gray-400">© 2026 MedPlatform</span>
+          <span className="text-xs text-gray-400">{t("footer.copyright")}</span>
         </div>
       </div>
     </footer>

@@ -1,0 +1,408 @@
+{
+  "layout": {
+    "title": "MedPlatform — Дәрігерге жазылу",
+    "description": "Медициналық ақпараттық жүйе"
+  },
+  "common": {
+    "loading": "Жүктелуде...",
+    "error": "Қате",
+    "save": "Сақтау",
+    "cancel": "Болдырмау",
+    "delete": "Жою",
+    "edit": "Өңдеу",
+    "search": "Іздеу",
+    "back": "Артқа",
+    "next": "Келесі",
+    "submit": "Жіберу",
+    "confirm": "Растау",
+    "close": "Жабу",
+    "noData": "Деректер жоқ",
+    "retry": "Қайталау",
+    "all": "Барлығы",
+    "status": {
+      "confirmed": "Расталды",
+      "pending": "Күтуде",
+      "pendingConfirmation": "Растауды күтуде",
+      "active": "Белсенді",
+      "completed": "Аяқталды"
+    },
+    "date": "Күні",
+    "actions": "Әрекеттер",
+    "name": "Атауы",
+    "description": "Сипаттамасы",
+    "notFound": "Табылмады",
+    "and": "және",
+    "active": "Белсенді",
+    "completed": "Аяқталған",
+    "comingSoon": "Функция әзірленуде",
+    "allSpecialties": "Барлық мамандықтар",
+    "anyStatus": "Кез келген күй",
+    "tryChangeFilters": "Сүзгілерді өзгертіп көріңіз",
+    "moreDetails": "Толығырақ",
+    "labStatus": {
+      "ready": "Дайын",
+      "taken": "Алынды",
+      "ordered": "Тағайындалды",
+      "inProgress": "Орындалуда"
+    },
+    "specialties": {
+      "therapist": "Терапевт",
+      "cardiologist": "Кардиолог",
+      "neurologist": "Невролог",
+      "dermatologist": "Дерматолог",
+      "pediatrician": "Педиатр",
+      "surgeon": "Хирург"
+    },
+    "freeOms": "Тегін (ММС)",
+    "password": "Құпия сөз",
+    "allYears": "Барлық жылдар"
+  },
+  "auth": {
+    "login": "Кіру",
+    "loginTitle": "Аккаунтыңызға кіріңіз",
+    "loginSubtitle": "Аккаунтыңызға кіріңіз",
+    "username": "Пайдаланушы аты",
+    "password": "Құпия сөз",
+    "rememberMe": "Мені есте сақтау",
+    "forgotPassword": "Құпия сөзді ұмыттыңыз ба?",
+    "forgotPasswordAlert": "Құпия сөзді қалпына келтіру уақытша қолжетімсіз",
+    "loggingIn": "Кіру...",
+    "noAccount": "Аккаунтыңыз жоқ па?",
+    "register": "Тіркелу",
+    "registerTitle": "Тіркелу",
+    "registerSubtitle": "Медициналық қызметтерге қол жеткізу үшін аккаунт жасаңыз",
+    "lastName": "Тегі",
+    "name": "Аты",
+    "iin": "ЖСН",
+    "phone": "Телефон нөмірі",
+    "email": "Email",
+    "createAccount": "Аккаунт жасау",
+    "haveAccount": "Аккаунтыңыз бар ма?",
+    "profile": "Профиль",
+    "settings": "Баптаулар",
+    "logout": "Шығу",
+    "rolePatient": "Пациент",
+    "roleDoctor": "Дәрігер",
+    "roleAdmin": "Әкімші",
+    "roleLabTechnician": "Зертханашы",
+    "loginError": "Кіру кезінде қате орын алды",
+    "iinOrEmail": "ЖСН немесе Email",
+    "iinOrEmailPlaceholder": "ЖСН немесе email енгізіңіз",
+    "submit": "Кіру",
+    "submitting": "Кіру…",
+    "success": "Сәтті кіру",
+    "registerLink": "Тіркелу",
+    "loginLink": "Кіру",
+    "registerSurname": "Тегі",
+    "registerName": "Аты",
+    "registerIin": "ЖСН",
+    "registerPhone": "Телефон нөмірі",
+    "registerEmail": "Email",
+    "registerPassword": "Құпия сөз",
+    "registerSurnamePlaceholder": "Мұхамеджанова",
+    "registerNamePlaceholder": "Әсел",
+    "registerIinPlaceholder": "920512450123",
+    "registerPhonePlaceholder": "+7 701 234 56 78",
+    "registerEmailPlaceholder": "example@mail.kz",
+    "registerPasswordPlaceholder": "Кемінде 8 символ",
+    "iAccept": "Мен қабылдаймын",
+    "termsOfUse": "пайдалану шарттары",
+    "privacyPolicy": "құпиялылық саясатын",
+    "registerSubmit": "Аккаунт жасау",
+    "hasAccount": "Аккаунтыңыз бар ма?",
+    "loginLinkText": "Кіру"
+  },
+  "patient": {
+    "dashboard": {
+      "greeting": "Қайырлы күн, {name}!",
+      "reminder": "Сіздің {doctor} дәрігеріне {date} күні {time} қабылдауға жазылуыңыз бар",
+      "bookAppointment": "Дәрігерге жазылу",
+      "myCard": "Менің картам",
+      "myEmk": "Менің картам (ЭМК)",
+      "laboratory": "Зертхана",
+      "prescriptions": "Тағайындаулар",
+      "upcomingAppointments": "Жақындағы жазбалар",
+      "allAppointments": "Барлық жазбалар",
+      "confirmed": "Расталды",
+      "pending": "Күтуде",
+      "labResults": "Талдау нәтижелері",
+      "viewAll": "Барлығы",
+      "bookButton": "Дәрігерге жазылу",
+      "emkButton": "Менің картам"
+    },
+    "appointment": {
+      "title": "Дәрігерге жазылу",
+      "subtitle": "Маманды және ыңғайлы уақытты таңдаңыз",
+      "myAppointments": "Менің жазбаларым",
+      "specialist": "Мамандығы",
+      "chooseDoctor": "Дәрігерді таңдау",
+      "chooseDate": "Күнді таңдау",
+      "chooseTime": "Уақытты таңдау",
+      "doctor": "Дәрігер",
+      "date": "Күні",
+      "time": "Уақыты",
+      "tabDoctors": "Дәрігерлер",
+      "tabMyAppointments": "Менің жазбаларым",
+      "doctorsNotFound": "Дәрігерлер табылмады",
+      "noAppointments": "Жазбалар әзірше жоқ",
+      "noAppointmentsHint": "«Дәрігерлер» қойындысында дәрігерге жазылыңыз",
+      "findDoctor": "Дәрігерді табу",
+      "clinic": "Емхана:",
+      "price": "Құны:",
+      "specialty": "Мамандығы:",
+      "cancelBooking": "Жазбаны болдырмау",
+      "selectDate": "Күнді таңдаңыз",
+      "selectTime": "Уақытты таңдаңыз — {date}",
+      "availableSlots": "Қолжетімді уақыт",
+      "backToDate": "← Күн таңдауға оралу",
+      "bookingConfirmation": "Жазбаны растау",
+      "patientFullName": "Пациенттің АТӘ",
+      "phone": "Телефон",
+      "visitType": "Қабылдау түрі",
+      "insurancePolicy": "ММС полисі",
+      "complaints": "Шағымдар / келу себебі",
+      "complaintsPlaceholder": "Симптомдарды сипаттаңыз...",
+      "confirmBooking": "Жазбаны растау",
+      "bookingConfirmed": "Жазба расталды!",
+      "reminderNote": "Біз қабылдауға бір күн қалғанда еске саламыз.",
+      "goToMyAppointments": "Менің жазбаларыма өту",
+      "visitTypes": {
+        "initial": "Алғашқы қабылдау",
+        "followUp": "Қайталама қабылдау",
+        "consultation": "Кеңес"
+      }
+    },
+    "emk": {
+      "title": "Электрондық медициналық карта",
+      "visits": {
+        "title": "Соңғы қабылдаулар",
+        "pageTitle": "Қабылдау тарихы",
+        "viewAll": "Барлық қабылдаулар",
+        "searchPlaceholder": "Дәрігер немесе диагноз бойынша іздеу...",
+        "notFound": "Қабылдаулар табылмады",
+        "prescriptionsLink": "Тағайындаулар ({count})"
+      },
+      "visitHistory": "Қабылдау тарихы",
+      "visitHistoryShort": "Қабылдаулар",
+      "prescriptions": "Тағайындаулар",
+      "prescriptionsShort": "Тағайындаулар",
+      "labResults": {
+        "title": "Талдау нәтижелері",
+        "empty": "Дайын нәтижелер жоқ",
+        "tableName": "Атауы",
+        "tableValue": "Мәні",
+        "tableReference": "Референс",
+        "tableDoctor": "Дәрігер",
+        "tableDate": "Күні"
+      },
+      "allergy": "Аллергиялар",
+      "bloodGroup": "Қан тобы",
+      "bloodType": "Үшінші оң (B Rh+)",
+      "chronicDiseases": "Созылмалы аурулар",
+      "patientCard": "Пациент картасы",
+      "patientCardShort": "Карта",
+      "basicInfo": {
+        "title": "Негізгі ақпарат",
+        "fullName": "АТӘ",
+        "iin": "ЖСН",
+        "dateOfBirth": "Туған күні",
+        "gender": "Жынысы",
+        "phone": "Телефон",
+        "insurance": "ММС полисі",
+        "address": "Мекен-жайы"
+      },
+      "conditions": {
+        "title": "Созылмалы аурулар және аллергиялар",
+        "noChronic": "Созылмалы аурулар жоқ",
+        "allergyPenicillin": "Аллергия: Пенициллин",
+        "allergyPollen": "Аллергия: Тозаң"
+      },
+      "documents": {
+        "title": "Тіркелген құжаттар"
+      },
+      "prescriptionsPage": {
+        "title": "Тағайындаулар мен рецептілер",
+        "dosage": "Дозасы:",
+        "duration": "Ұзақтығы:",
+        "prescribedBy": "Тағайындаған:",
+        "courseProgress": "Курс барысы",
+        "referrals": "Талдауға жолдамалар",
+        "noReferrals": "Белсенді жолдамалар жоқ",
+        "noReferralsHint": "Дәрігер әлі талдау тағайындаған жоқ"
+      }
+    },
+    "laboratory": {
+      "title": "Зертханалық зерттеулер",
+      "subtitle": "Талдау нәтижелері мен жолдамалар",
+      "testName": "Талдау атауы",
+      "status": "Күйі",
+      "date": "Күні",
+      "results": "Талдау нәтижелері онлайн",
+      "appointed": "Тағайындалды",
+      "taken": "Алынды",
+      "ready": "Дайын",
+      "noResults": "Нәтижелер әлі жоқ",
+      "tabAll": "Барлық талдаулар",
+      "tabReferrals": "Жолдамалар",
+      "searchPlaceholder": "Талдау атауы бойынша іздеу...",
+      "orderedBy": "Тағайындаған: {doctorName}",
+      "orderedDate": "Тапсырылған: {date}",
+      "readyDate": "Дайын: {date}",
+      "noTests": "Талдаулар табылмады",
+      "noTestsHint": "Іздеу сұранысын өзгертіп көріңіз",
+      "orderedByClinic": "Тағайындаған: {doctor} · {clinic}",
+      "used": "Пайдаланылды",
+      "pendingSubmission": "Тапсыруды күтуде",
+      "noReferrals": "Жолдамалар жоқ",
+      "noReferralsHint": "Дәрігер әлі талдау тағайындаған жоқ"
+    }
+  },
+  "doctor": {
+    "dashboard": {
+      "title": "Дәрігер панелі",
+      "todayAppointments": "Бүгінгі қабылдаулар",
+      "patients": "Пациенттер",
+      "waiting": "Күтуде",
+      "appointments": "Тағайындаулар"
+    },
+    "patients": "Пациенттер",
+    "schedule": "Кесте",
+    "appointments": "Дәрігерге жазылулар",
+    "orderTest": "Order a test",
+    "selectTestType": "Select test type"
+  },
+  "admin": {
+    "users": "Пайдаланушылар",
+    "doctors": "Дәрігерлер",
+    "clinics": "Емханалар",
+    "audit": "Аудит",
+    "dashboard": "Әкімші панелі",
+    "all": "Барлығы",
+    "patient": "Пациент",
+    "doctor": "Дәрігер",
+    "admin": "Әкімші"
+  },
+  "header": {
+    "appointment": "Дәрігерге жазылу",
+    "laboratory": "Зертхана",
+    "myCard": "Менің картам",
+    "notifications": "Хабарландырулар",
+    "notificationsAll": "Барлық хабарландырулар",
+    "home": "Басты бет",
+    "services": "Қызметтер",
+    "contacts": "Байланыс",
+    "about": "Біз туралы"
+  },
+  "landing": {
+    "hero": {
+      "badge": "Жаңа буын медициналық платформа",
+      "title": "Заманауи медициналық платформа",
+      "subtitle": "Дәрігерге жазылу, электрондық медициналық карта және зертханалық зерттеулер бір жерде.",
+      "ctaBook": "Жазылу",
+      "ctaLearnMore": "Көбірек білу",
+      "searchPlaceholder": "Дәрігерді немесе қызметті іздеу...",
+      "online": "● Онлайн",
+      "statsAppointments": "Жазбалар",
+      "statsLabTests": "Талдаулар",
+      "nextAppointment": "Келесі қабылдау",
+      "nextAppointmentDate": "16 қаз, 10:00",
+      "mobileNextAppointment": "Келесі қабылдау: 16 қаз, 10:00"
+    },
+    "features": {
+      "title": "Платформа мүмкіндіктері",
+      "subtitle": "Денсаулығыңызды күтуге қажеттінің бәрі бір қосымшада",
+      "items": {
+        "booking": {
+          "title": "Онлайн жазылу",
+          "desc": "Ыңғайлы уақытты таңдап, қоңыраулар мен кезексіз дәрігерге жазылыңыз."
+        },
+        "emr": {
+          "title": "Электрондық медкарта",
+          "desc": "Ауру тарихы, диагноздар мен тағайындаулар бір жерде — 24/7 қолжетімді."
+        },
+        "lab": {
+          "title": "Зертханалық нәтижелер",
+          "desc": "Талдау нәтижелерін дайын болғаннан кейін бірден онлайн алыңыз."
+        },
+        "security": {
+          "title": "Деректер қауіпсіздігі",
+          "desc": "Медициналық деректеріңіз шифрлаумен және қатаң қол жеткізу протоколдарымен қорғалған."
+        }
+      }
+    },
+    "ehr": {
+      "title": "Электрондық медициналық карта",
+      "subtitle": "Бүкіл медициналық тарихыңыз цифрлық форматта",
+      "bloodType": "Қан тобы",
+      "visitHistory": "Қабылдау тарихы",
+      "prescriptions": "Тағайындаулар",
+      "mockPatientName": "Мұхамеджанова Әсел",
+      "mockBloodType": "B Rh+ (III оң)"
+    },
+    "lab": {
+      "title": "Зертханалық зерттеулер",
+      "subtitle": "Талдау нәтижелері дайын болғаннан кейін бірден онлайн",
+      "tableTestName": "Талдау атауы",
+      "tableStatus": "Күйі",
+      "tableDate": "Күні"
+    },
+    "nav": {
+      "home": "Басты бет",
+      "services": "Қызметтер",
+      "doctors": "Дәрігерлер",
+      "contacts": "Байланыс"
+    },
+    "header": {
+      "login": "Кіру",
+      "register": "Тіркелу"
+    },
+    "footer": {
+      "about": "MedPlatform — пациенттер мен дәрігерлердің ыңғайлы өзара әрекеттесуі үшін жасалған заманауи медициналық платформа. Қызмет дәрігерге жазылуға, электрондық медициналық картаны көруге және зертханалық зерттеу нәтижелерін бір қосымшада алуға мүмкіндік береді.",
+      "copyright": "© 2026 MedPlatform",
+      "services": {
+        "title": "Қызметтер",
+        "booking": "Дәрігерге жазылу",
+        "emk": "Электрондық карта",
+        "laboratory": "Зертхана",
+        "consultations": "Кеңестер"
+      },
+      "contacts": {
+        "title": "Байланыс",
+        "phone": "+7 (7152) 50-00-00",
+        "email": "info@medplatform.kz",
+        "address": "Петропавл қ.",
+        "addressFull": "Петропавл қ., Конституция к-сі 15"
+      },
+      "support": {
+        "title": "Қолдау",
+        "helpCenter": "Көмек орталығы",
+        "faq": "FAQ",
+        "feedback": "Кері байланыс",
+        "privacy": "Құпиялылық саясаты"
+      }
+    }
+  },
+  "days": {
+    "mon": "Дс",
+    "tue": "Сс",
+    "wed": "Ср",
+    "thu": "Бс",
+    "fri": "Жм",
+    "sat": "Сб",
+    "sun": "Жс"
+  },
+  "months": {
+    "january": "қаңтар",
+    "february": "ақпан",
+    "march": "наурыз",
+    "april": "сәуір",
+    "may": "мамыр",
+    "june": "маусым",
+    "july": "шілде",
+    "august": "тамыз",
+    "september": "қыркүйек",
+    "october": "қазан",
+    "november": "қараша",
+    "december": "желтоқсан"
+  }
+}

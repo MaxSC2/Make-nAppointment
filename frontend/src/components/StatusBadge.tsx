@@ -1,32 +1,31 @@
-const STATUS_STYLES: Record<string, string> = {
-  waiting: 'bg-yellow-100 text-yellow-800',
-  in_progress: 'bg-blue-100 text-blue-800',
-  done: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-  scheduled: 'bg-gray-100 text-gray-800',
-  completed: 'bg-green-100 text-green-800',
+import { useTranslation } from 'react-i18next'
+
+const statusMap: Record<string, string> = {
+  waiting: 'statusBadge.waiting',
+  in_progress: 'statusBadge.inProgress',
+  completed: 'statusBadge.completed',
+  cancelled: 'statusBadge.cancelled',
+  planned: 'statusBadge.planned',
+  done: 'statusBadge.done',
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  waiting: 'Ожидание',
-  in_progress: 'В работе',
-  done: 'Завершён',
-  cancelled: 'Отменён',
-  scheduled: 'Запланирован',
-  completed: 'Выполнен',
+const colors: Record<string, string> = {
+  waiting: 'bg-yellow-50 text-yellow-700 ring-yellow-200',
+  in_progress: 'bg-blue-50 text-blue-700 ring-blue-200',
+  completed: 'bg-green-50 text-green-700 ring-green-200',
+  cancelled: 'bg-gray-50 text-gray-500 ring-gray-200',
+  planned: 'bg-purple-50 text-purple-700 ring-purple-200',
+  done: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
 }
 
-interface StatusBadgeProps {
-  status: string
-  className?: string
-}
-
-export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
-  const style = STATUS_STYLES[status] || 'bg-gray-100 text-gray-800'
-  const label = STATUS_LABELS[status] || status
+export default function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation()
+  const key = statusMap[status]
+  const label = key ? t(key) : status
+  const color = colors[status] ?? 'bg-gray-50 text-gray-600 ring-gray-200'
 
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${style} ${className}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${color}`}>
       {label}
     </span>
   )

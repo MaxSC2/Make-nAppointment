@@ -4,8 +4,12 @@ import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
 import { useQuery } from "@/lib/api/hooks";
 import { fetchAdminDoctors } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function AdminDoctorsPage() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
+  const ta = useTranslations("auth");
   const { data: doctors, loading } = useQuery(fetchAdminDoctors);
 
   return (
@@ -14,7 +18,7 @@ export default function AdminDoctorsPage() {
         <Link href="/admin/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Врачи</span>
+        <span className="text-lg font-bold text-foreground">{t("doctors")}</span>
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-8">

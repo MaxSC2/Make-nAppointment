@@ -4,8 +4,11 @@ import Link from "next/link";
 import { ArrowLeft, Search } from "lucide-react";
 import { useQuery } from "@/lib/api/hooks";
 import { fetchAdminAuditLogs } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function AdminAuditPage() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
   const { data: logs, loading } = useQuery(fetchAdminAuditLogs);
 
   return (
@@ -14,7 +17,7 @@ export default function AdminAuditPage() {
         <Link href="/admin/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Журнал аудита</span>
+        <span className="text-lg font-bold text-foreground">{t("audit")}</span>
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-8">

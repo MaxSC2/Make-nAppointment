@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Просмотр DICOM — {{ study_uid }}</title>
+    <title>{{ _("Просмотр DICOM") }} — {{ study_uid }}</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a14; color: #ccc; padding: 16px; }
@@ -26,7 +26,7 @@
 <body>
     <div class="header">
         <h1>🖼 DICOM Viewer — {{ study_uid[:24] }}…</h1>
-        <div class="nav"><a href="/studies">← К списку</a></div>
+        <div class="nav"><a href="/studies">{{ _("← К списку") }}</a></div>
     </div>
 
     <div class="layout">
@@ -34,18 +34,18 @@
             <canvas id="canvas" width="512" height="512"></canvas>
         </div>
         <div class="meta">
-            <h3>📊 Метаданные</h3>
-            <div id="metaBox">⏳ Загрузка…</div>
+            <h3>{{ _("📊 Метаданные") }}</h3>
+            <div id="metaBox">{{ _("⏳ Загрузка…") }}</div>
             <div class="controls">
-                <h3 style="margin-top:16px;">🎛 Окно</h3>
+                <h3 style="margin-top:16px;">{{ _("🎛 Окно") }}</h3>
                 <button onclick="setWindow(400, 40)">CT (400/40)</button>
-                <button onclick="setWindow(1500, -500)">Лёгкие (1500/-500)</button>
-                <button onclick="setWindow(80, 40)">Мозг (80/40)</button>
-                <button onclick="setWindow(350, 50)">Кость (350/50)</button>
-                <h3 style="margin-top:16px;">🔄 Навигация</h3>
-                <button onclick="prevSlice()">← Предыдущий срез</button>
-                <button onclick="nextSlice()">Следующий срез →</button>
-                <p style="color:#888;font-size:11px;margin-top:8px;">Колёсико мыши, ←/→</p>
+                <button onclick="setWindow(1500, -500)">{{ _("Лёгкие (1500/-500)") }}</button>
+                <button onclick="setWindow(80, 40)">{{ _("Мозг (80/40)") }}</button>
+                <button onclick="setWindow(350, 50)">{{ _("Кость (350/50)") }}</button>
+                <h3 style="margin-top:16px;">🔄 {{ _("Навигация") }}</h3>
+                <button onclick="prevSlice()">{{ _("← Предыдущий срез") }}</button>
+                <button onclick="nextSlice()">{{ _("Следующий срез →") }}</button>
+                <p style="color:#888;font-size:11px;margin-top:8px;">{{ _("Колёсико мыши, ←/→") }}</p>
             </div>
         </div>
     </div>
@@ -64,17 +64,16 @@
 
     async function init() {
         try {
-            // Ищем инстансы через /tools/find
             const find = await fetch("/api/orthanc/tools/find", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ Level: "Instance", Query: { StudyInstanceUID: STUDY_UID } }),
             }).then(r => r.json());
-            if (!find.length) { document.getElementById("metaBox").innerHTML = "Исследование не найдено в Orthanc"; return; }
+            if (!find.length) { document.getElementById("metaBox").innerHTML = "{{ _("Исследование не найдено в Orthanc") }}"; return; }
             instances = find;
             await loadSlice(0);
         } catch (e) {
-            document.getElementById("metaBox").innerHTML = "Ошибка: " + e.message;
+            document.getElementById("metaBox").innerHTML = "{{ _("Ошибка:") }} " + e.message;
         }
     }
 
@@ -85,14 +84,13 @@
             const tags = await api.getJson(`instances/${id}/tags?short`);
             const meta = document.getElementById("metaBox");
             meta.innerHTML = `
-                <div class="row"><span>Срез</span><span>${i+1} / ${instances.length}</span></div>
+                <div class="row"><span>{{ _("Срез") }}</span><span>${i+1} / ${instances.length}</span></div>
                 <div class="row"><span>Patient</span><span>${tags.PatientName || "—"}</span></div>
                 <div class="row"><span>PatientID</span><span>${tags.PatientID || "—"}</span></div>
                 <div class="row"><span>Modality</span><span>${tags.Modality || "—"}</span></div>
                 <div class="row"><span>Rows × Cols</span><span>${tags.Rows || "?"}×${tags.Columns || "?"}</span></div>
                 <div class="row"><span>Bits</span><span>${tags.BitsStored || "?"}</span></div>
             `;
-            // Подгружаем PNG preview (если есть) или image-uint8
             const preview = await fetch(`/api/orthanc/instances/${id}/preview`).then(r => {
                 if (!r.ok) throw new Error("no preview");
                 return r.blob();
@@ -108,7 +106,7 @@
             };
             img.src = url;
         } catch (e) {
-            document.getElementById("metaBox").innerHTML = "Ошибка среза: " + e.message;
+            document.getElementById("metaBox").innerHTML = "{{ _("Ошибка среза:") }} " + e.message;
         }
     }
 

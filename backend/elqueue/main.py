@@ -21,6 +21,7 @@ from starlette.templating import _TemplateResponse
 
 from db.config import settings
 from db.error_handlers import register_error_handlers
+from locales import gettext, locale_middleware
 from elqueue.routers import auth as auth_router
 from elqueue.routers import tickets as tickets_router
 
@@ -32,6 +33,7 @@ jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(str(TEMPLATES_DIR)),
     autoescape=True,
 )
+jinja_env.globals["_"] = gettext
 
 
 def render(name: str, context: dict) -> _TemplateResponse:
@@ -69,6 +71,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Locale middleware (чтение NEXT_LOCALE из cookie)
+app.middleware("http")(locale_middleware)
 
 # Глобальные обработчики ошибок с русскими сообщениями
 register_error_handlers(app)

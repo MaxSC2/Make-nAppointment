@@ -4,8 +4,11 @@ import Link from "next/link";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@/lib/api/hooks";
 import { fetchDoctorSchedule } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function DoctorSchedulePage() {
+  const t = useTranslations("doctor");
+  const tc = useTranslations("common");
   const { data, loading } = useQuery(fetchDoctorSchedule);
 
   return (
@@ -14,7 +17,7 @@ export default function DoctorSchedulePage() {
         <Link href="/doctor/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Расписание</span>
+        <span className="text-lg font-bold text-foreground">{t("schedule")}</span>
       </header>
       <div className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
@@ -32,7 +35,7 @@ export default function DoctorSchedulePage() {
         ) : (
           <div className="overflow-hidden rounded-xl border border-border">
             <div className="grid grid-cols-8 border-b border-border bg-muted/30">
-              <div className="border-r border-border px-3 py-3 text-label font-semibold text-muted-foreground">Время</div>
+              <div className="border-r border-border px-3 py-3 text-label font-semibold text-muted-foreground">Time</div>
               {data?.weekDays.map((d) => (
                 <div key={d} className={`border-r border-border px-3 py-3 text-center text-label font-semibold last:border-r-0 ${data.schedule[d] ? "text-primary" : "text-muted-foreground"}`}>{d}</div>
               ))}

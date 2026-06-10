@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 const links = [
-  { label: "Главная", href: "/dashboard", icon: "home" },
-  { label: "Запись", href: "/appointment", icon: "calendar" },
-  { label: "Карта", href: "/emk", icon: "file" },
-  { label: "Анализы", href: "/laboratory", icon: "flask" },
+  { key: "header.home", href: "/dashboard", icon: "home" },
+  { key: "header.appointment", href: "/appointment", icon: "calendar" },
+  { key: "header.myCard", href: "/emk", icon: "file" },
+  { key: "header.laboratory", href: "/laboratory", icon: "flask" },
 ];
 
 function NavIcon({ name, active }: { name: string; active: boolean }) {
@@ -44,6 +45,7 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
 
 export function MobileNav() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border bg-card px-2 md:hidden">
@@ -51,14 +53,14 @@ export function MobileNav() {
         const active = pathname.startsWith(link.href);
         return (
           <Link
-            key={link.label}
+            key={link.key}
             href={link.href}
             className={`flex flex-col items-center gap-0.5 border-none bg-transparent text-micro font-medium ${
               active ? "text-primary" : "text-muted-foreground"
             }`}
           >
             <NavIcon name={link.icon} active={active} />
-            {link.label}
+            {t(link.key)}
           </Link>
         );
       })}

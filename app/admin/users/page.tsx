@@ -5,6 +5,7 @@ import { ArrowLeft, Search, Shield, User, Stethoscope } from "lucide-react";
 import { useQuery } from "@/lib/api/hooks";
 import { fetchAdminUsers } from "@/lib/api";
 import type { AdminUser } from "@/lib/mockData";
+import { useTranslations } from "next-intl";
 
 const roleIcon: Record<AdminUser["role"], typeof Shield> = { Пациент: User, Врач: Stethoscope, Админ: Shield };
 const roleColor: Record<AdminUser["role"], string> = {
@@ -14,6 +15,14 @@ const roleColor: Record<AdminUser["role"], string> = {
 };
 
 export default function AdminUsersPage() {
+  const t = useTranslations("admin");
+  const tc = useTranslations("common");
+  const ta = useTranslations("auth");
+  const roleLabel: Record<string, string> = {
+    Пациент: ta("rolePatient"),
+    Врач: ta("roleDoctor"),
+    Админ: ta("roleAdmin"),
+  };
   const { data: users, loading } = useQuery(fetchAdminUsers);
 
   return (
@@ -22,7 +31,7 @@ export default function AdminUsersPage() {
         <Link href="/admin/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Пользователи</span>
+        <span className="text-lg font-bold text-foreground">{t("users")}</span>
       </header>
 
       <div className="mx-auto max-w-4xl px-6 py-8">
@@ -52,7 +61,7 @@ export default function AdminUsersPage() {
                   <div className="col-span-4 text-body text-muted-foreground">{u.iin}</div>
                   <div className="col-span-3">
                     <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-label font-medium ${roleColor[u.role]}`}>
-                      <Icon className="h-3 w-3" /> {u.role}
+                      <Icon className="h-3 w-3" /> {roleLabel[u.role] || u.role}
                     </span>
                   </div>
                 </div>

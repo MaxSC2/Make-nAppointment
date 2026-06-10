@@ -1,29 +1,31 @@
 "use client";
 
 import { FlaskConical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type LabTest, labTests } from "@/lib/landingData";
 
-const statusStyles: Record<LabTest["status"], string> = {
-  "Назначен": "bg-yellow-100 text-yellow-700",
-  "В процессе": "bg-blue-100 text-blue-700",
-  "Готов": "bg-green-100 text-green-700",
-};
-
 export function LaboratorySection() {
+  const t = useTranslations("landing");
+
+  const statusStyles: Record<string, string> = {
+    [t("lab.statusScheduled")]: "bg-yellow-100 text-yellow-700",
+    [t("lab.statusInProgress")]: "bg-blue-100 text-blue-700",
+    [t("lab.statusReady")]: "bg-green-100 text-green-700",
+  };
   return (
     <section className="bg-white py-16 md:py-24">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <h2 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">Лабораторные исследования</h2>
-          <p className="text-base text-gray-500">Результаты анализов онлайн — сразу после готовности</p>
+          <h2 className="mb-3 text-3xl font-bold text-gray-900 md:text-4xl">{t("lab.title")}</h2>
+          <p className="text-base text-gray-500">{t("lab.subtitle")}</p>
         </div>
 
         <div className="mx-auto max-w-3xl">
           <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
             <div className="grid grid-cols-12 gap-4 border-b border-gray-100 bg-gray-50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
-              <div className="col-span-6">Название анализа</div>
-              <div className="col-span-3">Статус</div>
-              <div className="col-span-3 text-right">Дата</div>
+              <div className="col-span-6">{t("lab.tableTestName")}</div>
+              <div className="col-span-3">{t("lab.tableStatus")}</div>
+              <div className="col-span-3 text-right">{t("lab.tableDate")}</div>
             </div>
 
             {labTests.map((t, i) => (

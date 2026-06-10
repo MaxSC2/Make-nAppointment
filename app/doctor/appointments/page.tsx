@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, CheckCircle, XCircle, FlaskConical, Stethoscope, File
 import { useQuery } from "@/lib/api/hooks";
 import { fetchDoctorAppointments, createLabTest } from "@/lib/api";
 import type { DoctorAppointment } from "@/lib/mockData";
+import { useTranslations } from "next-intl";
 
 const DEMO_PATIENT_ID = "patient-1";
 const DEMO_DOCTOR_NAME = "Нурланов А.С.";
@@ -43,6 +44,8 @@ function Toast({ message, type, onClose }: { message: string; type: "success" | 
 }
 
 function LabDialog({ onClose, onCreate }: { onClose: () => void; onCreate: (name: string, category: string) => Promise<void> }) {
+  const td = useTranslations("doctor");
+  const tdc = useTranslations("common");
   const [loading, setLoading] = useState<string | null>(null);
 
   async function handleClick(name: string, category: string) {
@@ -54,30 +57,30 @@ function LabDialog({ onClose, onCreate }: { onClose: () => void; onCreate: (name
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-sm rounded-xl border border-border bg-card p-6 shadow-xl">
-        <h2 className="mb-1 text-h3 font-bold text-foreground">Назначить анализ</h2>
-        <p className="mb-5 text-body text-muted-foreground">Выберите тип анализа</p>
+        <h2 className="mb-1 text-h3 font-bold text-foreground">{td("orderTest")}</h2>
+        <p className="mb-5 text-body text-muted-foreground">{td("selectTestType")}</p>
         <div className="flex flex-col gap-2">
-          {LAB_TEMPLATES.map((t) => (
+          {LAB_TEMPLATES.map((tmpl) => (
             <button
-              key={t.name}
-              onClick={() => handleClick(t.name, t.category)}
+              key={tmpl.name}
+              onClick={() => handleClick(tmpl.name, tmpl.category)}
               disabled={loading !== null}
               className="flex items-center gap-3 rounded-lg border border-border px-4 py-3 text-left text-body text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading === t.name ? (
+              {loading === tmpl.name ? (
                 <Loader className="h-4 w-4 animate-spin text-primary" />
               ) : (
                 <FlaskConical className="h-4 w-4 text-primary" />
               )}
               <div>
-                <div className="font-medium">{t.name}</div>
-                <div className="text-label text-muted-foreground">{t.category}</div>
+                <div className="font-medium">{tmpl.name}</div>
+                <div className="text-label text-muted-foreground">{tmpl.category}</div>
               </div>
             </button>
           ))}
         </div>
         <button onClick={onClose} className="mt-4 w-full rounded-lg border border-border bg-background py-2.5 text-body font-medium text-muted-foreground transition-colors hover:text-foreground">
-          Отмена
+          {tdc("cancel")}
         </button>
       </div>
     </div>
@@ -85,6 +88,8 @@ function LabDialog({ onClose, onCreate }: { onClose: () => void; onCreate: (name
 }
 
 export default function DoctorAppointmentsPage() {
+  const t = useTranslations("doctor");
+  const tc = useTranslations("common");
   const { data: appointments, loading, refetch } = useQuery(fetchDoctorAppointments);
   const [selectedPatient, setSelectedPatient] = useState<string | null>(null);
   const [showLabDialog, setShowLabDialog] = useState(false);
@@ -140,7 +145,7 @@ export default function DoctorAppointmentsPage() {
         <Link href="/doctor/dashboard" className="mr-4 text-muted-foreground hover:text-primary">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <span className="text-lg font-bold text-foreground">Записи на приём</span>
+        <span className="text-lg font-bold text-foreground">{t("appointments")}</span>
       </header>
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8 lg:flex-row">
@@ -158,7 +163,7 @@ export default function DoctorAppointmentsPage() {
                 <div className="col-span-4">Пациент</div>
                 <div className="col-span-2">Время</div>
                 <div className="col-span-3">Тип</div>
-                <div className="col-span-3">Статус</div>
+                <div className="col-span-3">{tc("status")}</div>
               </div>
               {(appointments ?? []).map((a) => {
                 const Icon = statusIcon[a.status] || XCircle;
@@ -209,7 +214,7 @@ export default function DoctorAppointmentsPage() {
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary/5 px-4 py-2.5 text-body font-semibold text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <FlaskConical className="h-4 w-4" />
-                  Назначить анализ
+                  {t("appointments.orderTest")}
                 </button>
               </div>
 
@@ -259,7 +264,7 @@ export default function DoctorAppointmentsPage() {
                     className="mt-1 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-body font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {savingVisit ? (
-                      <><Loader className="h-4 w-4 animate-spin" /> Сохранение…</>
+                      <><Loader className="h-4 w-4 animate-spin" /> {tc("loading")}</>
                     ) : selectedAppointment.status === "Завершён" ? (
                       <><CheckCircle className="h-4 w-4" /> Приём завершён</>
                     ) : (
