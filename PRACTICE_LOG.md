@@ -1322,4 +1322,26 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 
 > **TODO [напиши своими словами]:** Что дало переключение фронта с elqueue на SmartQ? Сколько багов вылезло? Понравилось ли что фронт просто меняет API-клиент и всё работает? Какой опыт получил от этой интеграции?
 
+## 10.06.2026 (20:00–21:00) — Code review: исправлено 4 Critical/High бага
+
+### Что сделал:
+1. **CORS Critical fix** — `allow_origins=["*"]` → `["http://localhost:5173","http://127.0.0.1:5173","http://localhost:3000"]` — allow_credentials теперь работает корректно, сторонние origins не проходят (`ris/main.py:73`)
+2. **updated_at onupdate** — добавлен `onupdate=func.now()` в модели Order и Protocol — поле теперь обновляется автоматически SQLAlchemy при каждом изменении (`db/models/ris.py:120`)
+3. **SmartQ mock не маскирует 404** — `_safe_smartq_call` теперь пробрасывает semantic-ошибки (404/400/409) на фронт, мок-данные только при connection error или disabled (`queue_integration.py:218`)
+4. **Study constraint в try** — создание Study обёрнуто в отдельный try/except; при неудаче Order коммитится без Study, а не откатывается целиком (`orders.py:232`)
+5. **httpx clients cleanup** — 4 глобальных `AsyncClient` закрываются в lifespan shutdown (smartq, orthanc, dicomweb, orders) — утечка соединений устранена (`ris/main.py:59`)
+6. **TS check** — `npx tsc --noEmit` прошёл без ошибок
+7. **Smoke test** — RIS запущен, health endpoint ответил 200, CORS разрешает Vite origin
+
+### Какие файлы создал/изменил:
+- `backend/ris/main.py` — CORS origins + lifespan shutdown для 4 httpx клиентов
+- `backend/db/models/ris.py` — `onupdate=func.now()` для Order.updated_at и Protocol.updated_at
+- `backend/ris/routers/queue_integration.py` — semantic-ошибки SmartQ пробрасываются на фронт
+- `backend/ris/routers/orders.py` — Study создаётся в отдельном try, не роняет Order
+
+### Что это дало для отчёта:
+- **П.9 — качество:** код-ревью выявил 20 проблем (в т.ч. CORS + утечки), 4 Critical/High исправлены немедленно
+- **П.10 — документация:** код-ревью зафиксирован в FULL_REPORT_2026-06-10.md + BUGS.md
+- **П.4 — инструменты:** CORS-тестирование curl, code review checklist, статический анализ Python (ast)
+
 

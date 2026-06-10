@@ -216,7 +216,7 @@ _MOCK_TICKET_STATE: dict[str, str] = {
 
 
 async def _safe_smartq_call(method_name: str, *args, **kwargs):
-    """Безопасный вызов SmartQ: если ошибка или disabled — возвращаем мок-данные."""
+    """Безопасный вызов SmartQ: мок только если disabled или connection error."""
     if not settings.smartq_enabled:
         return _MOCK_RESPONSE.get(method_name, lambda: [])()
 
@@ -225,6 +225,9 @@ async def _safe_smartq_call(method_name: str, *args, **kwargs):
         return await method(*args, **kwargs)
     except smartq_client.SmartQError as e:
         logger.warning("SmartQ %s failed: %s — falling back to mock", method_name, e.message)
+        # На semantic-ошибки (404, 400) не маскируем — пусть фронт видит
+        if getattr(e, 'status_code', None) in (404, 400, 409):
+            raise
         return _MOCK_RESPONSE.get(method_name, lambda: [])()
 
 

@@ -49,6 +49,12 @@ def render(name: str, context: dict) -> _TemplateResponse:
 
 # ======================== LIFESPAN ========================
 
+import ris.services.smartq_client as smartq_client_module
+import ris.services.pacs_facade as pacs_facade_module
+import ris.routers.dicomweb as dicomweb_module
+import ris.routers.orders as orders_module
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("старт, шаблоны: %s", TEMPLATES_DIR)
@@ -57,6 +63,15 @@ async def lifespan(app: FastAPI):
     await start_listener(async_session_maker)
     yield
     await stop_listener()
+    for mod_name, client in [
+        ("smartq", smartq_client_module._smartq_client),
+        ("orthanc", pacs_facade_module._orthanc_client),
+        ("dicomweb", dicomweb_module._dicomweb_client),
+        ("orders", orders_module._http_client),
+    ]:
+        if client is not None:
+            await client.aclose()
+            logger.info("%s client closed", mod_name)
     logger.info("остановлен")
 
 
@@ -69,10 +84,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — разрешаем фронт на любом origin (dev режим)
+# CORS — явные origins для dev-режима (allow_credentials требует не "*")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -229,6 +229,7 @@ async def create_order(
     db.add(Protocol(order_id=order.id, body="", is_draft=True))
 
     # 5. Отправляем метаданные в Orthanc (best-effort) и сохраняем связь
+    orthanc_id = None
     try:
         orthanc_id = await _send_metadata_to_orthanc(patient, order, study_uid)
         if orthanc_id:
@@ -241,7 +242,13 @@ async def create_order(
     except Exception as e:
         logger.warning("Orthanc недоступен: %s", e)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        logger.warning("Failed to link Orthanc study, order created without link")
+        await db.commit()
+
     await db.refresh(order)
     await _audit(request, db, action=AuditAction.ORDER_CREATED.value,
                  resource_type="order", resource_id=order.id)
