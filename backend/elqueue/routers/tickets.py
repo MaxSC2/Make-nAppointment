@@ -403,7 +403,7 @@ async def _patch_ris_status(
         client = _get_ris_client()
         await client.patch(
             f"{settings.ris_url}/api/orders/{order_id}/status",
-            params={"status": status},
+            json={"status": status},
             headers=headers,
             timeout=3,
         )

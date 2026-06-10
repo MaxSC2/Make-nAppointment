@@ -34,8 +34,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.config import settings
-from db.dependencies import get_current_user, get_db
-from db.models.auth import User
+from db.dependencies import get_current_user, get_db, require_role
+from db.models.auth import RoleCode, User
 from db.models.queue import Patient
 from db.models.ris import Modality, Order, OrderStatus
 
@@ -315,6 +315,8 @@ async def get_cabinets(
             modality = "DX"
         elif "УЗИ" in name or "US" in name:
             modality = "US"
+        elif "Ангиографи" in name or "XA" in name:
+            modality = "XA"
         result.append(RoomOut(
             id=r.get("id", 0),
             name=name,
@@ -342,6 +344,10 @@ async def get_service_types(
             modality = "MR"
         elif "рентген" in name:
             modality = "DX"
+        elif "уз" in name or "us" in name:
+            modality = "US"
+        elif "ангио" in name or "xa" in name:
+            modality = "XA"
         else:
             modality = ""
         result.append(ServiceTypeOut(
@@ -396,17 +402,32 @@ async def get_ticket(
 @router.post("/tickets", response_model=TicketOut, status_code=201, summary="Создать талон (kiosk)")
 async def create_ticket(
     body: CreateTicketRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(RoleCode.REGISTRAR, RoleCode.DOCTOR, RoleCode.ADMIN)),
 ) -> TicketOut:
     """POST /api/queue/tickets — регистрация пациента в очереди.
 
     В SmartQ: POST /tickets/kiosk (без авторизации).
+    Доступ: registrar (регистратура), doctor, admin.
     """
     # Находим serviceTypeId по modality
     services = await _safe_smartq_call("get_service_types")
     service_type_id = None
+    modality_search = body.modality.upper()
     for s in services:
-        if s.get("name", "").upper().startswith(body.modality):
+        name = s.get("name", "").upper()
+        if name.startswith(modality_search) or "КТ" in name and modality_search == "CT":
+            service_type_id = s.get("id")
+            break
+        if "МРТ" in name and modality_search == "MR":
+            service_type_id = s.get("id")
+            break
+        if "РЕНТГЕН" in name and modality_search == "DX":
+            service_type_id = s.get("id")
+            break
+        if ("УЗИ" in name or "УЗ" in name) and modality_search == "US":
+            service_type_id = s.get("id")
+            break
+        if "АНГИО" in name and modality_search == "XA":
             service_type_id = s.get("id")
             break
     if service_type_id is None:
@@ -424,7 +445,13 @@ async def create_ticket(
     )
 
     services_cache = {s.get("id"): s.get("name", "") for s in services}
-    return await _smartq_ticket_to_ours(smartq_ticket, services_cache)
+    result = await _smartq_ticket_to_ours(smartq_ticket, services_cache)
+    # SmartQ не возвращает fullName/policyNumber — подставляем из запроса
+    if not result.full_name:
+        result.full_name = body.full_name
+    if not result.policy_number:
+        result.policy_number = body.policy_number
+    return result
 
 
 @router.post(
@@ -435,10 +462,11 @@ async def create_ticket(
 async def call_ticket(
     ticket_id: str,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN)),
 ) -> CallResponse:
     """POST /api/queue/tickets/{id}/call — вызов пациента.
 
+    Доступ: doctor, technician, admin.
     1. Вызывает SmartQ POST /tickets/:id/call (меняет статус талона)
     2. Создаёт Order в нашей БД (PACS-заказ для врача)
     3. Возвращает оба ID
@@ -508,6 +536,8 @@ async def call_ticket(
                 modality_code = "DX"
             elif "уз" in name:
                 modality_code = "US"
+            elif "ангио" in name:
+                modality_code = "XA"
             break
 
     modality = (await db.execute(
@@ -525,6 +555,7 @@ async def call_ticket(
         status=OrderStatus.IN_PROGRESS.value,
         started_at=now,
         source_ticket_id=ticket_id,
+        source_ticket_number=smartq_ticket.get("number"),
         source_system="smartq",
         smartq_called_at=now,
     )
@@ -553,10 +584,11 @@ async def call_ticket(
 async def complete_ticket(
     ticket_id: str,
     db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN)),
 ) -> TicketOut:
     """POST /api/queue/tickets/{id}/complete — завершение.
 
+    Доступ: doctor, technician, admin.
     1. SmartQ: POST /tickets/:id/complete
     2. Наш Order (по source_ticket_id): status='completed'
     """
@@ -584,6 +616,7 @@ async def complete_ticket(
                 started_at=datetime.now(timezone.utc),
                 completed_at=datetime.now(timezone.utc),
                 source_ticket_id=ticket_id,
+                source_ticket_number=smartq_ticket.get("number"),
                 source_system="smartq",
             )
             db.add(order)
@@ -626,10 +659,11 @@ async def _find_or_create_patient(db: AsyncSession, smartq_t: dict) -> Patient:
 )
 async def next_in_queue(
     room_id: int,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN)),
 ) -> TicketOut | None:
     """GET /api/queue/room/{roomId}/next — следующий талон в очереди.
 
+    Доступ: doctor, technician, admin.
     Если в очереди пусто — возвращает None (200 OK с null).
     """
     smartq_ticket = await _safe_smartq_call("get_next_ticket", room_id)

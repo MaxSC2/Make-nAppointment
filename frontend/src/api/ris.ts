@@ -2,12 +2,21 @@ import type { ModalityOut, OrderOut, PatientStudy, ProtocolOut, StudyListItem, S
 import type { PatientOut } from '../types/queue'
 import { risGet, risPatch, risPatchBody, risPost, risPut, risV1Get, risV1Post } from './client'
 
-export function getOrders(status?: string, patientId?: string) {
+export interface OrderListResponse {
+  items: OrderOut[]
+  total: number
+  limit: number
+  offset: number
+  has_more: boolean
+}
+
+export async function getOrders(status?: string, patientId?: string) {
   const params = new URLSearchParams()
   if (status) params.set('status_filter', status)
   if (patientId) params.set('patient_id', patientId)
   const qs = params.toString()
-  return risGet<OrderOut[]>(`/orders${qs ? '?' + qs : ''}`)
+  const data = await risGet<OrderListResponse>(`/orders${qs ? '?' + qs : ''}`)
+  return data.items
 }
 
 export function getOrder(orderId: string) {
