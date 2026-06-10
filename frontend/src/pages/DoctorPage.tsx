@@ -6,8 +6,8 @@ import QueueTable from '../components/QueueTable'
 import { useTranslation } from 'react-i18next'
 
 export default function DoctorPage() {
-  const { cabinets } = useCabinets()
   const { t } = useTranslation()
+  const { cabinets } = useCabinets()
   const [cabinetCode, setCabinetCode] = useState('1')
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)

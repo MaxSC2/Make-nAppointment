@@ -1,6 +1,6 @@
 import type { ModalityOut, OrderOut, PatientStudy, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
 import type { PatientOut } from '../types/queue'
-import { risGet, risPatch, risPatchBody, risPost, risPut, risV1Get, risV1Post } from './client'
+import { risGet, risPatchBody, risPost, risPut, risV1Get, risV1Post } from './client'
 
 export interface OrderListResponse {
   items: OrderOut[]

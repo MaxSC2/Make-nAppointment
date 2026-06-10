@@ -1,107 +1,138 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { getPatient, getPatientStudies } from '../api/ris'
 import type { PatientOut } from '../types/queue'
-import type { StudyOut } from '../types/ris'
-import StatusBadge from '../components/StatusBadge'
+import type { PatientStudy } from '../types/ris'
 import { useTranslation } from 'react-i18next'
 
 export default function PatientCardPage() {
+  const { t } = useTranslation()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { t } = useTranslation()
   const [patient, setPatient] = useState<PatientOut | null>(null)
-  const [studies, setStudies] = useState<StudyOut[]>([])
+  const [studies, setStudies] = useState<PatientStudy[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     if (!id) return
+    let cancelled = false
     setLoading(true)
-    Promise.all([
-      getPatient(id).catch(() => null),
-      getPatientStudies(id).catch(() => []),
-    ])
+    setError(null)
+
+    Promise.all([getPatient(id), getPatientStudies(id)])
       .then(([p, s]) => {
-        if (p) setPatient(p)
+        if (cancelled) return
+        setPatient(p)
         setStudies(s)
       })
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
+      .catch(err => { if (!cancelled) setError(err.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
   }, [id])
 
-  if (loading) return <div className="p-6 text-sm text-gray-500">{t('common.loading')}</div>
-  if (error) return <div className="p-6 text-sm text-red-600">{t('patientCard.error')} {error}</div>
-  if (!patient) return <div className="p-6 text-sm text-gray-500">{t('common.notFound')}</div>
+  if (loading) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="h-8 w-48 bg-slate-100 rounded animate-pulse mb-4" />
+        <div className="h-32 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
+          {t('patientCard.error')} {error}
+        </div>
+        <button
+          onClick={() => navigate('/patients')}
+          className="mt-4 text-teal-600 hover:underline"
+        >
+          {t('patientCard.backToPatients')}
+        </button>
+      </div>
+    )
+  }
+
+  if (!patient) return null
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="p-6 max-w-4xl mx-auto">
       <button
         onClick={() => navigate('/patients')}
-        className="mb-4 text-sm text-blue-600 hover:underline"
+        className="text-sm text-teal-600 hover:underline mb-4"
       >
         {t('patientCard.backToPatients')}
       </button>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">{patient.full_name}</h2>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <span className="text-gray-500">{t('patientCard.policy')}</span>
-            <span className="ml-2 font-medium">{patient.policy_number}</span>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+              {patient.full_name}
+            </h2>
+            <div className="text-sm text-slate-600 space-y-1">
+              <div>{t('patientCard.policy')} <span className="font-mono">{patient.policy_number}</span></div>
+              {patient.birth_date && <div>{t('patientCard.dob')} {patient.birth_date}</div>}
+              {patient.phone && <div>{t('patientCard.phone')} {patient.phone}</div>}
+            </div>
           </div>
-          {patient.birth_date && (
-            <div>
-              <span className="text-gray-500">{t('patientCard.dob')}</span>
-              <span className="ml-2 font-medium">{patient.birth_date}</span>
-            </div>
-          )}
-          {patient.phone && (
-            <div>
-              <span className="text-gray-500">{t('patientCard.phone')}</span>
-              <span className="ml-2 font-medium">{patient.phone}</span>
-            </div>
-          )}
+          <button
+            onClick={() => navigate(`/orders/new?patientId=${patient.id}`)}
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-md hover:bg-brand-700 transition flex-shrink-0"
+          >
+            {t('patientCard.assignStudy')}
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{t('patientCard.studies', { count: studies.length })}</h3>
-        <button
-          onClick={() => navigate(`/orders/new?patient=${patient.id}`)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
-        >
-          {t('patientCard.assignStudy')}
-        </button>
-      </div>
+      <h3 className="text-lg font-semibold text-slate-900 mb-3">
+        {t('patientCard.studies', { count: studies.length })}
+      </h3>
 
       {studies.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-8 text-center text-sm text-gray-400">
+        <div className="text-center text-slate-500 py-12 bg-slate-50 rounded-lg">
           {t('patientCard.noStudies')}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {studies.map((study) => (
-            <div key={study.id} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-start justify-between mb-2">
-                <div className="text-sm font-medium text-gray-900">
-                  {study.modality ?? t('patientCard.noPreview')}
+        <div className="space-y-2">
+          {studies.map(s => (
+            <div
+              key={s.orthanc_id || s.study_uid}
+              className="flex items-center gap-4 bg-white border border-slate-200 rounded-lg p-3"
+            >
+              <div className="w-20 h-20 flex-shrink-0 bg-slate-100 rounded overflow-hidden flex items-center justify-center">
+                {imgErrors[s.study_uid] ? (
+                  <span className="text-xs text-slate-400">{t('patientCard.noPreview')}</span>
+                ) : (
+                  <img
+                    src={`/api/v1/studies/${s.study_uid}/preview`}
+                    alt={s.description || s.study_uid}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgErrors(prev => ({ ...prev, [s.study_uid]: true }))}
+                  />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-slate-900">
+                  {s.modality} · {s.study_description || t('patientCard.noDescription')}
                 </div>
-                <StatusBadge status={study.status} />
+                <div className="text-sm text-slate-500">
+                  {s.study_date || (s.created_at && s.created_at.slice(0, 10)) || t('patientCard.dateUnknown')} · {t('patientCard.status')} {s.order_status || s.ris_order_status || t('patientCard.statusAssigned')}
+                </div>
               </div>
-              <div className="text-xs text-gray-500 space-y-1">
-                <p>{study.description || t('patientCard.noDescription')}</p>
-                <p>{study.study_date || t('patientCard.dateUnknown')}</p>
-                <p>{t('patientCard.status')} {study.status === 'ordered' ? t('patientCard.statusAssigned') : study.status}</p>
-              </div>
-              {study.status !== 'ordered' && (
-                <button
-                  onClick={() => navigate(`/viewer/${study.study_uid}`)}
-                  className="mt-3 text-xs text-blue-600 hover:underline"
-                >
-                  {t('patientCard.open')}
-                </button>
-              )}
+
+              <button
+                onClick={() => navigate(`/viewer/${s.study_uid}`)}
+                className="px-3 py-1.5 bg-teal-600 text-white text-sm rounded hover:bg-teal-700 flex-shrink-0"
+              >
+                {t('patientCard.open')}
+              </button>
             </div>
           ))}
         </div>

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { App, AppOptions, ViewConfig } from 'dwv'
-import type { DicomWebLoadOptions, PositionEvent } from 'dwv'
+import * as dwv from 'dwv'
 import { getToken } from '../api/client'
 
 export const TOOLS = [
@@ -47,7 +46,7 @@ export interface StudyData {
 export interface UseDwvViewerResult {
   containerRef: React.RefObject<HTMLDivElement | null>
   fileInputRef: React.RefObject<HTMLInputElement | null>
-  appRef: React.MutableRefObject<App | null>
+  appRef: React.MutableRefObject<dwv.App | null>
   loading: boolean
   error: string | null
   loaded: boolean
@@ -179,8 +178,6 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         }, LOAD_TIMEOUT_MS)
       })
 
-      let sliceRef = { current: 1, total: 0 }
-
       app.addEventListener('loadend', () => {
         clearLoadTimeout()
         setLoading(false)
@@ -271,13 +268,13 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
           id: data.patient_id_dicom || data.patient?.id || '—',
         })
 
-        const series: SeriesItem[] = (data.series || []).map((s: { series_uid: string; modality: string; series_description: string | null; instance_count: number; instances: SeriesInstance[] }) => ({
+        const series: SeriesItem[] = (data.series || []).map(s => ({
           series_uid: s.series_uid,
           modality: s.modality,
           description: s.series_description || null,
           instance_count: s.instance_count ?? (s.instances || []).length,
           instances: s.instances || [],
-        }))
+        }) as SeriesItem)
         setSeriesList(series)
         seriesListRef.current = series
 
@@ -393,7 +390,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
       if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
-      if (key === '0' && e.ctrlKey) { try { app.resetLayout() } catch {}; e.preventDefault() }
+      if (key === '0' && e.ctrlKey) { try { (app as unknown as { resetLayout: () => void }).resetLayout() } catch {}; e.preventDefault() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
