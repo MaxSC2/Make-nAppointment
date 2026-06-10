@@ -4,15 +4,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { User, Calendar, Pill } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 const navItems = [
-  { label: "Карточка пациента", shortLabel: "Карточка", href: "/emk", icon: User },
-  { label: "История визитов", shortLabel: "Визиты", href: "/emk/visits", icon: Calendar },
-  { label: "Назначения", shortLabel: "Назначения", href: "/emk/prescriptions", icon: Pill },
+  { key: "patient.emk.visits", shortKey: "patient.emk.visitsShort", href: "/emk", icon: User },
+  { key: "patient.emk.visitHistory", shortKey: "patient.emk.visitHistoryShort", href: "/emk/visits", icon: Calendar },
+  { key: "patient.emk.prescriptions", shortKey: "patient.emk.prescriptionsShort", href: "/emk/prescriptions", icon: Pill },
 ];
 
 export function EmkSidebar() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   return (
     <aside className="w-64 shrink-0 max-lg:hidden">
@@ -33,7 +35,7 @@ export function EmkSidebar() {
           ИИН 920512450123
         </div>
         <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-label font-semibold text-red-700">
-          Третья положительная (B Rh+)
+          {t("patient.emk.bloodType")}
         </span>
       </div>
 
@@ -52,7 +54,7 @@ export function EmkSidebar() {
               }`}
             >
               <Icon className="h-4 w-4" />
-              {link.label}
+              {t(link.key)}
             </Link>
           );
         })}
@@ -63,6 +65,7 @@ export function EmkSidebar() {
 
 export function EmkMobileTabs() {
   const pathname = usePathname();
+  const t = useTranslations();
 
   return (
     <div className="mb-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
@@ -78,7 +81,7 @@ export function EmkMobileTabs() {
                 : "border border-border bg-card text-muted-foreground"
             }`}
           >
-            {item.shortLabel}
+            {t(item.shortKey)}
           </Link>
         );
       })}

@@ -4,11 +4,13 @@ import Image from "next/image";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Bell, Settings, User, LogOut } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 const navItems = [
-  { label: "Запись к врачу", href: "/appointment" },
-  { label: "Лаборатория", href: "/laboratory" },
-  { label: "Моя карта", href: "/emk" },
+  { key: "header.appointment", href: "/appointment" },
+  { key: "header.laboratory", href: "/laboratory" },
+  { key: "header.myCard", href: "/emk" },
 ];
 
 const notifications = [
@@ -32,6 +34,7 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
 
 function HeaderNotifications({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useTranslations("header");
   useClickOutside(ref, onClose);
 
   return (
@@ -40,7 +43,7 @@ function HeaderNotifications({ onClose }: { onClose: () => void }) {
       className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border bg-card shadow-xl"
     >
       <div className="border-b border-border px-4 py-3 text-body font-bold text-foreground">
-        Уведомления
+        {t("notifications")}
       </div>
       <div className="max-h-64 overflow-y-auto">
         {notifications.map((n) => (
@@ -57,7 +60,7 @@ function HeaderNotifications({ onClose }: { onClose: () => void }) {
         ))}
       </div>
       <button className="w-full rounded-b-xl border-t border-border px-4 py-2.5 text-label font-medium text-primary transition-colors hover:bg-background">
-        Все уведомления
+        {t("notificationsAll")}
       </button>
     </div>
   );
@@ -69,12 +72,13 @@ function clearAuth() {
 
 function HeaderUserMenu({ onClose }: { onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const t = useTranslations("auth");
   useClickOutside(ref, onClose);
 
   const items = [
-    { icon: User, label: "Профиль", href: "/emk" },
-    { icon: Settings, label: "Настройки", href: null as string | null },
-    { icon: LogOut, label: "Выйти", href: "/login" },
+    { icon: User, labelKey: "profile", labelDefault: "Профиль", href: "/emk" },
+    { icon: Settings, labelKey: "settings", labelDefault: "Настройки", href: null as string | null },
+    { icon: LogOut, labelKey: "logout", labelDefault: "Выйти", href: "/login" },
   ];
 
   return (
@@ -91,22 +95,22 @@ function HeaderUserMenu({ onClose }: { onClose: () => void }) {
         if (!item.href) {
           return (
             <button
-              key={item.label}
+              key={item.labelKey}
               type="button"
               disabled
               className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-body font-medium text-muted-foreground/50 transition-colors"
             >
               <Icon className="h-4 w-4" />
-              {item.label}
+              {t(item.labelKey)}
             </button>
           );
         }
         return (
           <Link
-            key={item.label}
+            key={item.labelKey}
             href={item.href}
             onClick={(e) => {
-              if (item.label === "Выйти") {
+              if (item.labelKey === "logout") {
                 e.preventDefault();
                 clearAuth();
                 window.location.href = "/login";
@@ -115,7 +119,7 @@ function HeaderUserMenu({ onClose }: { onClose: () => void }) {
             className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-body font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary"
           >
             <Icon className="h-4 w-4" />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
@@ -126,6 +130,7 @@ function HeaderUserMenu({ onClose }: { onClose: () => void }) {
 export function Header() {
   const [showNotif, setShowNotif] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const t = useTranslations();
 
   return (
     <header className="flex h-16 items-center justify-between bg-primary px-6 text-white max-md:hidden">
@@ -137,16 +142,17 @@ export function Header() {
         <nav className="flex items-center gap-6">
           {navItems.map((item) => (
             <Link
-              key={item.label}
+              key={item.key}
               href={item.href}
               className="text-sm text-white/75 transition-colors hover:text-white"
             >
-              {item.label}
+              {t(item.key)}
             </Link>
           ))}
         </nav>
       </div>
       <div className="relative flex items-center gap-3">
+        <LanguageSwitcher />
         <button
           onClick={() => { setShowNotif((v) => !v); setShowMenu(false); }}
           className="relative rounded-lg p-2 text-white/70 hover:text-white"

@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPatients } from '../api/ris'
 import type { PatientOut } from '../types/queue'
+import { useTranslation } from 'react-i18next'
 
 export default function PatientsPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [patients, setPatients] = useState<PatientOut[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,14 +27,14 @@ export default function PatientsPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-semibold text-slate-900 mb-2">Пациенты</h1>
-      <p className="text-sm text-slate-500 mb-4">Поиск по ФИО или номеру полиса</p>
+      <h1 className="text-2xl font-semibold text-slate-900 mb-2">{t('patients.title')}</h1>
+      <p className="text-sm text-slate-500 mb-4">{t('patients.searchPlaceholder')}</p>
 
       <input
         type="text"
         value={search}
         onChange={e => setSearch(e.target.value)}
-        placeholder="Поиск по ФИО или полису..."
+        placeholder={t('patients.searchPlaceholderShort')}
         className="w-full px-4 py-2 border border-slate-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-teal-500"
       />
 
@@ -46,20 +48,20 @@ export default function PatientsPage() {
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
-          <div className="font-medium">Ошибка загрузки</div>
+          <div className="font-medium">{t('patients.error')}</div>
           <div className="text-sm">{error}</div>
           <button
             onClick={() => setSearch(s => s)}
             className="mt-2 px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
           >
-            Повторить
+            {t('common.retry')}
           </button>
         </div>
       )}
 
       {!loading && !error && patients.length === 0 && (
         <div className="text-center text-slate-500 py-12 bg-slate-50 rounded-lg">
-          Пациентов пока нет. Зарегистрируйте первого пациента на странице Регистрации.
+          {t('patients.empty')}
         </div>
       )}
 
@@ -73,11 +75,11 @@ export default function PatientsPage() {
             >
               <div className="font-medium text-slate-900">{p.full_name}</div>
               <div className="text-sm text-slate-500 mt-1">
-                Полис: {p.policy_number}
-                {p.birth_date && ` · Дата рождения: ${p.birth_date}`}
+                {t('patients.policy')} {p.policy_number}
+                {p.birth_date && ` ${t('patients.dob')} ${p.birth_date}`}
                 {p.phone && ` · ${p.phone}`}
               </div>
-              <div className="text-xs text-teal-600 mt-2">Открыть карту →</div>
+              <div className="text-xs text-teal-600 mt-2">{t('patients.openCard')}</div>
             </button>
           ))}
         </div>
