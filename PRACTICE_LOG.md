@@ -1322,19 +1322,4 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 
 > **TODO [напиши своими словами]:** Что дало переключение фронта с elqueue на SmartQ? Сколько багов вылезло? Понравилось ли что фронт просто меняет API-клиент и всё работает? Какой опыт получил от этой интеграции?
 
----
-
-## Стек технологий проекта (общий)
-
-- **Frontend:** React 19 + Vite 8 + TypeScript 6
-- **Стилизация:** Tailwind CSS v4
-- **Роутинг:** React Router v7
-- **Backend:** FastAPI (Python 3.14) + PostgreSQL 16
-- **PACS:** Orthanc 1.12+
-- **DICOM Viewer:** DWV 0.36.3
-- **Очередь:** SmartQ (NestJS 11 + Prisma) через RIS-proxy
-- **Инфраструктура:** без Docker, сервисы запущены напрямую
-- **Инструменты:** VS Code, Git, GitHub, Swagger UI, pytest, respx
-
-### Роль: Frontend RIS + участие в Backend + SmartQ интеграция
 
