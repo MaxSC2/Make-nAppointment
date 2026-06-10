@@ -296,7 +296,7 @@ const resp = await fetch('/api/v1/studies/', { headers: { Authorization: `Bearer
 
 ---
 
-## ✅ ИТОГО: что исправлено за 08-09.06
+## ✅ ИТОГО: что исправлено за 08-10.06
 
 | # | Баг | Статус |
 |---|-----|--------|
@@ -326,3 +326,37 @@ const resp = await fetch('/api/v1/studies/', { headers: { Authorization: `Bearer
 | 24 | `is_uploaded` всегда True | ⚪ не баг |
 | 25 | `preview_url` study_uid | ⚪ не баг |
 | 26 | `getPatient(id)` 404 | ✅ |
+| 27 | **elqueue PATCH params→json** (09.06) | ✅ |
+| 28 | **OrdersPage пагинация** (09.06) | ✅ |
+| 29 | **SmartQ не возвращает fullName** (10.06) | ✅ |
+
+---
+
+## 🟡 elqueue _patch_ris_status слал status в params, не body (FIXED 09.06)
+
+**Найдено:** 09.06.2026 (тест elqueue→RIS)
+**Где:** `backend/elqueue/routers/tickets.py`
+**Что:** `_patch_ris_status` использовал `params={"status": ...}` вместо `json={"status": ...}`. RIS endpoint `PATCH /orders/{id}/status` ожидает тело JSON, не query param.
+**Симптом:** При call/complete талона в elqueue → Order в RIS оставался `scheduled`, не переходил в `in_progress`/`completed`.
+**Статус:** ✅ ИСПРАВЛЕНО — заменён `params` на `json` в httpx-вызове.
+
+---
+
+## 🟡 OrdersPage пагинация — фронт ждал массив, а не Page (FIXED 09.06)
+
+**Найдено:** 09.06.2026 (демо-сценарий шаг 5)
+**Где:** `frontend/src/api/ris.ts:13-20`
+**Что:** Другой AI изменил `GET /orders` на возврат `OrderListResponse {items, total, limit, offset, has_more}`, но фронт ожидал `OrderOut[]`.
+**Симптом:** OrdersPage падала с ошибкой типов.
+**Статус:** ✅ ИСПРАВЛЕНО — `getOrders()` теперь распаковывает `data.items`.
+
+---
+
+## 🟡 SmartQ API не возвращает fullName/policyNumber в ответе (FIXED 10.06)
+
+**Найдено:** 10.06.2026 (тест SmartQ→RIS)
+**Где:** SmartQ kiosk API (`POST /tickets/kiosk`, `GET /tickets/:id`)
+**Что:** При создании талона SmartQ принимает `fullName`/`policyNumber`, но не включает их в ответ. Наш маппер `_smartq_ticket_to_ours` получал пустые строки.
+**Симптом:** В очереди отображались талоны без ФИО пациента и полиса.
+**Статус:** ✅ ИСПРАВЛЕНО — в `create_ticket` endpoint добавлено: если SmartQ вернул пустые, подставляем из запроса. Для `get_tickets` (список) — ФИО не отображается (ограничение SmartQ API).
+**Урок:** При интеграции со внешним API проверять поля ответа до начала маппинга.
