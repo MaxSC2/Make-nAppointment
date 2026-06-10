@@ -1206,3 +1206,49 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.7 — методология:** E2E live-тест всего цикла, а не только unit/mock
 - **П.9 — качество:** real-time обновление статуса без polling, идемпотентность
 
+## 10.06.2026 (18:00–20:00) — Фронт переключён на SmartQ через RIS
+
+### Что сделал:
+1. **Переключил фронт с elqueue на SmartQ-RIS:**
+   - `api/queue.ts` — все 5 функций переписаны с `elqueueGet/elqueuePost` на `risGet/risPost`
+   - Добавлен маппер `RisTicketOut→TicketDetail` (flat→nested) для совместимости с QueueTable
+   - `types/queue.ts` — добавлены `RisRoomOut`, `RisTicketOut`, `sourceTicketId` в `TicketDetail`
+   - `DoctorPage.tsx` — call/complete по SmartQ UUID вместо callNext по кабинету
+   - `RegistrationPage.tsx` — селект показывает комнаты SmartQ с modality; форма шлёт `modality`
+   - `QueueTable.tsx` — кнопка "Карта пациента" задизейблена для SmartQ-талонов
+
+2. **SmartQ patient name fix:**
+   - SmartQ API принимает `fullName`/`policyNumber` при создании, но **не возвращает** в ответе
+   - `queue_integration.py:create_ticket` — подставляем `full_name`/`policy_number` из тела запроса
+
+3. **Browser smoke-test:**
+   - Registration (КТ, stat) → QueuePage (приоритетная сортировка) → DoctorPage (call) → Complete — всё через SmartQ
+
+4. **Задокументировал:**
+   - `BUGS.md` — добавлены 3 бага (elqueue PATCH params→json, OrdersPage pagination, SmartQ name fix)
+   - `PROJECT_REPORT.md` — обновлён до 10.06, архитектура с SmartQ, таблица сервисов
+   - `PRACTICE_LOG.md` (десктоп) — запись за 10.06
+
+### Коммиты: `207df95`, `d86b6d2`, `2ed4866`
+
+### Итог:
+- **Две очереди работают параллельно:** SmartQ (:3000) — основная, elqueue (:8005) — fallback
+- **Graceful degradation** на демо: *"Интегрировали SmartQ, старая очередь — fallback"*
+- TypeScript — 0 ошибок
+
+---
+
+## Стек технологий проекта (общий)
+
+- **Frontend:** React 19 + Vite 8 + TypeScript 6
+- **Стилизация:** Tailwind CSS v4
+- **Роутинг:** React Router v7
+- **Backend:** FastAPI (Python 3.14) + PostgreSQL 16
+- **PACS:** Orthanc 1.12+
+- **DICOM Viewer:** DWV 0.36.3
+- **Очередь:** SmartQ (NestJS 11 + Prisma) через RIS-proxy
+- **Инфраструктура:** без Docker, сервисы запущены напрямую
+- **Инструменты:** VS Code, Git, GitHub, Swagger UI, pytest, respx
+
+### Роль: Frontend RIS + участие в Backend + SmartQ интеграция
+
