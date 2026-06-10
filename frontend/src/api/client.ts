@@ -12,6 +12,8 @@ export function getToken() {
   return authToken
 }
 
+const REQUEST_TIMEOUT = 15_000
+
 async function request(base: string, path: string, init?: RequestInit) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -21,7 +23,10 @@ async function request(base: string, path: string, init?: RequestInit) {
     headers['Authorization'] = `Bearer ${authToken}`
   }
 
-  const res = await fetch(`${base}${path}`, { ...init, headers })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT)
+
+  const res = await fetch(`${base}${path}`, { ...init, headers, signal: controller.signal }).finally(() => clearTimeout(timer))
 
   if (res.status === 401) {
     localStorage.removeItem('mp_access_token')

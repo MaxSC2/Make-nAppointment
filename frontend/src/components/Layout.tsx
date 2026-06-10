@@ -41,18 +41,18 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center gap-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white grid place-items-center text-sm font-bold">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 h-16 flex items-center gap-1 overflow-x-auto">
+          <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-brand-500 to-brand-700 text-white grid place-items-center text-sm font-bold shrink-0">
               M
             </div>
-            <div className="leading-tight">
-              <div className="text-base font-bold text-slate-900">MedPlatform</div>
+            <div className="leading-tight hidden sm:block">
+              <div className="text-sm sm:text-base font-bold text-slate-900">MedPlatform</div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500">RIS + Эл. очередь</div>
             </div>
           </div>
 
-          <nav className="flex gap-1">
+          <nav className="flex gap-0.5 sm:gap-1 overflow-x-auto">
             {visibleNav.map(({ to, key }) => (
               <NavLink
                 key={to}
@@ -61,7 +61,7 @@ export default function Layout() {
                 className={({ isActive }) => {
                   const isPatientsSection = to === '/patients' && window.location.pathname.startsWith('/patients')
                   const active = isActive || isPatientsSection
-                  return `px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                  return `px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap transition ${
                     active
                       ? 'bg-brand-50 text-brand-700'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
@@ -73,7 +73,7 @@ export default function Layout() {
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto shrink-0 flex items-center gap-1 sm:gap-2">
             <LanguageSwitcher />
             <div className="text-right leading-tight hidden sm:block">
               <div className="text-sm font-medium text-slate-900">{user.full_name || user.username}</div>
