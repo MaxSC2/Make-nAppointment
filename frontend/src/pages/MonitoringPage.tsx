@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   getStatsSummary,
   getStatsByModality,
@@ -58,6 +59,7 @@ function ProgressBar({ value, max, color = 'blue' }: { value: number; max: numbe
 }
 
 export default function MonitoringPage() {
+  const { t } = useTranslation()
   const [summary, setSummary] = useState<StatsSummary | null>(null)
   const [byModality, setByModality] = useState<ModalityStat[]>([])
   const [byCabinet, setByCabinet] = useState<CabinetStat[]>([])
@@ -83,7 +85,7 @@ export default function MonitoringPage() {
         setLoading(false)
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Ошибка загрузки')
+          setError(e instanceof Error ? e.message : t('monitoring.error'))
           setLoading(false)
         }
       }
@@ -95,13 +97,13 @@ export default function MonitoringPage() {
   }, [])
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-400">Загрузка...</div>
+    return <div className="text-center py-12 text-slate-400">{t('monitoring.loading')}</div>
   }
 
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-6">
-        <div className="font-medium mb-1">Ошибка загрузки</div>
+        <div className="font-medium mb-1">{t('monitoring.error')}</div>
         <div className="text-sm">{error}</div>
       </div>
     )
@@ -116,9 +118,9 @@ export default function MonitoringPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Мониторинг</h2>
+          <h2 className="text-2xl font-semibold text-slate-900">{t('monitoring.title')}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Сводка обновляется автоматически каждые 30 сек
+            {t('monitoring.subtitle')}
           </p>
         </div>
       </div>
@@ -126,52 +128,52 @@ export default function MonitoringPage() {
       {/* Главные KPI */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
-          label="Заказы сегодня"
+          label={t('monitoring.ordersToday')}
           value={summary.orders_today}
-          hint={`за неделю: ${summary.orders_week}`}
+          hint={`${t('monitoring.ordersWeek')} ${summary.orders_week}`}
           color="blue"
         />
         <StatCard
-          label="Завершено сегодня"
+          label={t('monitoring.completedToday')}
           value={summary.completed_today}
-          hint={`за неделю: ${summary.completed_week}`}
+          hint={`${t('monitoring.ordersWeek')} ${summary.completed_week}`}
           color="emerald"
         />
         <StatCard
-          label="В работе"
+          label={t('monitoring.inProgress')}
           value={summary.in_progress}
-          hint={`назначено: ${summary.scheduled}`}
+          hint={`${t('monitoring.inProgressAssigned')} ${summary.scheduled}`}
           color="amber"
         />
         <StatCard
-          label="В очереди"
+          label={t('monitoring.inQueue')}
           value={summary.tickets_waiting}
-          hint={`всего пациентов: ${summary.patients_total}`}
+          hint={`${t('monitoring.inQueueTotal')} ${summary.patients_total}`}
           color="teal"
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <StatCard
-          label="Подписано протоколов"
+          label={t('monitoring.protocolsSigned')}
           value={summary.signed_protocols_today}
-          hint="за сегодня"
+          hint={t('monitoring.protocolsToday')}
           color="emerald"
         />
         <StatCard
-          label="Среднее время обработки"
+          label={t('monitoring.avgProcessing')}
           value={summary.avg_completion_minutes_week > 0
-            ? `${summary.avg_completion_minutes_week} мин`
+            ? t('monitoring.avgMinutes', { time: summary.avg_completion_minutes_week })
             : '—'}
-          hint="от создания до завершения, за неделю"
+          hint={t('monitoring.avgDescription')}
           color="slate"
         />
         <StatCard
-          label="Завершаемость"
+          label={t('monitoring.completionRate')}
           value={summary.orders_week > 0
             ? `${Math.round((summary.completed_week / summary.orders_week) * 100)}%`
             : '—'}
-          hint={`${summary.completed_week} из ${summary.orders_week} за неделю`}
+          hint={`${t('monitoring.completionOf')} ${summary.completed_week} ${t('monitoring.completionWeek')}`}
           color="emerald"
         />
       </div>
@@ -179,10 +181,10 @@ export default function MonitoringPage() {
       {/* По модальностям */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
         <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
-          Заказы по модальностям (за неделю)
+          {t('monitoring.ordersByModality')}
         </h3>
         {byModality.length === 0 ? (
-          <div className="text-slate-400 text-sm">Нет данных</div>
+          <div className="text-slate-400 text-sm">{t('monitoring.noData')}</div>
         ) : (
           <div className="space-y-3">
             {byModality.map(m => (
@@ -190,7 +192,7 @@ export default function MonitoringPage() {
                 <div className="flex items-center justify-between text-sm mb-1">
                   <span className="font-medium text-slate-700">{m.modality}</span>
                   <span className="text-xs text-slate-500">
-                    сегодня: <b>{m.today}</b> · неделя: {m.week} · готово: {m.completed}
+                    {t('monitoring.today')} <b>{m.today}</b> {t('monitoring.week')} {m.week} {t('monitoring.ready')} {m.completed}
                   </span>
                 </div>
                 <ProgressBar value={m.week} max={maxModality} color="blue" />
@@ -203,10 +205,10 @@ export default function MonitoringPage() {
       {/* По кабинетам */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
         <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
-          Загрузка кабинетов (текущая)
+          {t('monitoring.cabinetLoad')}
         </h3>
         {byCabinet.length === 0 ? (
-          <div className="text-slate-400 text-sm">Нет активных кабинетов</div>
+          <div className="text-slate-400 text-sm">{t('monitoring.noCabinets')}</div>
         ) : (
           <div className="space-y-3">
             {byCabinet.map(c => (
@@ -229,18 +231,18 @@ export default function MonitoringPage() {
       {/* Активность врачей */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
         <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
-          Активность врачей (за неделю)
+          {t('monitoring.doctorActivity')}
         </h3>
         {physicians.length === 0 ? (
-          <div className="text-slate-400 text-sm">Нет активности</div>
+          <div className="text-slate-400 text-sm">{t('monitoring.noActivity')}</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-500 uppercase border-b border-slate-200">
-                  <th className="text-left py-2 font-medium">Врач</th>
-                  <th className="text-right py-2 font-medium">Заказов</th>
-                  <th className="text-right py-2 font-medium">Подписей</th>
+                  <th className="text-left py-2 font-medium">{t('monitoring.doctor')}</th>
+                  <th className="text-right py-2 font-medium">{t('monitoring.orders')}</th>
+                  <th className="text-right py-2 font-medium">{t('monitoring.signatures')}</th>
                 </tr>
               </thead>
               <tbody>

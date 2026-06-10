@@ -80,12 +80,21 @@ export default function DoctorPage() {
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>
       )}
 
-      <QueueTable
-        tickets={tickets}
-        onCall={handleCall}
-        onComplete={handleComplete}
-        showActions
-      />
+      {loading && tickets.length === 0 ? (
+        <div className="animate-pulse space-y-3">
+          <div className="h-10 bg-gray-100 rounded-lg" />
+          <div className="h-10 bg-gray-100 rounded-lg" />
+          <div className="h-10 bg-gray-100 rounded-lg" />
+          <div className="h-10 bg-gray-100 rounded-lg" />
+        </div>
+      ) : (
+        <QueueTable
+          tickets={tickets}
+          onCall={handleCall}
+          onComplete={handleComplete}
+          showActions
+        />
+      )}
     </div>
   )
 }
