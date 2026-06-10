@@ -31,7 +31,7 @@ import pydicom
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import Response
 from pydicom.dataset import Dataset
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -44,6 +44,7 @@ from db.models.ris import Modality, Order, OrderStatus, Protocol, Study
 from db.schemas.ris import (
     ModalityOut,
     OrderCreateRequest,
+    OrderListResponse,
     OrderOut,
     OrderStatusUpdate,
     ProtocolOut,
@@ -84,20 +85,95 @@ async def list_modalities(
 
 # ======================== ЗАКАЗЫ ========================
 
-@router.get("/orders", response_model=list[OrderOut])
+@router.get("/orders", response_model=OrderListResponse)
 async def list_orders(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
     status_filter: str | None = None,
+    modality: str | None = None,
+    priority: str | None = None,
     patient_id: uuid.UUID | None = None,
-    limit: int = 100,
-) -> list[Order]:
-    stmt = select(Order).order_by(Order.created_at.desc()).limit(min(limit, 500))
+    search: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    sort_by: str = "created_at",
+    sort_dir: str = "desc",
+    limit: int = 50,
+    offset: int = 0,
+) -> OrderListResponse:
+    """Список заказов с фильтрацией, сортировкой и пагинацией.
+
+    Фильтры:
+    - status_filter: scheduled | in_progress | completed | cancelled
+    - modality: CT | MR | DX | US
+    - priority: normal | urgent | stat
+    - patient_id: UUID пациента
+    - search: подстрочное совпадение по ФИО пациента или study_description
+    - date_from / date_to: диапазон дат по created_at (ISO 8601)
+
+    Сортировка: sort_by = created_at | scheduled_for | completed_at, sort_dir = asc | desc
+
+    Пагинация: limit (макс 500), offset
+    """
+    limit = min(max(limit, 1), 500)
+    offset = max(offset, 0)
+
+    # Базовый запрос с join для поиска по ФИО
+    stmt = select(Order)
+
     if status_filter:
+        if status_filter not in {s.value for s in OrderStatus}:
+            raise HTTPException(status_code=400, detail=f"Invalid status: {status_filter}")
         stmt = stmt.where(Order.status == status_filter)
+    if modality:
+        stmt = stmt.where(Order.modality == modality)
+    if priority:
+        stmt = stmt.where(Order.priority == priority)
     if patient_id:
         stmt = stmt.where(Order.patient_id == patient_id)
-    return list((await db.execute(stmt)).scalars().all())
+    if date_from:
+        stmt = stmt.where(Order.created_at >= date_from)
+    if date_to:
+        stmt = stmt.where(Order.created_at <= date_to)
+    if search:
+        # ILIKE по study_description + ФИО пациента через join
+        from db.models.queue import Patient
+        stmt = stmt.join(Patient, Patient.id == Order.patient_id, isouter=True)
+        search_pattern = f"%{search}%"
+        stmt = stmt.where(
+            or_(
+                Order.study_description.ilike(search_pattern),
+                Patient.full_name.ilike(search_pattern),
+                Patient.policy_number.ilike(search_pattern),
+            )
+        )
+
+    # Сортировка (с вторичным ключом для детерминированности)
+    sort_columns = {
+        "created_at": Order.created_at,
+        "scheduled_for": Order.scheduled_for,
+        "completed_at": Order.completed_at,
+        "priority": Order.priority,
+    }
+    sort_col = sort_columns.get(sort_by, Order.created_at)
+    direction = sort_col.desc() if sort_dir == "desc" else sort_col.asc()
+    stmt = stmt.order_by(direction, Order.id.asc())  # secondary key для стабильности
+
+    # Total count (для пагинации)
+    count_stmt = select(func.count()).select_from(stmt.subquery())
+    total = (await db.execute(count_stmt)).scalar_one()
+
+    # Paginate
+    stmt = stmt.limit(limit).offset(offset)
+    items = list((await db.execute(stmt)).scalars().unique().all())
+
+    return OrderListResponse(
+        items=items,
+        total=total,
+        limit=limit,
+        offset=offset,
+        has_more=(offset + len(items)) < total,
+    )
 
 
 @router.post(
@@ -109,9 +185,12 @@ async def create_order(
     body: OrderCreateRequest,
     request: Request,
     db: Annotated[AsyncSession, Depends(get_db)],
-    user: Annotated[User, Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN))],
+    user: Annotated[User, Depends(require_role(RoleCode.REGISTRAR, RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN))],
 ) -> Order:
-    """Создаёт заказ на исследование + отправляет минимальный DICOM в Orthanc."""
+    """Создаёт заказ на исследование + отправляет минимальный DICOM в Orthanc.
+
+    Доступ: registrar (создаёт направления), doctor, technician, admin.
+    """
     # 1. Пациент должен существовать
     patient = (await db.execute(
         select(Patient).where(Patient.id == body.patient_id)
@@ -253,7 +332,9 @@ async def list_studies(
 async def get_protocol(
     order_id: str,
     db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
 ) -> Protocol:
+    """Получить протокол заказа. Доступ: все авторизованные (doctor, technician, admin, registrar)."""
     proto = (await db.execute(
         select(Protocol).where(Protocol.order_id == order_id)
     )).scalar_one_or_none()
@@ -270,7 +351,12 @@ async def upsert_protocol(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_role(RoleCode.DOCTOR, RoleCode.ADMIN))],
 ) -> Protocol:
-    """Создаёт или обновляет протокол. Подписание — отдельный эндпоинт."""
+    """Создаёт или обновляет протокол. Подписание — отдельный эндпоинт.
+
+    Нельзя редактировать подписанный протокол. Для изменения нужно:
+    - либо admin может отозвать подпись через DELETE /protocol/sign
+    - либо нельзя редактировать вообще (конфликт 409)
+    """
     order = (await db.execute(select(Order).where(Order.id == order_id))).scalar_one_or_none()
     if order is None:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -278,16 +364,23 @@ async def upsert_protocol(
     proto = (await db.execute(
         select(Protocol).where(Protocol.order_id == order_id)
     )).scalar_one_or_none()
+
     if proto is None:
+        # Создание нового
         proto = Protocol(order_id=order_id, body=body.body, impression=body.impression)
         db.add(proto)
     else:
+        # Обновление существующего — запрещено, если подписан
+        if not proto.is_draft and proto.signed_at is not None:
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    f"Protocol is signed at {proto.signed_at.isoformat()} and cannot be edited. "
+                    "Ask admin to revoke the signature first."
+                ),
+            )
         proto.body = body.body
         proto.impression = body.impression
-        # Снимаем подпись при редактировании
-        proto.is_draft = True
-        proto.signed_at = None
-        proto.signed_by = None
 
     await db.commit()
     await db.refresh(proto)
@@ -303,7 +396,12 @@ async def sign_protocol(
     db: Annotated[AsyncSession, Depends(get_db)],
     user: Annotated[User, Depends(require_role(RoleCode.DOCTOR, RoleCode.ADMIN))],
 ) -> Protocol:
-    """Подписать протокол (финализирует заключение)."""
+    """Подписать протокол (финализирует заключение).
+
+    - Нельзя подписать пустой протокол (400)
+    - Нельзя подписать уже подписанный (409)
+    - При подписании автоматически завершает Order
+    """
     proto = (await db.execute(
         select(Protocol).where(Protocol.order_id == order_id)
     )).scalar_one_or_none()
@@ -311,6 +409,11 @@ async def sign_protocol(
         raise HTTPException(status_code=404, detail="Protocol not found")
     if not proto.body.strip():
         raise HTTPException(status_code=400, detail="Empty protocol body")
+    if not proto.is_draft and proto.signed_at is not None:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Protocol already signed at {proto.signed_at.isoformat()}",
+        )
 
     proto.is_draft = False
     proto.signed_at = datetime.now(timezone.utc)
@@ -326,6 +429,50 @@ async def sign_protocol(
     await db.refresh(proto)
     await _audit(request, db, action=AuditAction.PROTOCOL_SIGNED.value,
                  resource_type="protocol", resource_id=str(proto.id))
+    return proto
+
+
+@router.delete("/orders/{order_id}/protocol/sign", response_model=ProtocolOut)
+async def revoke_protocol_signature(
+    order_id: str,
+    request: Request,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    user: Annotated[User, Depends(require_role(RoleCode.ADMIN))],
+) -> Protocol:
+    """Отозвать подпись протокола (только admin).
+
+    Возвращает протокол в статус draft. После этого можно редактировать.
+    Записывается в audit_log как отдельное событие PROTOCOL_REVOKED.
+    """
+    proto = (await db.execute(
+        select(Protocol).where(Protocol.order_id == order_id)
+    )).scalar_one_or_none()
+    if proto is None:
+        raise HTTPException(status_code=404, detail="Protocol not found")
+    if proto.is_draft or proto.signed_at is None:
+        raise HTTPException(status_code=409, detail="Protocol is not signed")
+
+    old_signer = proto.signed_by
+    old_signed_at = proto.signed_at
+    proto.is_draft = True
+    proto.signed_at = None
+    proto.signed_by = None
+
+    # НЕ откатываем статус Order — это бизнес-решение, оставляем completed
+
+    await db.commit()
+    await db.refresh(proto)
+    await _audit(
+        request, db,
+        action=AuditAction.PROTOCOL_REVOKED.value,
+        resource_type="protocol",
+        resource_id=str(proto.id),
+        extra={
+            "revoked_from_user": str(old_signer) if old_signer else None,
+            "revoked_signed_at": old_signed_at.isoformat() if old_signed_at else None,
+            "revoked_by": str(user.id),
+        },
+    )
     return proto
 
 
@@ -459,7 +606,10 @@ async def _audit(
     resource_id: str | None = None,
     extra: dict | None = None,
 ) -> None:
-    user_id = getattr(request.state, "user_id", None)
+    user_obj = getattr(request.state, "user", None)
+    user_id = getattr(request.state, "user_id", None) or (
+        user_obj.id if user_obj else None
+    )
     db.add(AuditLog(
         user_id=user_id,
         action=action,

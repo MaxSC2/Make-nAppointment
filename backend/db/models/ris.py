@@ -100,6 +100,9 @@ class Order(Base):
     source_ticket_id: Mapped[str | None] = mapped_column(
         String(64), nullable=True
     )
+    source_ticket_number: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
     source_system: Mapped[str | None] = mapped_column(
         String(32), nullable=True
     )

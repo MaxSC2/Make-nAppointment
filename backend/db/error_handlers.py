@@ -65,13 +65,16 @@ async def http_exception_handler(
 ) -> JSONResponse:
     """HTTPException → русский detail. Не затирает явный detail (если он уже на русском)."""
     raw = exc.detail
-    # Если detail уже строка и содержит кириллицу или это «публичное» сообщение — оставляем
+    # Если detail уже строка с кириллицей — оставляем как есть
     if isinstance(raw, str) and _is_russian_or_neutral(raw):
         message = raw
     elif isinstance(raw, str) and raw in _STATUS_TRANSLATIONS.values():
         message = raw
+    elif isinstance(raw, str) and not _is_standard_http_phrase(raw):
+        # Кастомное сообщение (даже на английском) — сохраняем
+        message = raw
     else:
-        # Иначе используем перевод по коду
+        # Стандартное HTTP-сообщение → переводим на русский
         message = _STATUS_TRANSLATIONS.get(exc.status_code, "Ошибка")
     return _make_error_response(exc.status_code, message)
 
@@ -109,6 +112,17 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 
 
 # ======================== УТИЛИТЫ ========================
+
+
+_HTTP_DEFAULT_PHRASES = {
+    "Bad Request", "Unauthorized", "Forbidden", "Not Found",
+    "Method Not Allowed", "Conflict", "Unprocessable Entity",
+    "Too Many Requests", "Internal Server Error",
+}
+
+
+def _is_standard_http_phrase(text: str) -> bool:
+    return text.strip() in _HTTP_DEFAULT_PHRASES
 
 
 def _is_russian_or_neutral(text: str) -> bool:

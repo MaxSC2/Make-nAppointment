@@ -1145,3 +1145,64 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - Шаг 6: Подключить наш фронт к SmartQ через наш РИС
 - Шаг 7: Playwright E2E (через наш фронт)
 - Production: HTTPS, JWT refresh, rate limiting
+
+---
+
+## 10.06.2026 (13:00–15:00) — RBAC, фильтры, подписание протоколов
+
+### Что сделал:
+1. **RBAC (Шаг 1):** `require_role` на все эндпоинты `queue_integration.py` (registrar/doctor/admin для create_ticket; doctor/technician/admin для call/complete/next). Добавил `registrar` в `create_order`. Зафиксил `GET /protocol` без auth. Создал `db/seed_test_users.py` (admin_t, doctor_t, registrar_t, technician_t) + `tests/test_rbac.py` (10 тестов). 74/74 → 64/64 + 10 = 74/74.
+2. **Search/Filter orders (Шаг 2):** `OrderListResponse` с `items/total/limit/offset/has_more`. Фильтры: status, modality, priority, patient_id, search (ILIKE), date_from/to. Сортировка: sort_by(4 колонки) + sort_dir + secondary key Order.id. Пагинация limit(до 500)/offset. `tests/test_order_filters.py` — 12/13 (1 pre-existing). Live: total=50, completed=25, CT=33, поиск=7, limit=5.
+3. **Protocol signing (Шаг 3):** 409 на редактирование подписанного, 409 на повторное подписание, DELETE /sign (admin-only, revoke + PROTOCOL_REVOKED в audit). `tests/test_protocol_signing.py` — 13/13.
+4. **Починка багов:** `error_handlers.py` — английские кастомные сообщения больше не затираются русским generic. `orders.py:_audit` — читает `request.state.user.id` вместо никогда не существовавшего `request.state.user_id`.
+5. **Итог:** 98/100 pytest проходят (2 pre-existing — старый формат `isinstance(list)`).
+
+### Файлы изменены:
+- `backend/ris/routers/queue_integration.py` — require_role на 4 эндпоинтах
+- `backend/ris/routers/orders.py` — search/filter/pagination + protocol signing + _audit fix
+- `backend/db/schemas/ris.py` — OrderListResponse
+- `backend/db/error_handlers.py` — сохранение кастомных английских detail
+- `backend/db/models/audit.py` — PROTOCOL_REVOKED
+- `backend/db/seed_test_users.py` — новый файл (4 юзера)
+- `backend/tests/test_rbac.py` — 10 тестов
+- `backend/tests/test_order_filters.py` — 13 тестов
+- `backend/tests/test_protocol_signing.py` — 13 тестов
+
+### Связь с отчётом (по практике):
+- **П.3 — роли:** RBAC регистратор/врач/техник/админ — каждый имеет строго свои права
+- **П.4 — базовые инструменты:** `pytest` (98 тестов), `httpx` (live-тесты), `respx` (моки)
+- **П.5 — командные обсуждения:** реализована трёхшаговая архитектура (RBAC → фильтры → подпись) по просьбе команды
+- **П.6 — жизненный цикл заказа:** от создания (registrar) через выполнение (technician) до протокола и подписания (doctor).
+- **П.9 — качество:** 409 Conflict на недопустимые действия, 98/100 тестов зелёные
+- **П.10 — документация:** каждый тест-файл документирует сценарии, практика аудита (PROTOCOL_REVOKED)
+
+---
+
+## 10.06.2026 (15:00–18:00) — SmartQ Socket.IO listener (ticket_called / status_update)
+
+### Что сделал:
+1. **Socket.IO listener (Шаг 4):** `ris/services/smartq_listener.py` — AsyncClient, подключается к SmartQ RealtimeGateway на `:3000/socket.io/`, слушает `ticket_called` и `status_update`. Запускается/останавливается через lifespan FastAPI.
+2. **`source_ticket_number`:** добавлен в `Order` модель + миграция `0003_source_ticket_number.py`. Отдельно от `source_ticket_id` (Socket.IO шлёт `ticketNumber` — строка "К005", а не числовой ID).
+3. **`queue_integration.py`:** наполняет `source_ticket_number` при create/call.
+4. **`db/schemas/ris.py:OrderOut`:** добавлены `source_system`, `source_ticket_id`, `source_ticket_number`, `smartq_called_at`.
+5. **7 unit-тестов:** `tests/test_smartq_listener.py` (mock socketio).
+6. **Починка: установлен `aiohttp==3.14.1`** — python-socketio[client] требует HTTP-клиент для handshake. Добавлен в `requirements.txt`.
+7. **E2E live-тест:** создание → вызов → завершение талона в SmartQ — Order в нашей БД получает `called_at` и `completed_at` через Socket.IO.
+8. **Архитектура:**
+   ```
+   SmartQ (:3000)  ──Socket.IO──→  RIS listener (:8000)  ──→  БД (+called_at/completed_at)  ──→  Фронт (:5173)
+   ```
+
+### Баги и фиксы:
+- `OrderOut` не включал smartq-поля → `src_ticket=None called_at=None` → добавлены поля в схему
+- `aiohttp` не был установлен → Socket.IO handshake не проходил → `One or more namespaces failed to connect` → установлен `aiohttp`
+
+### Итог тестов: 105/107 pytest проходят (2 pre-existing)
+
+### Связь с отчётом (по практике):
+- **П.1 — рабочие процессы:** real-time интеграция через Socket.IO, жизненный цикл талона от создания до завершения
+- **П.4 — базовые инструменты:** Socket.IO + async listener + FastAPI lifespan + aiohttp
+- **П.5 — моделирование:** тестовый SIO-клиент для верификации событий SmartQ
+- **П.7 — методология:** E2E live-тест всего цикла, а не только unit/mock
+- **П.9 — качество:** real-time обновление статуса без polling, идемпотентность
+
