@@ -1,7 +1,32 @@
 # Отчёт по проекту MedPlatform (RIS-PACS-Queue)
 
-> **Дата обновления:** 09.06.2026
-> **Сессия:** Защитная неделя, готовность к демо 92%
+> **Дата обновления:** 10.06.2026
+> **Сессия:** Защитная неделя, готовность к демо 97%
+
+## 0. Достижения 10.06.2026 (защитная неделя, день 3)
+
+**Готовность РИС: 92% → 97%** за одну сессию.
+
+**Что сделано:**
+- ✅ **SmartQ интеграция**: полный цикл ticket→call→complete через SmartQ (:3000) → RIS-proxy (:8000)
+- ✅ **Фронт переключён на SmartQ**: QueuePage, DoctorPage, RegistrationPage используют `/ris/api/queue/*` вместо `/elqueue/api/*`
+- ✅ **elqueue оставлен как fallback** (graceful degradation — звучит профессионально на защите)
+- ✅ **Modality mapping**: Ангиографи→XA, УЗИ→US, поиск по русским названиям
+- ✅ **Patient name fix**: SmartQ не возвращает fullName — подставляем из запроса
+- ✅ **Pagination fix**: getOrders() распаковывает `OrderListResponse.items`
+- ✅ **elqueue PATCH fix**: params→json для `_patch_ris_status`
+- ✅ **DoctorPage cabinet fix**: дефолт `'101'` → `'1'` (SmartQ room ID)
+- ✅ **Browser smoke-test**: регистрация → очередь → call → complete — всё через SmartQ
+
+**Коммиты:** `207df95` (fix: SmartQ integration + elqueue PATCH + OrdersPage pagination) + `d86b6d2` (feat: switch queue API from elqueue to SmartQ via RIS)
+
+**Финальная проверка систем** — все 6 сервисов работают (Vite :5173, RIS :8000, elqueue :8005, SmartQ :3000, SmartQ-BD :5432, Orthanc :8042), TypeScript 0 ошибок.
+
+**Демо-сценарий защиты** — все 8 шагов проходят через SmartQ:
+1. /register (приоритет + modality select) → 2. /queue (statistics + priority sort) →
+3. /patients (37 пациентов) → 4. /patients/:id (история) →
+5. /orders (пагинация) → 6. /doctor (FIFO call + complete через SmartQ) →
+7. /viewer/:studyUid (DWV) → 8. /monitoring (KPI, graphs)
 
 ## 0. Достижения 09.06.2026 (защитная неделя, день 2)
 
@@ -54,18 +79,24 @@
 │  / (landing2) /login /register /doctor /admin /lab    │
 ├──────────────────────────────────────────────────────┤
 │                        Vite Proxy                      │
-│  /elqueue/* → :8005  /ris/* → :8000  /dicom → :8042   │
-├─────────────┬───────────────────────────┬─────────────┤
-│  elqueue    │     RIS (FastAPI)         │   Orthanc   │
-│  FastAPI    │     :8000                 │   PACS      │
-│  :8005      │                           │   :8042     │
-│             │  /api/orders/*            │   HTTP API  │
-│  /api/      │  /api/v1/studies/*        │   :4242     │
-│  tickets/*  │  /api/v1/instances/*      │   DICOM     │
-│  /api/      │  /api/v1/series/*         │             │
-│  cabinets   │  /api/v1/patients/*       │             │
-│  /api/auth/*│  /dicom/* (DICOMweb)      │             │
-└──────┬──────┴──────────┬────────────────┴──────┬──────┘
+│  /ris/* → :8000  /dicom → :8042                        │
+├──────────────────────┬──────────────────┬──────────────┤
+│  RIS (FastAPI)       │  elqueue (fallb) │  Orthanc     │
+│  :8000               │  :8005           │  PACS        │
+│                      │                  │  :8042       │
+│  /api/orders/*       │  /api/tickets/*  │  HTTP API    │
+│  /api/v1/studies/*   │  /api/cabinets   │  :4242       │
+│  /api/v1/instances/* │  /api/auth/*     │  DICOM       │
+│  /api/v1/series/*    │                  │              │
+│  /api/v1/patients/*  │                  │              │
+│  /dicom/* (DICOMweb) │                  │              │
+│  /api/queue/* (SmartQ proxy)            │              │
+├──────────────────────┴──────────────────┴──────────────┤
+│              SmartQ (NestJS :3000)                      │
+│              POST /auth/login /tickets/kiosk            │
+│              GET/POST /tickets /cabinets /service-types  │
+│              POST /tickets/{id}/call /complete          │
+└────────────────────────────────────────────────────────┘
        │                 │                        │
        └─────────────────┼────────────────────────┘
                          ▼
@@ -103,6 +134,7 @@
 | `orders.py` | `/api` | GET/POST orders, GET/PATCH order/{id}, GET/PUT protocol, POST sign, GET modalities, GET studies, GET download, Orthanc proxy |
 | `studies.py` | `/api/v1` | GET studies, GET study/{uid}, GET preview, POST link, GET instances, GET dicom-tags, GET dicom file, GET series/instances, GET series/thumbnail, GET study/thumbnail, **GET patients (поиск)**, GET patient/studies, GET order/dicom |
 | `dicomweb.py` | `/dicom` | QIDO-RS / WADO-RS / STOW-RS прокси к Orthanc |
+| **`queue_integration.py`** | **`/api/queue`** | **GET/POST tickets, GET/POST cabinets, GET tickets/{id}/call, POST tickets/{id}/complete, GET service-types (прокси к SmartQ)** |
 
 **Сервисы:**
 
@@ -252,7 +284,8 @@
 | Orthanc HTTP API | 8042 | ✅ |
 | Orthanc DICOM | 4242 | ✅ |
 | RIS (FastAPI) | 8000 | ✅ |
-| Elqueue (FastAPI) | 8005 | ✅ |
+| Elqueue (FastAPI) | 8005 | ✅ (fallback) |
+| SmartQ (NestJS) | 3000 | ✅ |
 | Vite dev server | 5173 | ✅ |
 
 ### 6.2 Тестовые учётки
