@@ -108,7 +108,7 @@ export default function DoctorPage() {
             onClick={refresh}
             className="bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-slate-300 px-3 py-1.5 rounded-md text-sm hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
           >
-            {loading ? '...' : t('doctor.refresh')}
+            {t('doctor.refresh')}
           </button>
         </div>
       </div>

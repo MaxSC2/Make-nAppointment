@@ -102,6 +102,7 @@ class TicketOut(BaseModel):
     study_uid: str | None = Field(default=None, description="DICOM Study UID")
     created_at: str = Field(default="")
     called_at: str | None = Field(default=None)
+    patient_id: str | None = Field(default=None, description="UUID пациента в нашей БД")
     completed_at: str | None = Field(default=None)
 
 
@@ -440,6 +441,7 @@ async def _enrich_with_orders(
             t.order_id = lookup[t.id][0]
             t.study_uid = lookup[t.id][1]
             pid = lookup[t.id][2]
+            t.patient_id = str(pid) if pid else None
             if pid in patient_lookup:
                 pname, ppolicy, piin = patient_lookup[pid]
                 if pname and not t.full_name:
@@ -448,6 +450,22 @@ async def _enrich_with_orders(
                     t.policy_number = ppolicy
                 if piin and not t.iin:
                     t.iin = piin
+        # Fallback: ищем пациента по имени/полису/ИИН если нет ордера
+        if not t.patient_id and (t.full_name or t.policy_number or t.iin):
+            pstmt = select(Patient.id)
+            conditions = []
+            if t.full_name:
+                conditions.append(Patient.full_name == t.full_name)
+            if t.policy_number:
+                conditions.append(Patient.policy_number == t.policy_number)
+            if t.iin:
+                conditions.append(Patient.iin == t.iin)
+            if conditions:
+                from sqlalchemy import or_
+                pstmt = pstmt.where(or_(*conditions))
+                fallback = (await db.execute(pstmt.limit(1))).scalar_one_or_none()
+                if fallback:
+                    t.patient_id = str(fallback)
     return tickets
 
 

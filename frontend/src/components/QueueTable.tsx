@@ -24,8 +24,8 @@ export default function QueueTable({ tickets, onCall, onComplete, onFillPatient,
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+    <div className="w-full overflow-x-auto rounded-lg border border-gray-200 dark:border-slate-700">
+      <table className="w-full table-fixed divide-y divide-gray-200 dark:divide-slate-700">
         <thead className="bg-gray-50 dark:bg-slate-800/50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase">{t('queue.ticket')}</th>
@@ -62,7 +62,13 @@ export default function QueueTable({ tickets, onCall, onComplete, onFillPatient,
               </td>
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300">{ticket.service_type_name || ticket.cabinet.modality || '-'}</td>
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300">{ticket.patient.full_name}</td>
-              <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">{ticket.patient.policy_number}</td>
+              <td className="px-4 py-3 text-sm text-gray-500 dark:text-slate-400">
+                {ticket.patient.iin ? (
+                  <span className="font-mono">{ticket.patient.iin}</span>
+                ) : (
+                  <span className="italic text-gray-300 dark:text-slate-600">—</span>
+                )}
+              </td>
               <td className="px-4 py-3 text-sm text-gray-700 dark:text-slate-300">{ticket.cabinet.name}</td>
               <td className="px-4 py-3">
                 <StatusBadge status={ticket.status} />
