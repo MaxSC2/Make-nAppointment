@@ -51,7 +51,7 @@ export default function Layout() {
   }
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 ${sidebarPinned ? 'lg:ml-60' : ''}`}>
+    <div className={`fixed inset-0 flex flex-col bg-slate-50 dark:bg-slate-950 ${sidebarPinned ? 'lg:ml-60' : ''}`}>
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -133,7 +133,7 @@ export default function Layout() {
 
       <main
         onClick={() => { if (!sidebarPinned && sidebarOpen && window.innerWidth >= 1024) setSidebarOpen(false) }}
-        className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 h-[calc(100vh-4rem)] overflow-y-auto"
+        className="flex-1 min-h-0 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 overflow-y-auto"
       >
         <Outlet />
         <footer className="pt-8 pb-2 text-center text-xs text-slate-400 dark:text-slate-600">
