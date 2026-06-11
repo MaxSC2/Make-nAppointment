@@ -10,7 +10,7 @@ export default function ViewerPage() {
   useEffect(() => { setError(null) }, [studyUid])
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col bg-[#060a10] text-slate-200">
+    <div className="h-screen flex flex-col bg-[#060a10] text-slate-200">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900 border-b border-slate-800 flex-shrink-0">
         <div className="flex items-center gap-3">
