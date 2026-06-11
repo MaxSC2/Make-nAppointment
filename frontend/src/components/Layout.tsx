@@ -51,7 +51,7 @@ export default function Layout() {
   }
 
   return (
-    <div className={`h-screen flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden ${sidebarPinned ? 'lg:ml-60' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 ${sidebarPinned ? 'lg:ml-60' : ''}`}>
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -92,8 +92,6 @@ export default function Layout() {
           <div className="flex-1" />
 
           <div className="shrink-0 flex items-center gap-1 sm:gap-2">
-            {/* DIAGNOSTIC: green block at right edge */}
-            <div style={{ width: '8px', height: '40px', background: 'lime', position: 'fixed', right: 0, top: 12, zIndex: 9999 }} />
             <button
               onClick={toggle}
               className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
@@ -135,25 +133,13 @@ export default function Layout() {
 
       <main
         onClick={() => { if (!sidebarPinned && sidebarOpen && window.innerWidth >= 1024) setSidebarOpen(false) }}
-        className="flex-1 min-h-0 px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 overflow-y-auto"
+        className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 h-[calc(100vh-4rem)] overflow-y-auto"
       >
         <Outlet />
         <footer className="pt-8 pb-2 text-center text-xs text-slate-400 dark:text-slate-600">
           MedPlatform RIS · MVP · {new Date().getFullYear()}
         </footer>
       </main>
-      {/* Diagnostic: red right-edge marker */}
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '4px',
-          background: 'red',
-          zIndex: 9999,
-        }}
-      />
     </div>
   )
 }
