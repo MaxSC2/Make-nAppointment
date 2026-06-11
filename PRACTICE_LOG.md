@@ -1440,6 +1440,57 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 
 ---
 
+## 11.06.2026 (финал) — ProtocolPage overhaul + иконки SVG + кодировка DICOM
+
+### Что сделал:
+
+1. **ProtocolPage — полная переработка:**
+   - i18n (был hardcoded на русском)
+   - Тёмная тема на всех элементах
+   - SVG ViewerIcon вместо 🖼 эмодзи
+   - Ссылка на карточку пациента в боковой панели
+   - **Автосохранение:** debounce 3 секунды после ввода
+   - **Ctrl+S** — ручное сохранение (безопасность от потери данных)
+   - Исправлен `{var}` → `{{var}}` в i18n-ключах протокола
+
+2. **SVG иконки — создан Icons.tsx:**
+   - ViewerIcon (глаз), ProtocolIcon (документ), PatientIcon (человек), EditIcon (карандаш), PlusIcon (плюс)
+   - Все эмодзи заменены в: OrderCard, PatientCardPage, StudiesPage, ProtocolPage
+
+3. **Кодировка DICOM:**
+   - **Проблема:** pydicom без `SpecificCharacterSet` записал кириллицу как `?`
+   - **Исправлено для новых:** `ds.SpecificCharacterSet = "ISO_IR_192"` в `_send_metadata_to_orthanc()`
+   - **Старые данные:** безвозвратно испорчены в Orthanc (требуется пересоздание)
+   - **Для демо:** страница Пациентов показывает имена из PostgreSQL (корректно)
+
+4. **Layout fix:** возвращён `h-[calc(100vh-4rem)]` (flex-col + flex-1 + h-screen вызывали перекос)
+
+5. **ИИН вместо Полиса:** главный идентификатор — ИИН для КЗ, «Полис» скрыт если совпадает
+
+6. **Убран мёртвый поиск из хедера**
+
+### Какие файлы изменил:
+- `frontend/src/pages/ProtocolPage.tsx` — i18n, dark mode, auto-save, patient link
+- `frontend/src/components/Icons.tsx` (новый) — 5 SVG иконок
+- `frontend/src/components/OrderCard.tsx` — SVG иконки
+- `frontend/src/pages/PatientCardPage.tsx` — SVG иконки, ИИН первичный, ✎ редактирование
+- `frontend/src/pages/StudiesPage.tsx` — SVG иконки, превью, i18n
+- `frontend/src/components/Layout.tsx` — убран поиск, layout revert
+- `backend/ris/routers/orders.py` — SpecificCharacterSet ISO_IR_192
+- `backend/ris/services/pacs_facade.py` — _fix_dicom_name()
+- `frontend/src/i18n/locales/{ru,en,kk}.json` — новые ключи, правки `{{var}}`
+
+### Результат:
+- ✅ TSC 0 ошибок
+- ✅ ProtocolPage: автосохранение, Ctrl+S, тёмная тема, i18n
+- ✅ Все эмодзи заменены на SVG
+- ✅ ИИН как основной идентификатор
+- ✅ Кодировка DICOM исправлена для новых исследований
+
+### Что это дало для отчёта:
+- **П.6 — жизненный цикл:** протокол — ключевой элемент рабочего процесса врача-радиолога
+- **П.9 — качество:** автосохранение (защита от потери данных), доступность (Ctrl+S), i18n---
+
 ## 11.06.2026 — DWV фиксы + PRODUCTION_VISION.md + доработка интерфейса врача
 
 ### Что сделал:
