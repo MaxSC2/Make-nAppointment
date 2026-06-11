@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { getOrder, getProtocol, signProtocol, upsertProtocol } from '../api/ris'
 import type { OrderOut, ProtocolOut } from '../types/ris'
 import { useAuth } from '../hooks/useAuth'
@@ -53,6 +53,7 @@ const TEMPLATES: Record<string, string> = {
 
 export default function ProtocolPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { orderId = '' } = useParams<{ orderId: string }>()
   const { user } = useAuth()
   const [order, setOrder] = useState<OrderOut | null>(null)
@@ -184,9 +185,9 @@ export default function ProtocolPage() {
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
       <div>
         <div className="mb-4">
-          <Link to="/studies" className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-            {t('protocol.backToStudies')}
-          </Link>
+        <button onClick={() => navigate(-1)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+            {t('common.back')}
+          </button>
         </div>
 
         <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg">
