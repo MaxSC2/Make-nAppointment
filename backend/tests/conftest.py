@@ -37,6 +37,7 @@ os.environ.setdefault("RIS_URL", "http://localhost:8000")
 os.environ.setdefault("ELQUEUE_URL", "http://localhost:8005")
 os.environ.setdefault("ADMIN_USERNAME", "admin")
 os.environ.setdefault("ADMIN_PASSWORD", "admin123")
+os.environ["SMARTQ_ENABLED"] = "false"
 
 # Загружаем модели
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -156,6 +157,21 @@ async def seed_patient(db_session: AsyncSession):
         policy_number="TEST-001",
         birth_date=None,
         phone="+7 701 123 45 67",
+    )
+    db_session.add(patient)
+    await db_session.commit()
+    await db_session.refresh(patient)
+    return patient
+
+
+@pytest_asyncio.fixture
+async def seed_patient_with_iin(db_session: AsyncSession):
+    patient = Patient(
+        full_name="Петров Пётр Петрович",
+        policy_number="IIN-TEST-001",
+        iin="123456789012",
+        birth_date=None,
+        phone="+7 702 987 65 43",
     )
     db_session.add(patient)
     await db_session.commit()

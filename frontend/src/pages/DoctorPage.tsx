@@ -15,7 +15,7 @@ export default function DoctorPage() {
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [fillTicket, setFillTicket] = useState<TicketDetail | null>(null)
   const [fillName, setFillName] = useState('')
   const [fillPolicy, setFillPolicy] = useState('')
@@ -36,10 +36,13 @@ export default function DoctorPage() {
   }, [cabinetCode, t])
 
   useEffect(() => {
-    refresh()
-    intervalRef.current = setInterval(refresh, 10000)
+    const poll = async () => {
+      await refresh()
+      intervalRef.current = setTimeout(poll, 10000)
+    }
+    poll()
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (intervalRef.current) clearTimeout(intervalRef.current)
     }
   }, [refresh])
 

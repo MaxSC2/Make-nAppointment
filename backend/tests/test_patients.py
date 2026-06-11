@@ -128,7 +128,7 @@ async def test_get_patient_by_id_has_all_fields(client, admin_auth_headers, seed
     )
     assert resp.status_code == 200
     data = resp.json()
-    for field in ("id", "full_name", "policy_number", "birth_date", "phone"):
+    for field in ("id", "full_name", "iin", "policy_number", "birth_date", "phone"):
         assert field in data, f"Отсутствует поле {field}"
 
 

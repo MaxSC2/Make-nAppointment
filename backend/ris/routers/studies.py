@@ -329,6 +329,7 @@ async def list_patients(
             or_(
                 Patient.full_name.ilike(f"%{search}%"),
                 Patient.policy_number.ilike(f"%{search}%"),
+                Patient.iin.ilike(f"%{search}%"),
             )
         )
     stmt = stmt.order_by(Patient.created_at.desc())
@@ -338,6 +339,7 @@ async def list_patients(
         {
             "id": str(p.id),
             "full_name": p.full_name,
+            "iin": p.iin,
             "policy_number": p.policy_number,
             "birth_date": str(p.birth_date) if p.birth_date else None,
             "phone": p.phone,
@@ -361,6 +363,7 @@ async def get_patient(
     return {
         "id": str(p.id),
         "full_name": p.full_name,
+        "iin": p.iin,
         "policy_number": p.policy_number,
         "birth_date": str(p.birth_date) if p.birth_date else None,
         "phone": p.phone,

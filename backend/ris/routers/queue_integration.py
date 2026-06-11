@@ -225,7 +225,8 @@ _MOCK_TICKET_STATE: dict[str, str] = {
 async def _safe_smartq_call(method_name: str, *args, **kwargs):
     """Безопасный вызов SmartQ: мок только если disabled или connection error."""
     if not settings.smartq_enabled:
-        return _MOCK_RESPONSE.get(method_name, lambda: [])()
+        mock_fn = _MOCK_RESPONSE.get(method_name, lambda **_: {})
+        return mock_fn(**kwargs)
 
     try:
         method = getattr(smartq_client.smartq_client, method_name)
@@ -235,19 +236,20 @@ async def _safe_smartq_call(method_name: str, *args, **kwargs):
         # На semantic-ошибки (404, 400) не маскируем — пусть фронт видит
         if getattr(e, 'status_code', None) in (404, 400, 409):
             raise
-        return _MOCK_RESPONSE.get(method_name, lambda: [])()
+        mock_fn = _MOCK_RESPONSE.get(method_name, lambda **_: [])
+        return mock_fn(**kwargs)
 
 
 _MOCK_RESPONSE = {
-    "get_rooms": lambda: _MOCK_ROOMS,
-    "get_service_types": lambda: _MOCK_SERVICES,
-    "get_tickets": lambda: _MOCK_TICKETS,
-    "get_ticket": lambda ticket_id=None: _find_mock_ticket(ticket_id or _MOCK_TICKETS[0]["id"]),
-    "call_ticket": lambda ticket_id=None: _mock_call(ticket_id or _MOCK_TICKETS[0]["id"]),
-    "start_ticket": lambda ticket_id=None: _mock_start(ticket_id or _MOCK_TICKETS[0]["id"]),
-    "complete_ticket": lambda ticket_id=None: _mock_complete(ticket_id or _MOCK_TICKETS[0]["id"]),
-    "get_next_ticket": lambda room_id=None: _find_mock_ticket(_MOCK_TICKETS[0]["id"]),
-    "create_ticket": lambda **kwargs: {
+    "get_rooms": lambda **_: _MOCK_ROOMS,
+    "get_service_types": lambda **_: _MOCK_SERVICES,
+    "get_tickets": lambda **_: _MOCK_TICKETS,
+    "get_ticket": lambda ticket_id=None, **_: _find_mock_ticket(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "call_ticket": lambda ticket_id=None, **_: _mock_call(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "start_ticket": lambda ticket_id=None, **_: _mock_start(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "complete_ticket": lambda ticket_id=None, **_: _mock_complete(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "get_next_ticket": lambda room_id=None, **_: _find_mock_ticket(_MOCK_TICKETS[0]["id"]),
+    "create_ticket": lambda **kw: {
         "id": str(uuid.uuid4()),
         "number": "M999",
         "status": "waiting",
@@ -523,6 +525,8 @@ async def create_ticket(
         result.full_name = body.full_name
     if not result.policy_number:
         result.policy_number = body.policy_number
+    if not result.iin and body.iin:
+        result.iin = body.iin
     return result
 
 
@@ -756,7 +760,7 @@ async def update_ticket_patient(
             modality="CT",
             study_uid=f"1.2.840.smartq.{ticket_id[:8]}",
             study_description=f"Заполнено врачом (талон {smartq_ticket.get('number', '')})",
-            status=OrderStatus.PLANNED.value,
+            status=OrderStatus.SCHEDULED.value,
             source_ticket_id=ticket_id,
             source_ticket_number=smartq_ticket.get("number"),
             source_system="smartq",
