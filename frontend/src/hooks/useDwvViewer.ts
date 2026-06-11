@@ -265,6 +265,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
     let cancelled = false
     studyDataRef.current = null
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on study change
     setSeriesList([])
     setActiveSeriesUid('')
     activeSeriesUidRef.current = ''
@@ -325,7 +326,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
   const setTool = useCallback((tool: typeof TOOLS[number]['id']) => {
     if (activeToolRef.current === 'WindowLevel' || activeToolRef.current === 'Draw') {
-      try { appRef.current?.setToolFeatures({}) } catch {}
+      try { appRef.current?.setToolFeatures({}) } catch { /* DWV tool not ready */ }
     }
     setActiveTool(tool)
     activeToolRef.current = tool
@@ -414,8 +415,8 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
       if (key === 'arrowdown') { setSliceInfo(p => p.total ? {...p, current: Math.min(p.total, p.current+1)} : p); e.preventDefault() }
       // Actions
       if (key === 'escape') { setTool('Scroll'); reset(); e.preventDefault() }
-      if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch {} }
-      if (key === '0' && e.ctrlKey) { try { (app as unknown as { resetLayout: () => void }).resetLayout() } catch {}; e.preventDefault() }
+      if ((key === 'i' || key === 'ш') && !e.ctrlKey) { setTool('WindowLevel'); try { app.setToolFeatures({}) } catch { /* noop */ } }
+      if (key === '0' && e.ctrlKey) { try { (app as unknown as { resetLayout: () => void }).resetLayout() } catch { /* noop */ }; e.preventDefault() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
