@@ -186,11 +186,11 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
       {/* ═══ MAIN: VIEWPORT + SIDEBAR ═══ */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Viewport */}
-        <div className="flex-1 flex min-w-0 overflow-hidden">
+        <div className="flex-1 flex min-w-0 overflow-hidden items-center justify-center bg-black p-1">
           <div
             ref={v.containerRef}
             onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}
-            className={'flex-1 bg-black relative overflow-hidden ' +
+            className={'relative flex-1 w-full h-full ' +
               (isDragging ? 'outline outline-3 outline-blue-500 outline-dashed outline-offset-[-3px]' : '')}
           >
             {isDragging && (
