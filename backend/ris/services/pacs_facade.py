@@ -44,7 +44,9 @@ def _fix_dicom_name(raw: str | None) -> str | None:
     # Verify it contains Cyrillic characters
     if any('\u0400' <= c <= '\u04FF' for c in name):
         return name
-    return rawfrom typing import Any
+    return raw
+
+from typing import Any
 
 import httpx
 from sqlalchemy import select

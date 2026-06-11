@@ -103,6 +103,12 @@ export function risV1Post<T>(path: string, body?: unknown) {
   }) as Promise<T>
 }
 
+export function risV1Delete<T>(path: string) {
+  return request(RIS_V1_BASE, path, {
+    method: 'DELETE',
+  }) as Promise<T>
+}
+
 // ---- auth (RIS, без auto-refresh) ----
 export function authLogin(username: string, password: string) {
   return request(RIS_BASE, '/auth/login', {

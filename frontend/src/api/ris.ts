@@ -1,6 +1,6 @@
 import type { ModalityOut, OrderOut, PatientStudy, ProtocolOut, StudyListItem, StudyOut } from '../types/ris'
 import type { PatientOut } from '../types/queue'
-import { risGet, risPatchBody, risPost, risPut, risV1Get, risV1Post } from './client'
+import { risGet, risPatchBody, risPost, risPut, risV1Delete, risV1Get, risV1Post } from './client'
 
 export interface OrderListResponse {
   items: OrderOut[]
@@ -75,6 +75,28 @@ export function linkStudy(orthancId: string, body: {
   return risV1Post<{ order_id: string; patient_id: string; patient_name: string }>(
     `/studies/${orthancId}/link`,
     body,
+  )
+}
+
+// ===== Очистка PACS (1-срезные исследования) =====
+
+export interface SingleSliceStudy {
+  orthanc_id: string
+  study_uid: string
+  patient_name: string
+  study_description: string
+  study_date: string
+  modality: string
+  last_update: string
+}
+
+export function listSingleSliceStudies() {
+  return risV1Get<{ count: number; items: SingleSliceStudy[] }>('/studies/cleanup/single-slice')
+}
+
+export function deleteOrthancStudy(orthancId: string) {
+  return risV1Delete<{ orthanc_id: string; deleted_db_rows: number; status: string }>(
+    `/studies/by-orthanc/${orthancId}`,
   )
 }
 

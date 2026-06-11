@@ -570,6 +570,7 @@ async def _send_metadata_to_orthanc(
     Возвращает orthanc_id загруженного инстанса или None при ошибке.
     """
     ds = Dataset()
+    ds.SpecificCharacterSet = "ISO_IR 192"  # UTF-8 для кириллицы
     ds.PatientName = patient.full_name
     ds.PatientID = patient.iin or str(patient.id)  # ИИН как PatientID, фолбэк на UUID
     ds.StudyDescription = order.study_description or "Routine"

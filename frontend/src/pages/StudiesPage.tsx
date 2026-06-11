@@ -23,6 +23,13 @@ export default function StudiesPage() {
   const [linkingId, setLinkingId] = useState<string | null>(null)
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
 
+  const [cleanupOpen, setCleanupOpen] = useState(false)
+  const [cleanupItems, setCleanupItems] = useState<SingleSliceStudy[]>([])
+  const [cleanupSelected, setCleanupSelected] = useState<Set<string>>(new Set())
+  const [cleanupLoading, setCleanupLoading] = useState(false)
+  const [cleanupDeleting, setCleanupDeleting] = useState(false)
+  const [cleanupError, setCleanupError] = useState<string | null>(null)
+
   const load = async () => {
     setLoading(true)
     setError(null)
@@ -64,6 +71,71 @@ export default function StudiesPage() {
     [studies],
   )
 
+  const openCleanup = async () => {
+    setCleanupOpen(true)
+    setCleanupLoading(true)
+    setCleanupError(null)
+    setCleanupSelected(new Set())
+    try {
+      const res = await listSingleSliceStudies()
+      setCleanupItems(res.items)
+    } catch (err) {
+      setCleanupError(err instanceof Error ? err.message : t('studies.cleanupLoadError'))
+    } finally {
+      setCleanupLoading(false)
+    }
+  }
+
+  const closeCleanup = () => {
+    setCleanupOpen(false)
+    setCleanupItems([])
+    setCleanupSelected(new Set())
+    setCleanupError(null)
+  }
+
+  const toggleCleanupItem = (orthancId: string) => {
+    setCleanupSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(orthancId)) next.delete(orthancId)
+      else next.add(orthancId)
+      return next
+    })
+  }
+
+  const toggleCleanupAll = () => {
+    if (cleanupSelected.size === cleanupItems.length) {
+      setCleanupSelected(new Set())
+    } else {
+      setCleanupSelected(new Set(cleanupItems.map((i) => i.orthanc_id)))
+    }
+  }
+
+  const runCleanup = async () => {
+    if (cleanupSelected.size === 0) return
+    if (!window.confirm(t('studies.cleanupConfirmMessage', { count: cleanupSelected.size }))) return
+    setCleanupDeleting(true)
+    setCleanupError(null)
+    let ok = 0
+    let fail = 0
+    for (const id of cleanupSelected) {
+      try {
+        await deleteOrthancStudy(id)
+        ok++
+      } catch {
+        fail++
+      }
+    }
+    setCleanupDeleting(false)
+    setCleanupItems((prev) => prev.filter((i) => !cleanupSelected.has(i.orthanc_id)))
+    setCleanupSelected(new Set())
+    if (fail > 0) {
+      setCleanupError(t('studies.cleanupDeletedPartial', { ok, total: ok + fail }))
+    } else {
+      setCleanupError(t('studies.cleanupDeletedOk', { count: ok }))
+    }
+    await load()
+  }
+
   // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
   useEffect(() => { void load() }, [modality])
 
@@ -92,6 +164,13 @@ export default function StudiesPage() {
             className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-3 py-1.5 rounded-md text-sm hover:bg-slate-200 dark:hover:bg-slate-700 transition"
           >
             {t('studies.refresh')}
+          </button>
+          <button
+            onClick={openCleanup}
+            className="bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 px-3 py-1.5 rounded-md text-sm hover:bg-amber-200 dark:hover:bg-amber-900/60 transition"
+            title={t('studies.cleanupSubtitle')}
+          >
+            🧹 {t('studies.cleanupButton')}
           </button>
           <button
             onClick={() => navigate('/orders/new')}
@@ -142,6 +221,106 @@ export default function StudiesPage() {
             ) : unlinked.length === 0 ? null : (
               <div className="text-center text-slate-400 text-sm py-6">{t('studies.noStudies')}</div>
             )}
+          </div>
+        </div>
+      )}
+
+      {cleanupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-opacity duration-200" onClick={closeCleanup}>
+          <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">🧹 {t('studies.cleanupTitle')}</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t('studies.cleanupSubtitle')}</p>
+              </div>
+              <button onClick={closeCleanup} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="p-3 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2 shrink-0">
+              <div className="text-sm text-slate-600 dark:text-slate-400">
+                {cleanupSelected.size > 0 ? t('studies.cleanupSelected', { count: cleanupSelected.size }) : `${cleanupItems.length}`}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={toggleCleanupAll}
+                  disabled={cleanupItems.length === 0}
+                  className="text-xs px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition disabled:opacity-50"
+                >
+                  {cleanupSelected.size === cleanupItems.length && cleanupItems.length > 0
+                    ? t('studies.cleanupDeselectAll')
+                    : t('studies.cleanupSelectAll')}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-2">
+              {cleanupError && (
+                <div className="m-2 p-2 rounded bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm">
+                  {cleanupError}
+                </div>
+              )}
+              {cleanupLoading ? (
+                <div className="p-8 text-center text-slate-400">{t('common.loading')}</div>
+              ) : cleanupItems.length === 0 ? (
+                <div className="p-8 text-center text-slate-400">{t('studies.cleanupEmpty')}</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="text-xs uppercase text-slate-500 sticky top-0 bg-white dark:bg-slate-800">
+                    <tr>
+                      <th className="px-2 py-2 w-8"></th>
+                      <th className="px-2 py-2 text-left">{t('studies.cleanupStudyPatient')}</th>
+                      <th className="px-2 py-2 text-left">{t('studies.cleanupStudyModality')}</th>
+                      <th className="px-2 py-2 text-left">{t('studies.cleanupStudyDescription')}</th>
+                      <th className="px-2 py-2 text-left">{t('studies.cleanupStudyDate')}</th>
+                      <th className="px-2 py-2 text-left">{t('studies.cleanupStudyId')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cleanupItems.map((it) => (
+                      <tr
+                        key={it.orthanc_id}
+                        onClick={() => toggleCleanupItem(it.orthanc_id)}
+                        className={`cursor-pointer border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 ${cleanupSelected.has(it.orthanc_id) ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                      >
+                        <td className="px-2 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={cleanupSelected.has(it.orthanc_id)}
+                            onChange={() => toggleCleanupItem(it.orthanc_id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-4 h-4"
+                          />
+                        </td>
+                        <td className="px-2 py-2 text-slate-700 dark:text-slate-300">{it.patient_name || '—'}</td>
+                        <td className="px-2 py-2 text-slate-600 dark:text-slate-400">{it.modality || '—'}</td>
+                        <td className="px-2 py-2 text-slate-600 dark:text-slate-400">{it.study_description || '—'}</td>
+                        <td className="px-2 py-2 text-slate-500 dark:text-slate-500 font-mono text-xs">{it.study_date || '—'}</td>
+                        <td className="px-2 py-2 text-slate-400 font-mono text-xs">{it.orthanc_id.slice(0, 8)}…</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="p-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-end gap-2 shrink-0">
+              <button
+                onClick={closeCleanup}
+                disabled={cleanupDeleting}
+                className="px-4 py-2 rounded-md text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition disabled:opacity-50"
+              >
+                {t('studies.cleanupCancel')}
+              </button>
+              <button
+                onClick={runCleanup}
+                disabled={cleanupSelected.size === 0 || cleanupDeleting}
+                className="px-4 py-2 rounded-md text-sm bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {cleanupDeleting ? t('studies.cleanupDeleting') : `${t('studies.cleanupDelete')} (${cleanupSelected.size})`}
+              </button>
+            </div>
           </div>
         </div>
       )}

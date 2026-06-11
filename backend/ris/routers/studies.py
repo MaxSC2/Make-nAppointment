@@ -204,6 +204,58 @@ async def link_study_to_order(
     )
 
 
+# ======================== CLEANUP (1-slice studies) ========================
+
+
+def _require_admin(user: User) -> None:
+    """Cleanup — только для admin/doctor (удаление данных — опасная операция)."""
+    if not (user.is_superuser or RoleCode.ADMIN.value in (user.role_codes or [])):
+        raise HTTPException(
+            status_code=403,
+            detail="Очистка PACS доступна только администратору",
+        )
+
+
+@router.get(
+    "/studies/cleanup/single-slice",
+    summary="Список 1-срезных исследований (Orthanc) — для очистки",
+)
+async def list_single_slice_studies_endpoint(
+    user: User = Depends(get_current_user),
+) -> dict:
+    _require_admin(user)
+    items = await pacs_facade.list_single_slice_studies()
+    return {"count": len(items), "items": items}
+
+
+@router.delete(
+    "/studies/by-orthanc/{orthanc_id}",
+    summary="Удалить исследование из Orthanc (PACS-фасад)",
+)
+async def delete_study_endpoint(
+    orthanc_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    _require_admin(user)
+    # Сначала удаляем запись в ris.studies (FK может блокировать Orthanc)
+    stmt = select(Study).where(Study.orthanc_id == orthanc_id)
+    db_studies = (await db.execute(stmt)).scalars().all()
+    for s in db_studies:
+        await db.delete(s)
+    await db.commit()
+    # Затем удаляем в Orthanc
+    try:
+        await pacs_facade.delete_orthanc_study(orthanc_id)
+    except pacs_facade.PACSError as e:
+        raise HTTPException(status_code=e.status_code, detail=f"PACS: {e}")
+    return {
+        "orthanc_id": orthanc_id,
+        "deleted_db_rows": len(db_studies),
+        "status": "deleted",
+    }
+
+
 # ======================== INSTANCES ========================
 
 
