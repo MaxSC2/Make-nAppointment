@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Логи и runtime
+*.log
+*.err.log
+*.pid
+nul
+
+# Orthanc runtime
+orthanc/orthanc.json
+orthanc/orthanc.pid
+orthanc/storage/
+orthanc/index*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Тестовые данные
+test-data/
