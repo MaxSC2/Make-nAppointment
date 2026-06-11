@@ -96,7 +96,7 @@ export default function PatientCardPage() {
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
           {t('patientCard.error')} {error}
         </div>
-        <button onClick={() => navigate('/patients')} className="mt-4 text-teal-600 hover:underline">
+        <button onClick={() => navigate(-1)} className="mt-4 text-teal-600 hover:underline">
           {t('patientCard.backToPatients')}
         </button>
       </div>
@@ -109,7 +109,7 @@ export default function PatientCardPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <button onClick={() => navigate('/patients')} className="text-sm text-teal-600 hover:underline mb-4">
+      <button onClick={() => navigate(-1)} className="text-sm text-teal-600 hover:underline mb-4">
         {t('patientCard.backToPatients')}
       </button>
 
