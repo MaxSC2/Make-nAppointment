@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
+import PublicLayout from './components/PublicLayout'
 import LoginPage from './pages/LoginPage'
 import QueuePage from './pages/QueuePage'
 import RegistrationPage from './pages/RegistrationPage'
@@ -53,7 +54,12 @@ function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: stri
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
+      {/* Public pages — clean layout, no sidebar */}
+      <Route element={<PublicLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+      </Route>
+
+      {/* Viewer — standalone full-screen, no Layout */}
       <Route
         path="/viewer/:studyUid"
         element={
@@ -62,6 +68,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
+      {/* Dashboard — with sidebar + header */}
       <Route
         element={
           <ProtectedRoute>
