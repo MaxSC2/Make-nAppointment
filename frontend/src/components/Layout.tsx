@@ -51,7 +51,7 @@ export default function Layout() {
   }
 
   return (
-    <div className={`h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden ${sidebarPinned ? 'lg:ml-60' : ''}`}>
+    <div className={`h-screen flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden ${sidebarPinned ? 'lg:ml-60' : ''}`}>
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
