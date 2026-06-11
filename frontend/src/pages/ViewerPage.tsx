@@ -47,7 +47,7 @@ export default function ViewerPage() {
       )}
 
       {studyUid && (
-        <DwvViewer studyUid={studyUid} onError={setError} />
+        <DwvViewer key={studyUid} studyUid={studyUid} onError={setError} />
       )}
     </div>
   )
