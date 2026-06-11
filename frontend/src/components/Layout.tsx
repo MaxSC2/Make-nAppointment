@@ -92,6 +92,8 @@ export default function Layout() {
           <div className="flex-1" />
 
           <div className="shrink-0 flex items-center gap-1 sm:gap-2">
+            {/* DIAGNOSTIC: green block at right edge */}
+            <div style={{ width: '8px', height: '40px', background: 'lime', position: 'fixed', right: 0, top: 12, zIndex: 9999 }} />
             <button
               onClick={toggle}
               className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
@@ -140,6 +142,18 @@ export default function Layout() {
           MedPlatform RIS · MVP · {new Date().getFullYear()}
         </footer>
       </main>
+      {/* Diagnostic: red right-edge marker */}
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '4px',
+          background: 'red',
+          zIndex: 9999,
+        }}
+      />
     </div>
   )
 }
