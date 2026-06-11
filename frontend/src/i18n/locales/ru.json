@@ -30,7 +30,8 @@
     "doctor": "Врач",
     "cabinet": "Кабинет",
     "policy": "ИИН",
-    "phone": "Телефон"
+    "phone": "Телефон",
+    "iin": "ИИН"
   },
   "nav": {
     "queue": "Очередь",
@@ -188,7 +189,9 @@
     "assignStudy": "Назначить исследование",
     "errorLoading": "Ошибка загрузки",
     "errorCreating": "Ошибка создания заказа",
-    "back": "← Назад"
+    "back": "← Назад",
+    "errorNeedPatient": "Выберите пациента",
+    "errorNeedModality": "Выберите модальность"
   },
   "monitoring": {
     "title": "Мониторинг",

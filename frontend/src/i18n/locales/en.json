@@ -30,7 +30,8 @@
     "doctor": "Doctor",
     "cabinet": "Room",
     "policy": "IIN",
-    "phone": "Phone"
+    "phone": "Phone",
+    "iin": "IIN"
   },
   "nav": {
     "queue": "Queue",
@@ -188,7 +189,9 @@
     "assignStudy": "Order a study",
     "errorLoading": "Load error",
     "errorCreating": "Order creation error",
-    "back": "← Back"
+    "back": "← Back",
+    "errorNeedPatient": "Select a patient",
+    "errorNeedModality": "Select a modality"
   },
   "monitoring": {
     "title": "Monitoring",

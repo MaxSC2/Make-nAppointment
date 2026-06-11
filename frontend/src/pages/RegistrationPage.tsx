@@ -26,7 +26,8 @@ export default function RegistrationPage() {
     setError(null)
     setResult(null)
     try {
-      const ticket = await queueApi.registerTicket(form)
+      const payload = { ...form, policy_number: form.iin || form.policy_number }
+      const ticket = await queueApi.registerTicket(payload)
       setResult(ticket)
       setForm({ full_name: '', policy_number: '', iin: '', cabinet_code: 'CT', phone: '', priority: 'normal' })
     } catch (err) {
@@ -60,25 +61,14 @@ export default function RegistrationPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.policyNumber')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('common.iin') ?? t('registration.policyNumber')}</label>
           <input
             type="text"
             required
-            value={form.policy_number}
-            onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
-            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="0000 000000 0000"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ИИН</label>
-          <input
-            type="text"
             maxLength={12}
             value={form.iin ?? ''}
             onChange={(e) => setForm({ ...form, iin: e.target.value })}
-            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="000000000000"
           />
         </div>
