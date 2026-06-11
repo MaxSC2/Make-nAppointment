@@ -32,14 +32,14 @@ export default function LoginPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen grid place-items-center">
+      <div className="w-full h-full grid place-items-center">
         <div className="text-slate-400 text-sm">{t('common.loading')}</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen grid place-items-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 p-4">
+    <div className="w-full h-full grid place-items-center bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 p-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 dark:text-slate-100">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
