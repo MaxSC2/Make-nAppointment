@@ -56,15 +56,22 @@ export default function Layout() {
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         isPinned={sidebarPinned}
-        onTogglePin={() => setSidebarPinned((p) => !p)}
+        onTogglePin={() => {
+          if (window.innerWidth >= 1024) {
+            if (sidebarPinned) { setSidebarPinned(false); setSidebarOpen(false) }
+            else { setSidebarPinned(true); setSidebarOpen(true) }
+          } else {
+            setSidebarPinned((p) => !p)
+          }
+        }}
         items={visibleNav}
       />
 
       <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-2 sm:px-4 h-16 flex items-center gap-1">
+        <div className="px-2 sm:px-4 md:px-6 h-16 flex items-center gap-1">
           <button
             onClick={() => setSidebarOpen((o) => !o)}
-            className={`p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition ${sidebarPinned ? 'hidden lg:hidden' : ''}`}
+            className={`p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition ${sidebarPinned ? 'lg:hidden' : ''}`}
             title={t('nav.menu')}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -82,20 +89,9 @@ export default function Layout() {
             </div>
           </div>
 
-          <div className="hidden md:block flex-1 max-w-md mx-auto">
-            <div className="relative">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-              </svg>
-              <input
-                type="text"
-                placeholder={t('nav.searchPlaceholder')}
-                className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-500 transition"
-              />
-            </div>
-          </div>
+          <div className="flex-1" />
 
-          <div className="ml-auto shrink-0 flex items-center gap-1 sm:gap-2">
+          <div className="shrink-0 flex items-center gap-1 sm:gap-2">
             <button
               onClick={toggle}
               className="p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition"
@@ -135,7 +131,10 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 h-[calc(100vh-4rem)] overflow-y-auto">
+      <main
+        onClick={() => { if (!sidebarPinned && sidebarOpen && window.innerWidth >= 1024) setSidebarOpen(false) }}
+        className="px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 h-[calc(100vh-4rem)] overflow-y-auto"
+      >
         <Outlet />
         <footer className="pt-8 pb-2 text-center text-xs text-slate-400 dark:text-slate-600">
           MedPlatform RIS · MVP · {new Date().getFullYear()}
