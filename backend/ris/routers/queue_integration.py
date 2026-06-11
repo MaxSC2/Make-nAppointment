@@ -372,29 +372,41 @@ async def get_service_types(
 
 @router.get("/tickets", response_model=list[TicketOut], summary="Список талонов (из SmartQ)")
 async def list_tickets(
-    status: str | None = Query(default=None, description="waiting | in_progress | done | cancelled"),
+    status: str | None = Query(default=None, description="waiting | in_progress | done | cancelled (можно через запятую)"),
     cabinet_id: int | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[TicketOut]:
     """GET /api/queue/tickets — список талонов.
 
-    Если указан status — конвертируем наш формат в SmartQ формат для фильтра,
-    потом обратно маппим.
+    Если status не указан — возвращаются только active (waiting + in_progress).
+    Можно передать несколько статусов через запятую: ?status=waiting,in_progress
     """
-    smartq_status = _REVERSE_STATUS_MAP.get(status, status) if status else None
-    smartq_tickets = await _safe_smartq_call(
-        "get_tickets",
-        status=smartq_status,
-        room_id=cabinet_id,
-    )
+    if status:
+        statuses = [s.strip() for s in status.split(",")]
+        smartq_statuses = [_REVERSE_STATUS_MAP.get(s, s) for s in statuses]
+    else:
+        smartq_statuses = None
+
+    all_tickets = await _safe_smartq_call("get_tickets")
+
+    # Фильтр по статусу
+    if smartq_statuses:
+        all_tickets = [t for t in all_tickets if t.get("status") in smartq_statuses]
+    else:
+        # По умолчанию — только active (waiting + called/in_progress)
+        all_tickets = [t for t in all_tickets if t.get("status") in ("waiting", "called")]
+
+    # Фильтр по кабинету
+    if cabinet_id:
+        all_tickets = [t for t in all_tickets if t.get("roomId") == cabinet_id]
 
     # Получаем кэш service types для маппинга modality
     services = await _safe_smartq_call("get_service_types")
     services_cache = {s.get("id"): s.get("name", "") for s in services}
 
     return await _enrich_with_orders(
-        [await _smartq_ticket_to_ours(t, services_cache) for t in smartq_tickets],
+        [await _smartq_ticket_to_ours(t, services_cache) for t in all_tickets],
         db,
     )
 

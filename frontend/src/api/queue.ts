@@ -61,7 +61,7 @@ export function registerTicket(body: TicketCreateRequest) {
 export function getTickets(cabinet?: string, status?: string) {
   const params = new URLSearchParams()
   if (cabinet) params.set('cabinet_id', cabinet)
-  if (status) params.set('status_filter', status)
+  if (status) params.set('status', status)
   const qs = params.toString()
   return risGet<RisTicketOut[]>(`/queue/tickets${qs ? '?' + qs : ''}`).then(list => list.map(risTicketToDetail))
 }
