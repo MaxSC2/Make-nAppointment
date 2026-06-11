@@ -237,7 +237,7 @@
     "us": "Ultrasound",
     "error": "Load error",
     "unknownModality": "Could not determine image modality",
-    "linkStudy": "Link image \"{studyId}\" to a new RIS order?",
+    "linkStudy": "Link image \"{{studyId}}\" to a new RIS order?",
     "linkError": "Link error",
     "unlinked": "Unlinked",
     "linked": "Linked",
