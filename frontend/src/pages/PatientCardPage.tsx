@@ -44,6 +44,8 @@ export default function PatientCardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
+  const [editing, setEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ full_name: '', iin: '', phone: '', notes: '', birth_date: '' })
 
   useEffect(() => {
     if (!id) return
@@ -56,6 +58,13 @@ export default function PatientCardPage() {
         if (cancelled) return
         setPatient(p)
         setStudies(s)
+        setEditForm({
+          full_name: p.full_name,
+          iin: p.iin || '',
+          phone: p.phone || '',
+          notes: p.notes || '',
+          birth_date: p.birth_date ? p.birth_date.slice(0, 10) : '',
+        })
       })
       .catch(err => { if (!cancelled) setError(err.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
@@ -106,17 +115,22 @@ export default function PatientCardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5 sticky top-4">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-3">
-              {patient.full_name}
-            </h2>
+            <div className="flex items-start justify-between mb-3">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                {patient.full_name}
+              </h2>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
+              >
+                ✎
+              </button>
+            </div>
 
             <dl className="text-sm space-y-2">
-              {patient.iin && (
-                <>
-                  <dt className="text-xs text-slate-400 uppercase">{t('patientCard.iin')}</dt>
-                  <dd className="font-mono text-slate-900 dark:text-slate-100 mb-2">{patient.iin}</dd>
-                </>
-              )}
+              <dt className="text-xs text-slate-400 uppercase">{t('patientCard.iin')}</dt>
+              <dd className="font-mono text-slate-900 dark:text-slate-100 mb-2">{patient.iin || '—'}</dd>
+
               {age !== null && (
                 <>
                   <dt className="text-xs text-slate-400 uppercase">{t('patientCard.age')}</dt>
@@ -129,8 +143,12 @@ export default function PatientCardPage() {
                   <dd className="text-slate-900 dark:text-slate-100 mb-2">{new Date(patient.birth_date).toLocaleDateString()}</dd>
                 </>
               )}
-              <dt className="text-xs text-slate-400 uppercase">{t('patientCard.policy')}</dt>
-              <dd className="font-mono text-slate-900 dark:text-slate-100 mb-2">{patient.policy_number}</dd>
+              {patient.policy_number !== patient.iin && patient.policy_number !== patient.id && (
+                <>
+                  <dt className="text-xs text-slate-400 uppercase">{t('patientCard.policy')}</dt>
+                  <dd className="font-mono text-slate-900 dark:text-slate-100 mb-2">{patient.policy_number}</dd>
+                </>
+              )}
               {patient.phone && (
                 <>
                   <dt className="text-xs text-slate-400 uppercase">{t('patientCard.phone')}</dt>
@@ -198,6 +216,76 @@ export default function PatientCardPage() {
           )}
         </div>
       </div>
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setEditing(false)}>
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('patientCard.editTitle')}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('patientCard.editName')}</label>
+                <input
+                  value={editForm.full_name}
+                  onChange={e => setEditForm(f => ({ ...f, full_name: e.target.value }))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('patientCard.iin')}</label>
+                <input
+                  value={editForm.iin}
+                  onChange={e => setEditForm(f => ({ ...f, iin: e.target.value }))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm font-mono bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  maxLength={12}
+                  placeholder="000000000000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('patientCard.editBirthDate')}</label>
+                <input
+                  type="date"
+                  value={editForm.birth_date}
+                  onChange={e => setEditForm(f => ({ ...f, birth_date: e.target.value }))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('patientCard.phone')}</label>
+                <input
+                  value={editForm.phone}
+                  onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                  placeholder="+77051234567"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{t('patientCard.notes')}</label>
+                <textarea
+                  value={editForm.notes}
+                  onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 resize-none"
+                  rows={3}
+                  placeholder={t('patientCard.editNotesPlaceholder')}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 text-sm text-white bg-teal-600 rounded-md hover:bg-teal-700"
+              >
+                {t('common.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

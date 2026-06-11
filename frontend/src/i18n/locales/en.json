@@ -138,6 +138,10 @@
     "activeOrders": "Active",
     "active": "Active",
     "completed": "Completed",
+    "editTitle": "Edit patient",
+    "editName": "Full name",
+    "editBirthDate": "Date of birth",
+    "editNotesPlaceholder": "Clinical notes, allergies, chronic conditions...",
     "open": "Open",
     "error": "Error:"
   },

@@ -138,6 +138,10 @@
     "activeOrders": "Белсенді",
     "active": "Белсенді",
     "completed": "Аяқталған",
+    "editTitle": "Пациентті өңдеу",
+    "editName": "Т.А.Ә.",
+    "editBirthDate": "Туған күні",
+    "editNotesPlaceholder": "Клиникалық жазбалар, аллергия, созылмалы аурулар...",
     "open": "Ашу",
     "error": "Қате:"
   },
