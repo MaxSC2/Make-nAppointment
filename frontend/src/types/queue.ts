@@ -13,6 +13,7 @@ export interface PatientOut {
   policy_number: string
   birth_date: string | null
   phone: string | null
+  notes?: string | null
   created_at: string
 }
 

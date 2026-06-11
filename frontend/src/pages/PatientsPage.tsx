@@ -1,8 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getPatients } from '../api/ris'
 import type { PatientOut } from '../types/queue'
 import { useTranslation } from 'react-i18next'
+
+function calcAge(birthDate: string | null): number | null {
+  if (!birthDate) return null
+  const bd = new Date(birthDate)
+  if (isNaN(bd.getTime())) return null
+  const today = new Date()
+  let age = today.getFullYear() - bd.getFullYear()
+  const m = today.getMonth() - bd.getMonth()
+  if (m < 0 || (m === 0 && today.getDate() < bd.getDate())) age--
+  return age
+}
 
 export default function PatientsPage() {
   const navigate = useNavigate()
@@ -67,21 +78,36 @@ export default function PatientsPage() {
 
       {!loading && !error && patients.length > 0 && (
         <div className="space-y-2">
-          {patients.map(p => (
-            <button
-              key={p.id}
-              onClick={() => navigate(`/patients/${p.id}`)}
-              className="w-full text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-teal-500 hover:shadow-sm dark:hover:shadow-slate-900/50 transition"
-            >
-              <div className="font-medium text-slate-900 dark:text-slate-100">{p.full_name}</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {t('patients.policy')} {p.policy_number}
-                {p.birth_date && ` ${t('patients.dob')} ${p.birth_date}`}
-                {p.phone && ` · ${p.phone}`}
-              </div>
-              <div className="text-xs text-teal-600 dark:text-teal-400 mt-2">{t('patients.openCard')}</div>
-            </button>
-          ))}
+          {patients.map(p => {
+            const age = calcAge(p.birth_date)
+            return (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/patients/${p.id}`)}
+                className="w-full text-left bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 hover:border-teal-500 hover:shadow-sm dark:hover:shadow-slate-900/50 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="font-medium text-slate-900 dark:text-slate-100">{p.full_name}</div>
+                  {age !== null && (
+                    <span className="text-xs text-slate-400 dark:text-slate-500">{age} {t('patients.years')}</span>
+                  )}
+                </div>
+                <div className="text-sm text-slate-500 dark:text-slate-400 mt-1 space-y-0.5">
+                  <div>
+                    {p.iin && <span className="font-mono">{p.iin}</span>}
+                    {p.iin && p.policy_number && <span className="mx-1.5 text-slate-300">|</span>}
+                    <span>{t('patients.policy')} {p.policy_number}</span>
+                  </div>
+                  <div>
+                    {p.phone && <span>{p.phone}</span>}
+                    {p.birth_date && (p.phone ? <span className="mx-1.5 text-slate-300">·</span> : null)}
+                    {p.birth_date && <span>{new Date(p.birth_date).toLocaleDateString()}</span>}
+                  </div>
+                </div>
+                <div className="text-xs text-teal-600 dark:text-teal-400 mt-2">{t('patients.openCard')}</div>
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

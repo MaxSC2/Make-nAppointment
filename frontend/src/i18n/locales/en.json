@@ -14,6 +14,7 @@
     "close": "Close",
     "noData": "No data",
     "retry": "Retry",
+    "hide": "Hide",
     "all": "All",
     "status": "Status",
     "date": "Date",
@@ -110,6 +111,7 @@
     "empty": "No patients yet. Register the first patient on the Registration page.",
     "policy": "Policy:",
     "dob": "· Date of birth:",
+    "years": "y.o.",
     "openCard": "Open card →"
   },
   "patientCard": {
@@ -125,6 +127,13 @@
     "dateUnknown": "Date unknown",
     "status": "Status:",
     "statusAssigned": "assigned",
+    "iin": "IIN",
+    "age": "Age",
+    "notes": "Notes",
+    "protocol": "Report",
+    "impression": "Impression",
+    "signed": "Signed",
+    "noProtocol": "No report",
     "open": "Open",
     "error": "Error:"
   },

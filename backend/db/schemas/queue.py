@@ -35,6 +35,7 @@ class PatientOut(BaseModel):
     policy_number: str
     birth_date: datetime | None
     phone: str | None
+    notes: str | None = None
     created_at: datetime
 
 

@@ -1438,4 +1438,86 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.9 — качество:** 0 ошибок TypeScript, 115/115 тестов, DoctorPage без race condition
 - **П.6 — жизненный цикл:** от бага (кнопка ...) → анализ (setInterval race) → фикс → тесты
 
+---
+
+## 11.06.2026 — DWV фиксы + PRODUCTION_VISION.md + доработка интерфейса врача
+
+### Что сделал:
+
+1. **Починил DWV viewer (3 проблемы):**
+   - JPEG-LS/RLE/JPEG2000 воркеры не грузились — скопированы из `node_modules/` в `public/viewer/assets/workers/` (DWV резолвит по `document.baseURI = /viewer/`). Также продублированы в `public/assets/workers/` для fallback.
+   - XC multi-volume — сырое исключение «Cannot create image for multi-volume» перехватывается глобальным `window.addEventListener('error')` с `e.preventDefault()` и показывается понятное сообщение: «Формат исследования не поддерживается 3D-просмотром (множественные объёмы)»
+   - «Загрузка...» висела при ошибке — добавлено условие `!v.error` в DwvViewer.tsx
+   - `app.reset()` при переключении серий чтобы не было ложных ошибок
+
+2. **Исследовал SmartQ как референс:**
+   SmartQ (NestJS + Prisma + Socket.IO + TanStack Query + Zustand + Recharts) — готовая enterprise-очередь второй группы:
+   - 8 статусов талонов (vs наши 3), приоритеты 1–5, ETA, WebSocket realtime
+   - Табло с голосовыми объявлениями (каз/рус/англ), киоск саморегистрации
+   - Аналитика загрузки врачей (Recharts), печать талонов
+   - **Что взять в RIS:** TanStack Query вместо ручных хуков, Zustand вместо Context, Socket.IO вместо polling, Recharts для дашбордов
+
+3. **Создал PRODUCTION_VISION.md** (`docs/PRODUCTION_VISION.md`):
+   - Целевая архитектура: единый UI врача → RIS-хаб → SmartQ + Orthanc + внешние ЛПУ (HL7/DICOM)
+   - 5 фаз дорожной карты: MVP → SmartQ интеграция → PACS-инфраструктура → ИИ + OHIF → Enterprise
+   - SmartQ интеграция спроектирована: прокси-роутер в RIS, webhook, fallback на elqueue (11-14 часов)
+   - Hot/cold storage tiering, AI-ассистент, MWL/MPPS/HL7 интеграции
+
+4. **Создал PRACTICE_LOG_RULES.md** — полный справочник по оформлению дневника практики:
+   - Требования к шрифту/полям/интервалам из .docx (TNR 14pt, поля 30/20/10/25мм, межстр. 1.25)
+   - Структура каждой записи: дата → что сделал → файлы → привязка к П.1–П.10
+   - Оформление рисунков/таблиц/формул/списка литературы/приложений
+   - Чек-лист перед коммитом
+
+5. **Доработал PatientsPage под врача:**
+   - Добавлен ИИН в карточку пациента
+   - Автоматический расчёт возраста из `birth_date`
+   - Улучшенная вёрстка: имя + возраст, ИИН | полис, телефон · дата рождения
+
+6. **Доработал PatientCardPage под врача:**
+   - Боковая панель с полной информацией: ИИН, возраст, дата рождения, полис, телефон, заметки
+   - Цветные статус-бейджи исследований (зелёный/синий/жёлтый/красный)
+   - Кнопка «Протокол» — загружает протокол по `order_id` и показывает Findings + Impression + подпись
+   - Улучшенная раскладка: пациент слева, исследования справа
+
+7. **Доработал OrderCard + OrdersPage:**
+   - Быстрые иконки-кнопки: 🖼 вьювер, 📋 протокол, 👤 карта пациента
+   - Клик по карточке → протокол
+   - Кнопка «+ Заказ» на странице заказов
+   - Показ направившего врача (`referring_physician`)
+
+8. **Добавил `notes` в PatientOut** (backend: `db/schemas/queue.py` + frontend: `types/queue.ts`)
+
+9. **Добавил i18n-ключи** (ru/en/kk): `patients.years`, `patientCard.iin`, `patientCard.age`, `patientCard.notes`, `patientCard.protocol`, `patientCard.impression`, `patientCard.signed`, `patientCard.noProtocol`, `common.hide`
+
+### Какие файлы изменил:
+- `frontend/src/pages/PatientsPage.tsx` — ИИН, возраст, улучшенная вёрстка
+- `frontend/src/pages/PatientCardPage.tsx` — боковая панель, протоколы, цветные статусы
+- `frontend/src/pages/OrdersPage.tsx` — кнопка «+ Заказ», onClick → протокол
+- `frontend/src/components/OrderCard.tsx` — иконки действий (вьювер/протокол/пациент)
+- `frontend/src/types/queue.ts` — `notes` в PatientOut
+- `backend/db/schemas/queue.py` — `notes` в PatientOut
+- `frontend/src/i18n/locales/{ru,en,kk}.json` — новые ключи
+- `docs/PRODUCTION_VISION.md` (новый)
+- `PRACTICE_LOG_RULES.md` (новый)
+- `frontend/src/components/DwvViewer.tsx` — `!v.error` fix
+- `frontend/src/hooks/useDwvViewer.ts` — global error + app.reset()
+- `frontend/public/viewer/assets/workers/` (новые — 12 файлов)
+- `frontend/public/assets/workers/` (новые — 12 файлов)
+
+### Результат:
+- ✅ TypeScript 0 ошибок
+- ✅ DWV viewer: JPEG-LS грузится, XC multi-volume не крашит консоль
+- ✅ Пациенты: ИИН, возраст, протоколы доступны из карточки
+- ✅ Заказы: быстрые действия одним кликом
+- ✅ PRODUCTION_VISION.md: полный план вывода в продуктив
+- ✅ Коммит `e73657f` (DWV fix) + нескоммиченные изменения выше
+
+### Что это дало для отчёта:
+- **П.5 — командные обсуждения:** исследование SmartQ как референса, интеграционный план
+- **П.6 — жизненный цикл:** от MVP к production vision, доработка интерфейса под реального врача
+- **П.7 — методология:** референс-анализ (SmartQ) → улучшение своего продукта
+- **П.9 — качество:** TSC 0 ошибок, i18n на 3 языках
+- **П.10 — документация:** PRODUCTION_VISION.md, PRACTICE_LOG_RULES.md
+
 
