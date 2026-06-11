@@ -79,13 +79,13 @@ export function DicomSearch({ onClose }: DicomSearchProps) {
   return (
     <div className="p-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+        <h3 className="flex items-center gap-1.5 text-sm font-semibold text-slate-100">
           <ToolIcon id="Search" className="w-4 h-4" />
           Поиск в PACS
         </h3>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-slate-700 p-1 rounded transition"
+          className="text-slate-400 hover:text-slate-300 p-1 rounded transition"
           aria-label="Закрыть"
           title="Закрыть"
         >
@@ -102,10 +102,10 @@ export function DicomSearch({ onClose }: DicomSearchProps) {
             onChange={e => setQuery(e.target.value)}
             placeholder="ФИО, ID, Accession, study UID, описание..."
             aria-label="Поиск исследования"
-            className="w-full pl-7 pr-2 py-1 border border-slate-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="w-full pl-7 pr-2 py-1 bg-slate-800 border border-slate-700 rounded text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
           />
         </div>
-        <label className="flex items-center gap-1 text-xs text-slate-700 whitespace-nowrap">
+        <label className="flex items-center gap-1 text-xs text-slate-300 whitespace-nowrap">
           <input
             type="checkbox"
             checked={filterUnlinked}
@@ -116,30 +116,30 @@ export function DicomSearch({ onClose }: DicomSearchProps) {
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-700 text-xs rounded px-2 py-1 mb-2">
+        <div className="bg-red-900/50 text-red-300 text-xs rounded px-2 py-1 mb-2">
           {error}
         </div>
       )}
 
-      <div className="text-xs text-slate-500 mb-1">
+      <div className="text-xs text-slate-400 mb-1">
         {loading ? 'Загрузка...' : `Найдено: ${studies.length}`}
       </div>
 
-      <div className="bg-white border border-slate-200 rounded max-h-48 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700 rounded max-h-48 overflow-y-auto">
         {studies.length === 0 && !loading ? (
-          <div className="text-center py-6 text-slate-400 text-sm">
+          <div className="text-center py-6 text-slate-500 text-sm">
             {query ? 'Не найдено' : 'Нет исследований'}
           </div>
         ) : (
           <table className="w-full text-xs">
-            <thead className="bg-slate-50 sticky top-0">
+            <thead className="bg-slate-800 sticky top-0">
               <tr>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">Дата</th>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">Мод.</th>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">Пациент</th>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">Описание</th>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">Accession</th>
-                <th className="px-2 py-1 text-left text-slate-500 font-medium">RIS</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">Дата</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">Мод.</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">Пациент</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">Описание</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">Accession</th>
+                <th className="px-2 py-1 text-left text-slate-400 font-medium">RIS</th>
               </tr>
             </thead>
             <tbody>
@@ -147,30 +147,30 @@ export function DicomSearch({ onClose }: DicomSearchProps) {
                 <tr
                   key={s.orthanc_id}
                   onClick={() => handleSelect(s)}
-                  className="hover:bg-brand-50 cursor-pointer border-t border-slate-100"
+                  className="hover:bg-slate-700/50 cursor-pointer border-t border-slate-800"
                 >
-                  <td className="px-2 py-1 text-slate-700">{s.study_date || '—'}</td>
+                  <td className="px-2 py-1 text-slate-300">{s.study_date || '—'}</td>
                   <td className="px-2 py-1">
-                    <span className="px-1.5 py-0.5 bg-slate-100 rounded text-slate-700">
+                    <span className="px-1.5 py-0.5 bg-slate-700 rounded text-slate-300">
                       {s.modality || '—'}
                     </span>
                   </td>
-                  <td className="px-2 py-1 text-slate-700 truncate max-w-[160px]">
+                  <td className="px-2 py-1 text-slate-300 truncate max-w-[160px]">
                     {s.patient_name_dicom || '—'}
                   </td>
-                  <td className="px-2 py-1 text-slate-500 truncate max-w-[200px]">
+                  <td className="px-2 py-1 text-slate-400 truncate max-w-[200px]">
                     {s.study_description || '—'}
                   </td>
-                  <td className="px-2 py-1 font-mono text-slate-500">
+                  <td className="px-2 py-1 font-mono text-slate-400">
                     {s.accession_number || '—'}
                   </td>
                   <td className="px-2 py-1">
                     {s.ris_order_id ? (
-                      <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
+                      <span className="px-1.5 py-0.5 bg-green-900/50 text-green-400 rounded">
                         ✓ {s.ris_order_id}
                       </span>
                     ) : (
-                      <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded">
+                      <span className="px-1.5 py-0.5 bg-amber-900/50 text-amber-400 rounded">
                         unlinked
                       </span>
                     )}

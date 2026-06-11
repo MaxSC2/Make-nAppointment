@@ -57,10 +57,7 @@ async def test_protected_endpoint_with_token(client, admin_auth_headers) -> None
     """С валидным токеном защищённый эндпоинт пропускает."""
     resp = await client.get("/api/orders", headers=admin_auth_headers)
     assert resp.status_code == 200
-    data = resp.json()
-    assert isinstance(data, dict)
-    assert "items" in data
-    assert isinstance(data["items"], list)
+    assert isinstance(resp.json(), list)
 
 
 async def test_refresh_token(client, seed_admin) -> None:

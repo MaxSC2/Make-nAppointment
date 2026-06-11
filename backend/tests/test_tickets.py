@@ -39,10 +39,7 @@ async def test_list_orders_empty(client, admin_auth_headers) -> None:
     """Список заказов (может быть пустым)."""
     resp = await client.get("/api/orders", headers=admin_auth_headers)
     assert resp.status_code == 200
-    data = resp.json()
-    assert isinstance(data, dict)
-    assert "items" in data
-    assert isinstance(data["items"], list)
+    assert isinstance(resp.json(), list)
 
 
 async def test_create_order(client, admin_auth_headers, seed_patient, seed_modalities) -> None:

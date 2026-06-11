@@ -20,17 +20,17 @@ function StatCard({
   color?: 'slate' | 'blue' | 'emerald' | 'amber' | 'rose' | 'teal'
 }) {
   const colorMap: Record<string, string> = {
-    slate: 'bg-slate-50 border-slate-200 text-slate-700',
-    blue: 'bg-blue-50 border-blue-200 text-blue-700',
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    amber: 'bg-amber-50 border-amber-200 text-amber-700',
-    rose: 'bg-rose-50 border-rose-200 text-rose-700',
-    teal: 'bg-teal-50 border-teal-200 text-teal-700',
+    slate: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300',
+    blue: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400',
+    emerald: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400',
+    amber: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400',
+    rose: 'bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400',
+    teal: 'bg-teal-50 dark:bg-teal-900/30 border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-400',
   }
   return (
     <div className={`border rounded-lg p-4 ${colorMap[color]}`}>
       <div className="text-3xl font-bold leading-none">{value}</div>
-      <div className="text-xs mt-2 font-medium uppercase tracking-wide">{label}</div>
+      <div className="text-xs mt-2 font-medium uppercase tracking-wide dark:text-inherit">{label}</div>
       {hint && <div className="text-xs mt-1 opacity-70">{hint}</div>}
     </div>
   )
@@ -47,13 +47,13 @@ function ProgressBar({ value, max, color = 'blue' }: { value: number; max: numbe
   }
   return (
     <div className="flex items-center gap-2 text-xs">
-      <div className="flex-1 bg-slate-100 rounded-full h-2 overflow-hidden">
+      <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden">
         <div
           className={`h-full ${colorMap[color]} transition-all`}
           style={{ width: `${pct}%` }}
         />
       </div>
-      <span className="text-slate-600 tabular-nums w-16 text-right">{value} / {max}</span>
+      <span className="text-slate-600 dark:text-slate-400 tabular-nums w-16 text-right">{value} / {max}</span>
     </div>
   )
 }
@@ -97,12 +97,12 @@ export default function MonitoringPage() {
   }, [])
 
   if (loading) {
-    return <div className="text-center py-12 text-slate-400">{t('monitoring.loading')}</div>
+    return <div className="text-center py-12 text-slate-400 dark:text-slate-500">{t('monitoring.loading')}</div>
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-6">
+      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg p-6">
         <div className="font-medium mb-1">{t('monitoring.error')}</div>
         <div className="text-sm">{error}</div>
       </div>
@@ -118,15 +118,15 @@ export default function MonitoringPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">{t('monitoring.title')}</h2>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h2 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{t('monitoring.title')}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {t('monitoring.subtitle')}
           </p>
         </div>
       </div>
 
       {/* Главные KPI */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard
           label={t('monitoring.ordersToday')}
           value={summary.orders_today}
@@ -179,8 +179,8 @@ export default function MonitoringPage() {
       </div>
 
       {/* По модальностям */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">
           {t('monitoring.ordersByModality')}
         </h3>
         {byModality.length === 0 ? (
@@ -190,8 +190,8 @@ export default function MonitoringPage() {
             {byModality.map(m => (
               <div key={m.modality}>
                 <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="font-medium text-slate-700">{m.modality}</span>
-                  <span className="text-xs text-slate-500">
+                  <span className="font-medium text-slate-700 dark:text-slate-300">{m.modality}</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     {t('monitoring.today')} <b>{m.today}</b> {t('monitoring.week')} {m.week} {t('monitoring.ready')} {m.completed}
                   </span>
                 </div>
@@ -203,8 +203,8 @@ export default function MonitoringPage() {
       </div>
 
       {/* По кабинетам */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">
           {t('monitoring.cabinetLoad')}
         </h3>
         {byCabinet.length === 0 ? (
@@ -214,8 +214,8 @@ export default function MonitoringPage() {
             {byCabinet.map(c => (
               <div key={c.code} className="grid grid-cols-[120px_1fr] gap-3 items-center">
                 <div>
-                  <div className="text-sm font-medium text-slate-700">{c.name}</div>
-                  <div className="text-xs text-slate-500">{c.modality}</div>
+                  <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{c.name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">{c.modality}</div>
                 </div>
                 <ProgressBar
                   value={c.waiting + c.in_progress}
@@ -229,8 +229,8 @@ export default function MonitoringPage() {
       </div>
 
       {/* Активность врачей */}
-      <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <h3 className="text-sm font-semibold text-slate-900 mb-4 uppercase tracking-wide">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 uppercase tracking-wide">
           {t('monitoring.doctorActivity')}
         </h3>
         {physicians.length === 0 ? (
@@ -239,7 +239,7 @@ export default function MonitoringPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-xs text-slate-500 uppercase border-b border-slate-200">
+                <tr className="text-xs text-slate-500 dark:text-slate-400 uppercase border-b border-slate-200 dark:border-slate-700">
                   <th className="text-left py-2 font-medium">{t('monitoring.doctor')}</th>
                   <th className="text-right py-2 font-medium">{t('monitoring.orders')}</th>
                   <th className="text-right py-2 font-medium">{t('monitoring.signatures')}</th>
@@ -247,15 +247,15 @@ export default function MonitoringPage() {
               </thead>
               <tbody>
                 {physicians.map(p => (
-                  <tr key={p.user_id} className="border-b border-slate-100">
+                  <tr key={p.user_id} className="border-b border-slate-100 dark:border-slate-700">
                     <td className="py-2">
-                      <div className="font-medium text-slate-900">{p.full_name}</div>
-                      <div className="text-xs text-slate-500">@{p.username}</div>
+                      <div className="font-medium text-slate-900 dark:text-slate-100">{p.full_name}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">@{p.username}</div>
                     </td>
-                    <td className="text-right tabular-nums font-medium text-slate-900">
+                    <td className="text-right tabular-nums font-medium text-slate-900 dark:text-slate-100">
                       {p.orders_week}
                     </td>
-                    <td className="text-right tabular-nums font-medium text-emerald-700">
+                    <td className="text-right tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
                       {p.protocols_signed_week}
                     </td>
                   </tr>

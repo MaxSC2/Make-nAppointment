@@ -489,6 +489,7 @@ async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
     import io
     from pydicom.filereader import dcmread
     from pydicom.filewriter import dcmwrite
+    from pydicom.dataset import Dataset
 
     raw = await _orthanc_get_bytes(f"instances/{instance_id}/file")
 

@@ -15,11 +15,11 @@ export default function QueuePage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-semibold">{t('queue.title')}</h2>
+        <h2 className="text-2xl font-semibold dark:text-slate-100">{t('queue.title')}</h2>
         <select
           value={cabinet ?? ''}
           onChange={(e) => setCabinet(e.target.value || undefined)}
-          className="border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+          className="border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-1.5 text-sm"
         >
           <option value="">{t('queue.allCabinets')}</option>
           {cabinets.map((c) => (
@@ -31,11 +31,11 @@ export default function QueuePage() {
       <QueueStats tickets={tickets} cabinetName={selectedCabinet} />
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">{error}</div>
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md text-sm">{error}</div>
       )}
 
       {loading ? (
-        <div className="text-center py-12 text-gray-400">{t('common.loading')}</div>
+        <div className="text-center py-12 text-gray-400 dark:text-slate-500">{t('common.loading')}</div>
       ) : (
         <QueueTable tickets={tickets} />
       )}

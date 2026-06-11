@@ -18,19 +18,19 @@ export function QueueStats({ tickets, cabinetName }: QueueStatsProps) {
   }, [tickets])
 
   const items = [
-    { key: 'total', label: t('stats.total'), value: stats.total, color: 'bg-slate-50 text-slate-700 border-slate-200' },
-    { key: 'waiting', label: t('stats.waiting'), value: stats.waiting, color: 'bg-amber-50 text-amber-700 border-amber-200' },
-    { key: 'in_progress', label: t('stats.inProgress'), value: stats.inProgress, color: 'bg-blue-50 text-blue-700 border-blue-200' },
-    { key: 'done', label: t('stats.completed'), value: stats.done, color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-    { key: 'cancelled', label: t('stats.cancelled'), value: stats.cancelled, color: 'bg-rose-50 text-rose-700 border-rose-200' },
+    { key: 'total', label: t('stats.total'), value: stats.total, color: 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700' },
+    { key: 'waiting', label: t('stats.waiting'), value: stats.waiting, color: 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' },
+    { key: 'in_progress', label: t('stats.inProgress'), value: stats.inProgress, color: 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800' },
+    { key: 'done', label: t('stats.completed'), value: stats.done, color: 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' },
+    { key: 'cancelled', label: t('stats.cancelled'), value: stats.cancelled, color: 'bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800' },
   ]
 
   return (
     <div className="mb-4">
-      <div className="text-xs text-slate-500 mb-2">
+      <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">
         {cabinetName ? t('stats.forCabinet', { name: cabinetName }) : t('stats.forAll')}
       </div>
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
         {items.map(item => (
           <div
             key={item.key}

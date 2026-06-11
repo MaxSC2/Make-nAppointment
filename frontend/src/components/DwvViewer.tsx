@@ -134,7 +134,7 @@ export function DwvViewer({ studyUid, onError }: DwvViewerProps) {
 
       {/* ═══ PACS SEARCH ═══ */}
       {showSearch && (
-        <div className="bg-slate-100 border-b border-slate-300 max-h-72 overflow-y-auto flex-shrink-0">
+        <div className="bg-slate-900 border-b border-slate-700 max-h-72 overflow-y-auto flex-shrink-0">
           <DicomSearch onClose={() => setShowSearch(false)} />
         </div>
       )}
