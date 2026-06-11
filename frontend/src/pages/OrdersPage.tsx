@@ -41,7 +41,7 @@ export default function OrdersPage() {
             onClick={() => navigate('/orders/new')}
             className="bg-teal-600 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-teal-700"
           >
-            + Заказ
+            {t('studies.newOrder')}
           </button>
         </div>
       </div>
