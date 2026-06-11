@@ -41,7 +41,9 @@
     "monitoring": "Monitoring",
     "risQueue": "RIS + Queue",
     "noRole": "no role",
-    "logout": "Log out"
+    "logout": "Log out",
+    "menu": "Menu",
+    "searchPlaceholder": "Search patient or order..."
   },
   "login": {
     "title": "Login",
@@ -77,7 +79,7 @@
     "inProgress": "In progress",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "forCabinet": "Statistics for room \"{{name}}\"",
+    "forCabinet": "Statistics for room \"{name}\"",
     "forAll": "Statistics for all rooms"
   },
   "registration": {
@@ -116,7 +118,7 @@
     "dob": "Date of birth:",
     "phone": "Phone:",
     "assignStudy": "+ Order study",
-    "studies": "Studies ({{count}})",
+    "studies": "Studies ({count})",
     "noStudies": "This patient has no studies yet",
     "noPreview": "no preview",
     "noDescription": "No description",
@@ -185,7 +187,7 @@
     "protocolsSigned": "Reports signed",
     "protocolsToday": "today",
     "avgProcessing": "Average processing time",
-    "avgMinutes": "{{time}} min",
+    "avgMinutes": "{time} min",
     "avgDescription": "from creation to completion, this week",
     "completionRate": "Completion rate",
     "completionOf": "of",
@@ -218,7 +220,7 @@
     "us": "Ultrasound",
     "error": "Load error",
     "unknownModality": "Could not determine image modality",
-    "linkStudy": "Link image \"{{studyId}}\" to a new RIS order?",
+    "linkStudy": "Link image \"{studyId}\" to a new RIS order?",
     "linkError": "Link error",
     "unlinked": "Unlinked",
     "linked": "Linked",
@@ -235,14 +237,14 @@
   "protocol": {
     "title": "Study report",
     "backToStudies": "← Back to studies",
-    "order": "Order {{id}}",
+    "order": "Order {id}",
     "signed": "✓ Signed",
     "findingsLabel": "Description / Findings",
     "findingsPlaceholder": "Report text...",
     "impressionLabel": "Conclusion / Impression",
     "impressionPlaceholder": "Brief conclusion...",
-    "savedAt": "✓ Saved at {{time}}",
-    "signedBy": "Signed by: {{name}}",
+    "savedAt": "✓ Saved at {time}",
+    "signedBy": "Signed by: {name}",
     "saving": "Saving...",
     "saveDraft": "Save draft",
     "signing": "Signing...",
@@ -279,7 +281,7 @@
     "searchButton": "Search study",
     "onlyUnlinked": "Unlinked only",
     "loading": "Loading...",
-    "found": "Found: {{count}}",
+    "found": "Found: {count}",
     "notFound": "Not found",
     "noStudies": "No studies",
     "date": "Date",
@@ -311,7 +313,7 @@
     "reset": "Reset",
     "searchPacs": "Search in PACS",
     "hotkeys": "Hotkeys",
-    "frame": "Frame {{n}}",
+    "frame": "Frame {n}",
     "loading": "Loading...",
     "load": "Load",
     "tools": "Tools",
@@ -336,7 +338,7 @@
     "series": "Series",
     "details": "Details",
     "noSeries": "No series",
-    "slices": "{{n}} slices",
+    "slices": "{n} slices",
     "patient": "Patient",
     "state": "State",
     "loaded": "✓ Loaded",
@@ -344,7 +346,7 @@
     "seriesLabel": "Series",
     "tool": "Tool",
     "loadStudy": "Load a study",
-    "seriesInfo": "Series: {{n}}",
-    "frames": "Frames: {{count}}"
+    "seriesInfo": "Series: {n}",
+    "frames": "Frames: {count}"
   }
 }

@@ -41,7 +41,9 @@
     "monitoring": "Мониторинг",
     "risQueue": "RIS + Эл. кезек",
     "noRole": "рөлсіз",
-    "logout": "Шығу"
+    "logout": "Шығу",
+    "menu": "Мәзір",
+    "searchPlaceholder": "Пациент немесе тапсырыс бойынша іздеу..."
   },
   "login": {
     "title": "Жүйеге кіру",
@@ -77,7 +79,7 @@
     "inProgress": "Орындалуда",
     "completed": "Аяқталды",
     "cancelled": "Болдырылмады",
-    "forCabinet": "\"{{name}}\" кабинетінің статистикасы",
+    "forCabinet": "\"{name}\" кабинетінің статистикасы",
     "forAll": "Барлық кабинеттердің статистикасы"
   },
   "registration": {
@@ -116,7 +118,7 @@
     "dob": "Туған күні:",
     "phone": "Телефон:",
     "assignStudy": "+ Зерттеу тағайындау",
-    "studies": "Зерттеулер ({{count}})",
+    "studies": "Зерттеулер ({count})",
     "noStudies": "Бұл пациенттің әлі зерттеулері жоқ",
     "noPreview": "алдын ала қарау жоқ",
     "noDescription": "Сипаттамасыз",
@@ -185,7 +187,7 @@
     "protocolsSigned": "Қол қойылған хаттамалар",
     "protocolsToday": "бүгін",
     "avgProcessing": "Орташа өңдеу уақыты",
-    "avgMinutes": "{{time}} мин",
+    "avgMinutes": "{time} мин",
     "avgDescription": "жасаудан аяқтауға дейін, апта ішінде",
     "completionRate": "Аяқталу көрсеткіші",
     "completionOf": "ішінен",
@@ -218,7 +220,7 @@
     "us": "УДЗ",
     "error": "Жүктеу қатесі",
     "unknownModality": "Суреттің модальділігін анықтау мүмкін емес",
-    "linkStudy": "\"{{studyId}}\" суретін жаңа RIS тапсырысымен байланыстыру?",
+    "linkStudy": "\"{studyId}\" суретін жаңа RIS тапсырысымен байланыстыру?",
     "linkError": "Байланыстыру қатесі",
     "unlinked": "Байланыспаған",
     "linked": "Байланыстырылған",
@@ -235,14 +237,14 @@
   "protocol": {
     "title": "Зерттеу хаттамасы",
     "backToStudies": "← Зерттеулерге оралу",
-    "order": "Тапсырыс {{id}}",
+    "order": "Тапсырыс {id}",
     "signed": "✓ Қол қойылған",
     "findingsLabel": "Сипаттама / Findings",
     "findingsPlaceholder": "Хаттама мәтіні...",
     "impressionLabel": "Қорытынды / Impression",
     "impressionPlaceholder": "Қысқаша қорытынды...",
-    "savedAt": "✓ Сақталды {{time}}",
-    "signedBy": "Қол қойды: {{name}}",
+    "savedAt": "✓ Сақталды {time}",
+    "signedBy": "Қол қойды: {name}",
     "saving": "Сақталуда...",
     "saveDraft": "Жобаны сақтау",
     "signing": "Қол қойылуда...",
@@ -279,7 +281,7 @@
     "searchButton": "Зерттеуді іздеу",
     "onlyUnlinked": "Тек байланыспағандар",
     "loading": "Жүктелуде...",
-    "found": "Табылды: {{count}}",
+    "found": "Табылды: {count}",
     "notFound": "Табылмады",
     "noStudies": "Зерттеулер жоқ",
     "date": "Күні",
@@ -311,7 +313,7 @@
     "reset": "Қалпына келтіру",
     "searchPacs": "PACS-тен іздеу",
     "hotkeys": "Ыстық пернелер",
-    "frame": "Кадр {{n}}",
+    "frame": "Кадр {n}",
     "loading": "Жүктелуде...",
     "load": "Жүктеу",
     "tools": "Құралдар",
@@ -336,7 +338,7 @@
     "series": "Сериялар",
     "details": "Толық ақпарат",
     "noSeries": "Сериялар жоқ",
-    "slices": "{{n}} қиынды",
+    "slices": "{n} қиынды",
     "patient": "Пациент",
     "state": "Күйі",
     "loaded": "✓ Жүктелді",
@@ -344,7 +346,7 @@
     "seriesLabel": "Сериялар",
     "tool": "Құрал",
     "loadStudy": "Зерттеуді жүктеңіз",
-    "seriesInfo": "Серия: {{n}}",
-    "frames": "Кадрлар: {{count}}"
+    "seriesInfo": "Серия: {n}",
+    "frames": "Кадрлар: {count}"
   }
 }

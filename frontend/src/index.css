@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 /* =============================================================================
    MedPlatform-RIS — design tokens (extension of Tailwind)
@@ -36,6 +37,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dark body,
+.dark #root {
+  background: #020617;
+  color: #e2e8f0;
+}
+
+.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%);
+}
+
 /* Custom utility: tabular numbers for tickets/IDs */
 .tabular { font-variant-numeric: tabular-nums; }
 
@@ -58,4 +69,41 @@ body {
 }
 #layerGroup0 canvas {
   display: block;
+}
+
+/* =============================================================================
+   Utility classes
+   ============================================================================= */
+
+.card {
+  @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm dark:shadow-lg;
+}
+.card-header {
+  @apply px-4 py-3 border-b border-slate-200 dark:border-slate-700;
+}
+.card-body {
+  @apply p-4;
+}
+.input {
+  @apply bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500;
+}
+.select {
+  @apply bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-500;
+}
+.table-container {
+  @apply overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700;
+}
+.badge {
+  @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium;
+}
+.badge-green { @apply bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400; }
+.badge-amber { @apply bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400; }
+.badge-red { @apply bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400; }
+.badge-blue { @apply bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400; }
+.badge-gray { @apply bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300; }
+.panel {
+  @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm;
+}
+.filter-bar {
+  @apply bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4;
 }

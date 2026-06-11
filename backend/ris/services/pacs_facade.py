@@ -483,6 +483,11 @@ async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
     Возвращает (bytes, content_type). Если у файла нет DICOM-преамбулы (128+NUL+DICM),
     добавляет её вручную. Никакого pydicom — сырые байты из Orthanc без перекодировки.
     """
+    import io
+    from pydicom.filereader import dcmread
+    from pydicom.filewriter import dcmwrite
+    from pydicom.dataset import Dataset
+
     raw = await _orthanc_get_bytes(f"instances/{instance_id}/file")
 
     if raw[:4] != b'\x00' * 4 or len(raw) < 132 or raw[128:132] != b'DICM':

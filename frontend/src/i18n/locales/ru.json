@@ -41,7 +41,9 @@
     "monitoring": "Мониторинг",
     "risQueue": "RIS + Эл. очередь",
     "noRole": "без роли",
-    "logout": "Выйти"
+    "logout": "Выйти",
+    "menu": "Меню",
+    "searchPlaceholder": "Поиск пациента или заказа..."
   },
   "login": {
     "title": "Вход в систему",
@@ -77,7 +79,7 @@
     "inProgress": "В работе",
     "completed": "Завершено",
     "cancelled": "Отменено",
-    "forCabinet": "Статистика по кабинету \"{{name}}\"",
+    "forCabinet": "Статистика по кабинету \"{name}\"",
     "forAll": "Статистика по всем кабинетам"
   },
   "registration": {
@@ -116,7 +118,7 @@
     "dob": "Дата рождения:",
     "phone": "Телефон:",
     "assignStudy": "+ Назначить исследование",
-    "studies": "Исследования ({{count}})",
+    "studies": "Исследования ({count})",
     "noStudies": "У этого пациента ещё нет исследований",
     "noPreview": "нет превью",
     "noDescription": "Без описания",
@@ -185,7 +187,7 @@
     "protocolsSigned": "Подписано протоколов",
     "protocolsToday": "за сегодня",
     "avgProcessing": "Среднее время обработки",
-    "avgMinutes": "{{time}} мин",
+    "avgMinutes": "{time} мин",
     "avgDescription": "от создания до завершения, за неделю",
     "completionRate": "Завершаемость",
     "completionOf": "из",
@@ -218,7 +220,7 @@
     "us": "УЗИ",
     "error": "Ошибка загрузки",
     "unknownModality": "Не удалось определить модальность снимка",
-    "linkStudy": "Связать снимок \"{{studyId}}\" с новым RIS-заказом?",
+    "linkStudy": "Связать снимок \"{studyId}\" с новым RIS-заказом?",
     "linkError": "Ошибка линковки",
     "unlinked": "Не связан",
     "linked": "Связан",
@@ -235,14 +237,14 @@
   "protocol": {
     "title": "Протокол исследования",
     "backToStudies": "← К исследованиям",
-    "order": "Заказ {{id}}",
+    "order": "Заказ {id}",
     "signed": "✓ Подписан",
     "findingsLabel": "Описание / Findings",
     "findingsPlaceholder": "Текст протокола...",
     "impressionLabel": "Заключение / Impression",
     "impressionPlaceholder": "Краткое заключение...",
-    "savedAt": "✓ Сохранено в {{time}}",
-    "signedBy": "Подписан: {{name}}",
+    "savedAt": "✓ Сохранено в {time}",
+    "signedBy": "Подписан: {name}",
     "saving": "Сохранение...",
     "saveDraft": "Сохранить черновик",
     "signing": "Подписание...",
@@ -279,7 +281,7 @@
     "searchButton": "Поиск исследования",
     "onlyUnlinked": "Только несвязанные",
     "loading": "Загрузка...",
-    "found": "Найдено: {{count}}",
+    "found": "Найдено: {count}",
     "notFound": "Не найдено",
     "noStudies": "Нет исследований",
     "date": "Дата",
@@ -311,7 +313,7 @@
     "reset": "Сброс",
     "searchPacs": "Поиск в PACS",
     "hotkeys": "Горячие клавиши",
-    "frame": "Кадр {{n}}",
+    "frame": "Кадр {n}",
     "loading": "Загрузка...",
     "load": "Загрузить",
     "tools": "Инструменты",
@@ -336,7 +338,7 @@
     "series": "Серии",
     "details": "Детали",
     "noSeries": "Нет серий",
-    "slices": "{{n}} срезов",
+    "slices": "{n} срезов",
     "patient": "Пациент",
     "state": "Состояние",
     "loaded": "✓ Загружено",
@@ -344,7 +346,7 @@
     "seriesLabel": "Серий",
     "tool": "Инструмент",
     "loadStudy": "Загрузите исследование",
-    "seriesInfo": "Серия: {{n}}",
-    "frames": "Кадров: {{count}}"
+    "seriesInfo": "Серия: {n}",
+    "frames": "Кадров: {count}"
   }
 }

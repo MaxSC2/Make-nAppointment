@@ -209,11 +209,11 @@ _MOCK_SERVICES = [
 
 _MOCK_TICKETS = [
     {"id": "00000000-0000-0000-0000-000000000001", "number": "M001", "status": "waiting",
-     "priority": 3, "room": {"id": 1, "name": "Кабинет КТ"}, "fullName": "Mock Patient 1", "policyNumber": "P-001",
-     "serviceType": {"id": 1, "name": "КТ грудной клетки"}, "createdAt": "2026-06-09T10:00:00Z"},
+     "priority": 3, "roomId": 1, "fullName": "Mock Patient 1", "policyNumber": "P-001",
+     "serviceTypeId": 1, "createdAt": "2026-06-09T10:00:00Z"},
     {"id": "00000000-0000-0000-0000-000000000002", "number": "M002", "status": "waiting",
-     "priority": 3, "room": {"id": 2, "name": "Кабинет МРТ"}, "fullName": "Mock Patient 2", "policyNumber": "P-002",
-     "serviceType": {"id": 2, "name": "МРТ головного мозга"}, "createdAt": "2026-06-09T10:30:00Z"},
+     "priority": 3, "roomId": 2, "fullName": "Mock Patient 2", "policyNumber": "P-002",
+     "serviceTypeId": 2, "createdAt": "2026-06-09T10:30:00Z"},
 ]
 
 # Внутренний стейт мока (изменяется при call/complete — имитирует SmartQ state machine)
@@ -222,14 +222,10 @@ _MOCK_TICKET_STATE: dict[str, str] = {
 }
 
 
-def _mock_fallback(*args, **kwargs):
-    return []
-
-
 async def _safe_smartq_call(method_name: str, *args, **kwargs):
     """Безопасный вызов SmartQ: мок только если disabled или connection error."""
     if not settings.smartq_enabled:
-        return _MOCK_RESPONSE.get(method_name, _mock_fallback)(*args, **kwargs)
+        return _MOCK_RESPONSE.get(method_name, lambda: [])()
 
     try:
         method = getattr(smartq_client.smartq_client, method_name)
@@ -239,19 +235,19 @@ async def _safe_smartq_call(method_name: str, *args, **kwargs):
         # На semantic-ошибки (404, 400) не маскируем — пусть фронт видит
         if getattr(e, 'status_code', None) in (404, 400, 409):
             raise
-        return _MOCK_RESPONSE.get(method_name, _mock_fallback)(*args, **kwargs)
+        return _MOCK_RESPONSE.get(method_name, lambda: [])()
 
 
 _MOCK_RESPONSE = {
-    "get_rooms": lambda *a, **kw: _MOCK_ROOMS,
-    "get_service_types": lambda *a, **kw: _MOCK_SERVICES,
-    "get_tickets": lambda *a, **kw: _MOCK_TICKETS,
-    "get_ticket": lambda *a, **kw: _find_mock_ticket(kw.get("ticket_id") or (a[0] if a else _MOCK_TICKETS[0]["id"])),
-    "call_ticket": lambda *a, **kw: _mock_call(kw.get("ticket_id") or (a[0] if a else _MOCK_TICKETS[0]["id"])),
-    "start_ticket": lambda *a, **kw: _mock_start(kw.get("ticket_id") or (a[0] if a else _MOCK_TICKETS[0]["id"])),
-    "complete_ticket": lambda *a, **kw: _mock_complete(kw.get("ticket_id") or (a[0] if a else _MOCK_TICKETS[0]["id"])),
-    "get_next_ticket": lambda *a, **kw: _find_mock_ticket(_MOCK_TICKETS[0]["id"]),
-    "create_ticket": lambda *a, **kw: {
+    "get_rooms": lambda: _MOCK_ROOMS,
+    "get_service_types": lambda: _MOCK_SERVICES,
+    "get_tickets": lambda: _MOCK_TICKETS,
+    "get_ticket": lambda ticket_id=None: _find_mock_ticket(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "call_ticket": lambda ticket_id=None: _mock_call(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "start_ticket": lambda ticket_id=None: _mock_start(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "complete_ticket": lambda ticket_id=None: _mock_complete(ticket_id or _MOCK_TICKETS[0]["id"]),
+    "get_next_ticket": lambda room_id=None: _find_mock_ticket(_MOCK_TICKETS[0]["id"]),
+    "create_ticket": lambda **kwargs: {
         "id": str(uuid.uuid4()),
         "number": "M999",
         "status": "waiting",

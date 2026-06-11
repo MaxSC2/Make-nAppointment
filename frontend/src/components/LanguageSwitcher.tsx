@@ -17,8 +17,8 @@ export default function LanguageSwitcher() {
       disabled={current === code}
       className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
         current === code
-          ? 'bg-gray-200 text-gray-900'
-          : 'text-gray-500 hover:text-gray-900'
+          ? 'bg-gray-200 dark:bg-slate-600 text-gray-900 dark:text-slate-100'
+          : 'text-gray-500 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'
       } disabled:opacity-100`}
     >
       {label}
@@ -28,9 +28,9 @@ export default function LanguageSwitcher() {
   return (
     <div className="flex items-center gap-1">
       {btn('ru', 'RU')}
-      <span className="text-gray-300 text-xs">|</span>
+      <span className="text-gray-300 dark:text-slate-600 text-xs">|</span>
       {btn('en', 'EN')}
-      <span className="text-gray-300 text-xs">|</span>
+      <span className="text-gray-300 dark:text-slate-600 text-xs">|</span>
       {btn('kk', 'ҚАЗ')}
     </div>
   )

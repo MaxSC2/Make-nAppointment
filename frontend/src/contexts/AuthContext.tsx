@@ -33,46 +33,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const access = localStorage.getItem(STORAGE_ACCESS)
     const refresh = localStorage.getItem(STORAGE_REFRESH)
     const u = localStorage.getItem(STORAGE_USER)
-
-    if (!access) {
-      setLoading(false)
-      return
+    if (access) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAccessToken(access)
+      setClientToken(access)
     }
-
-    setClientToken(access)
     if (u) {
       try { setUser(JSON.parse(u)) } catch { console.error('Auth: corrupted user in localStorage'); localStorage.removeItem(STORAGE_USER) }
     }
-
+    setLoading(false)
     if (refresh && access) {
-      authMe(access).then(fresh => {
-        setAccessToken(access)
+      // best-effort refresh on mount
+      void authMe(access).then(fresh => {
         setUser(fresh)
         localStorage.setItem(STORAGE_USER, JSON.stringify(fresh))
-        setLoading(false)
       }).catch(async () => {
-        try {
-          const rr = await fetch('/ris/api/auth/refresh', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refresh_token: refresh }),
-          })
-          if (rr.ok) {
-            const pair = await rr.json() as { access_token: string }
-            setClientToken(pair.access_token)
-            setAccessToken(pair.access_token)
-            localStorage.setItem(STORAGE_ACCESS, pair.access_token)
-          } else {
-            setClientToken(null)
-            localStorage.removeItem(STORAGE_ACCESS)
-            localStorage.removeItem(STORAGE_REFRESH)
-            localStorage.removeItem(STORAGE_USER)
+        if (refresh && access) {
+          try {
+            const rr = await fetch('/ris/api/auth/refresh', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refresh_token: refresh }),
+            })
+            if (rr.ok) {
+              const pair = await rr.json() as { access_token: string }
+              setAccessToken(pair.access_token)
+              setClientToken(pair.access_token)
+              localStorage.setItem(STORAGE_ACCESS, pair.access_token)
+            } else {
+              localStorage.removeItem(STORAGE_ACCESS)
+              localStorage.removeItem(STORAGE_REFRESH)
+              localStorage.removeItem(STORAGE_USER)
+              setAccessToken(null); setUser(null)
+            }
+          } catch {
+            // refresh failed — clear
           }
-        } catch { /* offline — stay on login */ }
-        setLoading(false)
+        }
       })
-    } else {
-      setClientToken(null)
-      setLoading(false)
     }
   }, [])
 

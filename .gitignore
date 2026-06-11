@@ -42,3 +42,6 @@ PRACTICE_LOG.md
 
 # Orthanc binary
 backend/orthanc/
+
+# Build artifacts
+.vite/

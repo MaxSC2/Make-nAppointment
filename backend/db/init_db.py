@@ -103,7 +103,7 @@ async def seed_admin(db: AsyncSession) -> None:
     registrar_role = await db.scalar(select(Role).where(Role.code == RoleCode.REGISTRAR.value))
     tech_role = await db.scalar(select(Role).where(Role.code == RoleCode.TECHNICIAN.value))
 
-    for role in (admin_role, doctor_role):
+    for role in (admin_role, doctor_role, registrar_role, tech_role):
         if role is not None:
             db.add(UserRole(user_id=admin.id, role_id=role.id))
 

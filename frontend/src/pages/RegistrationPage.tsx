@@ -44,29 +44,29 @@ export default function RegistrationPage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">{t('registration.title')}</h2>
+      <h2 className="text-2xl font-semibold mb-6 dark:text-slate-100">{t('registration.title')}</h2>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.patientName')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.patientName')}</label>
           <input
             type="text"
             required
             value={form.full_name}
             onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder={t('registration.patientNamePlaceholder')}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.policyNumber')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.policyNumber')}</label>
           <input
             type="text"
             required
             value={form.policy_number}
             onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0000 000000 0000"
           />
         </div>
@@ -78,17 +78,17 @@ export default function RegistrationPage() {
             maxLength={12}
             value={form.iin ?? ''}
             onChange={(e) => setForm({ ...form, iin: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             placeholder="000000000000"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.cabinet')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.cabinet')}</label>
           <select
             value={form.cabinet_code}
             onChange={(e) => setForm({ ...form, cabinet_code: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {cabinets.map((c) => (
               <option key={c.code} value={c.modality}>
@@ -99,17 +99,17 @@ export default function RegistrationPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.phone')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.phone')}</label>
           <input
             type="tel"
             value={form.phone ?? ''}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('registration.priority')}</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">{t('registration.priority')}</label>
           <div className="grid grid-cols-3 gap-2">
             {priorityOpts.map(opt => (
               <button
@@ -121,7 +121,7 @@ export default function RegistrationPage() {
                     ? opt.v === 'stat' ? 'bg-rose-600 text-white border-rose-600'
                       : opt.v === 'urgent' ? 'bg-amber-500 text-white border-amber-500'
                       : 'bg-blue-600 text-white border-blue-600'
-                    : `bg-white text-gray-700 ${opt.cls}`
+                    : `bg-white dark:bg-slate-700 text-gray-700 dark:text-slate-300 ${opt.cls}`
                 }`}
               >
                 {t(opt.key)}
@@ -140,15 +140,15 @@ export default function RegistrationPage() {
       </form>
 
       {error && (
-        <div className="mt-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
+        <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-md text-sm">
           {error}
         </div>
       )}
 
       {result && (
-        <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-green-800 mb-2">{t('registration.successTitle')}</h3>
-          <div className="space-y-1 text-sm text-green-700">
+        <div className="mt-6 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-green-800 dark:text-green-400 mb-2">{t('registration.successTitle')}</h3>
+          <div className="space-y-1 text-sm text-green-700 dark:text-green-300">
             <p>{t('registration.ticketLabel')} <span className="font-mono font-bold">{result.ticket_number}</span></p>
             <p>{t('registration.patientLabel')} {result.patient.full_name}</p>
             <p>{t('registration.cabinetLabel')} {result.cabinet.name}</p>

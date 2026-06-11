@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { AuthProvider } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
@@ -36,9 +37,9 @@ function ProtectedRoute({ children, roles }: { children: ReactNode; roles?: stri
     const has = user.role_codes.some((r) => roles.includes(r)) || user.is_superuser
     if (!has) {
       return (
-        <div className="max-w-md mx-auto mt-12 p-6 bg-amber-50 border border-amber-200 rounded-lg">
-          <h2 className="text-lg font-semibold text-amber-900">Недостаточно прав</h2>
-          <p className="text-sm text-amber-700 mt-1">
+        <div className="max-w-md mx-auto mt-12 p-6 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+          <h2 className="text-lg font-semibold text-amber-900 dark:text-amber-400">Недостаточно прав</h2>
+          <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
             Требуется одна из ролей: {roles.join(', ')}
           </p>
         </div>
@@ -150,9 +151,11 @@ function AppRoutes() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }
