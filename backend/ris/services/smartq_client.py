@@ -238,23 +238,22 @@ class SmartQClient:
         policy_number: str,
         service_type_id: int,
         priority: int = 3,
+        room_id: int | None = None,
     ) -> dict:
         """POST /tickets/kiosk — создать талон (без авторизации).
 
-        Returns:
-            {"id": "uuid", "number": "A001", "status": "waiting", ...}
+        Args:
+            room_id: ID кабинета SmartQ (чтобы талон сразу привязался к кабинету)
         """
-        return await _request(
-            "POST",
-            "/tickets/kiosk",
-            json={
-                "fullName": full_name,
-                "policyNumber": policy_number,
-                "serviceTypeId": service_type_id,
-                "priority": priority,
-            },
-            auth=False,
-        )
+        body = {
+            "fullName": full_name,
+            "policyNumber": policy_number,
+            "serviceTypeId": service_type_id,
+            "priority": priority,
+        }
+        if room_id is not None:
+            body["roomId"] = room_id
+        return await _request("POST", "/tickets/kiosk", json=body, auth=False)
 
     async def call_ticket(self, ticket_id: str) -> dict:
         """POST /tickets/:id/call — вызвать талона в кабинет.

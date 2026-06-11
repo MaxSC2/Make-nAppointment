@@ -11,6 +11,7 @@ import {
   type PhysicianStat,
 } from '../api/ris'
 
+
 function StatCard({
   label, value, hint, color = 'slate',
 }: {
@@ -64,6 +65,7 @@ export default function MonitoringPage() {
   const [byModality, setByModality] = useState<ModalityStat[]>([])
   const [byCabinet, setByCabinet] = useState<CabinetStat[]>([])
   const [physicians, setPhysicians] = useState<PhysicianStat[]>([])
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

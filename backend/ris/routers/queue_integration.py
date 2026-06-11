@@ -68,8 +68,8 @@ _REVERSE_STATUS_MAP = {
     "cancelled": "cancelled",
 }
 
-_PRIORITY_MAP = {1: "stat", 2: "stat", 3: "urgent", 4: "routine", 5: "routine"}
-_REVERSE_PRIORITY_MAP = {"stat": 1, "urgent": 3, "routine": 5}
+_PRIORITY_MAP = {1: "stat", 2: "routine", 3: "urgent", 4: "urgent", 5: "routine"}
+_REVERSE_PRIORITY_MAP = {"stat": 1, "urgent": 3, "routine": 2}
 
 
 def _map_priority(smartq_priority: int) -> str:
@@ -96,6 +96,9 @@ class TicketOut(BaseModel):
     cabinet_name: str = Field(default="")
     full_name: str = Field(default="", description="ФИО пациента")
     policy_number: str = Field(default="")
+    service_type_name: str = Field(default="", description="КТ, МРТ, Рентгенография...")
+    order_id: str | None = Field(default=None, description="ID заказа в нашей БД")
+    study_uid: str | None = Field(default=None, description="DICOM Study UID")
     created_at: str = Field(default="")
     called_at: str | None = Field(default=None)
     completed_at: str | None = Field(default=None)
@@ -175,6 +178,7 @@ async def _smartq_ticket_to_ours(smartq_t: dict, services_cache: dict | None = N
         status=_map_status_to_ours(smartq_t.get("status", "waiting")),
         priority=_map_priority(smartq_t.get("priority", 3)),
         modality=modality_name,
+        service_type_name=modality_name,
         cabinet_id=cabinet_id,
         cabinet_name=cabinet_name,
         full_name=smartq_t.get("fullName", "") or smartq_t.get("patientName", ""),
@@ -249,7 +253,7 @@ _MOCK_RESPONSE = {
         "number": "M999",
         "status": "waiting",
         "priority": kw.get("priority", 3),
-        "room": {"id": 1, "name": "Кабинет КТ"},
+        "room": {"id": kw.get("room_id", 1), "name": {1: "Кабинет КТ-1", 3: "Кабинет МРТ-1", 4: "Рентген-кабинет", 5: "Кабинет УЗИ", 6: "Ангиографическая операционная"}.get(kw.get("room_id"), "Кабинет КТ-1")},
         "fullName": kw.get("full_name", "Новый пациент"),
         "policyNumber": kw.get("policy_number", "POL-Новый"),
         "serviceType": {"id": kw.get("service_type_id", 1), "name": _MOCK_SERVICES[0]["name"] if _MOCK_SERVICES else "КТ грудной клетки"},
@@ -371,6 +375,7 @@ async def list_tickets(
     status: str | None = Query(default=None, description="waiting | in_progress | done | cancelled"),
     cabinet_id: int | None = Query(default=None),
     user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> list[TicketOut]:
     """GET /api/queue/tickets — список талонов.
 
@@ -388,22 +393,79 @@ async def list_tickets(
     services = await _safe_smartq_call("get_service_types")
     services_cache = {s.get("id"): s.get("name", "") for s in services}
 
-    return [
-        await _smartq_ticket_to_ours(t, services_cache)
-        for t in smartq_tickets
-    ]
+    return await _enrich_with_orders(
+        [await _smartq_ticket_to_ours(t, services_cache) for t in smartq_tickets],
+        db,
+    )
+
+
+async def _enrich_with_orders(
+    tickets: list[TicketOut],
+    db: AsyncSession | None = None,
+) -> list[TicketOut]:
+    """Добавляет order_id, study_uid и данные пациента из нашей БД."""
+    if db is None:
+        return tickets
+    source_ids = [t.id for t in tickets]
+    if not source_ids:
+        return tickets
+    stmt = select(Order.id, Order.source_ticket_id, Order.study_uid, Order.patient_id).where(
+        Order.source_ticket_id.in_(source_ids),
+    )
+    rows = (await db.execute(stmt)).all()
+    patient_ids = [r.patient_id for r in rows]
+    patient_lookup = {}
+    if patient_ids:
+        pstmt = select(Patient.id, Patient.full_name, Patient.policy_number).where(
+            Patient.id.in_(patient_ids),
+        )
+        for pr in (await db.execute(pstmt)).all():
+            patient_lookup[pr.id] = (pr.full_name, pr.policy_number)
+    lookup = {r.source_ticket_id: (r.id, r.study_uid, r.patient_id) for r in rows}
+    for t in tickets:
+        if t.id in lookup:
+            t.order_id = lookup[t.id][0]
+            t.study_uid = lookup[t.id][1]
+            pid = lookup[t.id][2]
+            if pid in patient_lookup:
+                pname, ppolicy = patient_lookup[pid]
+                if pname and not t.full_name:
+                    t.full_name = pname
+                if ppolicy and not t.policy_number:
+                    t.policy_number = ppolicy
+    return tickets
 
 
 @router.get("/tickets/{ticket_id}", response_model=TicketOut, summary="Детали талона")
 async def get_ticket(
     ticket_id: str,
     user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ) -> TicketOut:
     """GET /api/queue/tickets/{id}."""
     smartq_ticket = await _safe_smartq_call("get_ticket", ticket_id)
     services = await _safe_smartq_call("get_service_types")
     services_cache = {s.get("id"): s.get("name", "") for s in services}
-    return await _smartq_ticket_to_ours(smartq_ticket, services_cache)
+    result = await _smartq_ticket_to_ours(smartq_ticket, services_cache)
+    enriched = await _enrich_with_orders([result], db)
+    return enriched[0]
+
+
+_MODALITY_TO_ROOM = {
+    "CT": 1,   # Кабинет КТ-1
+    "MR": 3,   # Кабинет МРТ-1
+    "DX": 4,   # Рентген-кабинет
+    "US": 5,   # Кабинет УЗИ
+    "XA": 6,   # Ангиографическая операционная
+}
+
+_MODALITY_TO_SERVICE_NAME = {
+    "CT": "Компьютерная томография",
+    "MR": "Магнитно-резонансная томография",
+    "DX": "Рентгенография",
+    "US": "Ультразвуковая диагностика",
+    "XA": "Ангиография",
+}
 
 
 @router.post("/tickets", response_model=TicketOut, status_code=201, summary="Создать талон (kiosk)")
@@ -416,31 +478,20 @@ async def create_ticket(
     В SmartQ: POST /tickets/kiosk (без авторизации).
     Доступ: registrar (регистратура), doctor, admin.
     """
-    # Находим serviceTypeId по modality
     services = await _safe_smartq_call("get_service_types")
     service_type_id = None
-    modality_search = body.modality.upper()
-    for s in services:
-        name = s.get("name", "").upper()
-        if name.startswith(modality_search) or "КТ" in name and modality_search == "CT":
-            service_type_id = s.get("id")
-            break
-        if "МРТ" in name and modality_search == "MR":
-            service_type_id = s.get("id")
-            break
-        if "РЕНТГЕН" in name and modality_search == "DX":
-            service_type_id = s.get("id")
-            break
-        if ("УЗИ" in name or "УЗ" in name) and modality_search == "US":
-            service_type_id = s.get("id")
-            break
-        if "АНГИО" in name and modality_search == "XA":
-            service_type_id = s.get("id")
-            break
+    code = body.modality.upper()
+
+    svc_name = _MODALITY_TO_SERVICE_NAME.get(code)
+    if svc_name:
+        for s in services:
+            if s.get("name", "").strip().lower() == svc_name.lower():
+                service_type_id = s.get("id")
+                break
     if service_type_id is None:
-        # Берём первый попавшийся
         service_type_id = services[0].get("id") if services else 1
 
+    room_id = _MODALITY_TO_ROOM.get(code)
     priority = _REVERSE_PRIORITY_MAP.get(body.priority, 3)
 
     smartq_ticket = await _safe_smartq_call(
@@ -449,11 +500,11 @@ async def create_ticket(
         policy_number=body.policy_number,
         service_type_id=service_type_id,
         priority=priority,
+        room_id=room_id,
     )
 
     services_cache = {s.get("id"): s.get("name", "") for s in services}
     result = await _smartq_ticket_to_ours(smartq_ticket, services_cache)
-    # SmartQ не возвращает fullName/policyNumber — подставляем из запроса
     if not result.full_name:
         result.full_name = body.full_name
     if not result.policy_number:
@@ -513,8 +564,19 @@ async def call_ticket(
 
     # Ищем пациента по fullName+policyNumber
     patient: Patient | None = None
-    full_name = smartq_ticket.get("fullName", "")
-    policy = smartq_ticket.get("policyNumber", "")
+    full_name = smartq_ticket.get("fullName", "").strip()
+    policy = smartq_ticket.get("policyNumber", "").strip()
+    
+    # Если fullName пусто, пробуем альтернативные поля SmartQ
+    if not full_name:
+        full_name = smartq_ticket.get("patientName", "").strip()
+    if not full_name:
+        full_name = smartq_ticket.get("name", "").strip()
+    
+    # Если policy пусто или не валидный, генерируем
+    if not policy:
+        policy = f"UNK-{ticket_id[:8]}"
+    
     if full_name and policy:
         pstmt = select(Patient).where(
             Patient.full_name == full_name,
@@ -524,12 +586,17 @@ async def call_ticket(
 
     # Если пациент не найден — создаём
     if patient is None:
+        # Если fullName ВСЕ ЕЩЕ пусто, генерируем имя по полису
+        if not full_name:
+            full_name = f"Patient {policy}"
+        
         patient = Patient(
-            full_name=full_name or f"Пациент {smartq_ticket.get('number', 'unknown')}",
-            policy_number=policy or f"UNK-{ticket_id[:8]}",
+            full_name=full_name,
+            policy_number=policy,
         )
         db.add(patient)
         await db.flush()
+        logger.info(f"Created new patient: {full_name} ({policy})")
 
     # Находим modality по serviceTypeId
     services = await _safe_smartq_call("get_service_types")
@@ -634,7 +701,60 @@ async def complete_ticket(
         order.completed_at = datetime.now(timezone.utc)
 
     await db.commit()
-    return await get_ticket(ticket_id, user)
+    return await get_ticket(ticket_id, user, db)
+
+
+class UpdatePatientRequest(BaseModel):
+    """Запрос на обновление данных пациента в талоне."""
+    full_name: str = Field(..., min_length=1, max_length=255)
+    policy_number: str = Field(..., min_length=1, max_length=64)
+
+
+@router.patch(
+    "/tickets/{ticket_id}/patient",
+    response_model=TicketOut,
+    summary="Заполнить данные пациента (врачом в кабинете)",
+)
+async def update_ticket_patient(
+    ticket_id: str,
+    body: UpdatePatientRequest,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN)),
+) -> TicketOut:
+    """PATCH /api/queue/tickets/{id}/patient — врач заполняет ФИО и ИИН.
+
+    Ищет Order по source_ticket_id, обновляет связанного Patient.
+    Если Order нет — создаём.
+    Доступ: doctor, technician, admin.
+    """
+    stmt = select(Order).where(Order.source_ticket_id == ticket_id)
+    order = (await db.execute(stmt)).scalar_one_or_none()
+
+    if order is None:
+        smartq_ticket = await _safe_smartq_call("get_ticket", ticket_id)
+        if not smartq_ticket:
+            raise HTTPException(status_code=502, detail="SmartQ: ticket не найден")
+        order = Order(
+            id=uuid.uuid4().hex[:8],
+            patient_id=(await _find_or_create_patient(db, smartq_ticket)).id,
+            modality="CT",
+            study_uid=f"1.2.840.smartq.{ticket_id[:8]}",
+            study_description=f"Заполнено врачом (талон {smartq_ticket.get('number', '')})",
+            status=OrderStatus.PLANNED.value,
+            source_ticket_id=ticket_id,
+            source_ticket_number=smartq_ticket.get("number"),
+            source_system="smartq",
+        )
+        db.add(order)
+        await db.flush()
+
+    patient = await db.get(Patient, order.patient_id)
+    if patient:
+        patient.full_name = body.full_name
+        patient.policy_number = body.policy_number
+        await db.commit()
+
+    return await get_ticket(ticket_id, user, db)
 
 
 async def _find_or_create_patient(db: AsyncSession, smartq_t: dict) -> Patient:

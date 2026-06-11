@@ -28,7 +28,7 @@
     "created": "Құрылды",
     "doctor": "Дәрігер",
     "cabinet": "Кабинет",
-    "policy": "Полис",
+    "policy": "ЖСН",
     "phone": "Телефон"
   },
   "nav": {
@@ -65,7 +65,11 @@
     "complete": "Аяқтау",
     "emergency": "ШҰҒЫЛ",
     "urgent": "Шұғыл",
-    "planned": "Жоспарлы"
+    "planned": "Жоспарлы",
+    "serviceType": "Қызмет түрі",
+    "view": "Қарау",
+    "protocol": "Хаттама",
+    "fillPatient": "Толтыру"
   },
   "stats": {
     "total": "Барлығы",
@@ -80,7 +84,7 @@
     "title": "Пациентті тіркеу",
     "patientName": "Пациенттің АТӘ",
     "patientNamePlaceholder": "Иванов Иван Иванович",
-    "policyNumber": "Полис нөмірі",
+    "policyNumber": "ЖСН",
     "cabinet": "Кабинет",
     "phone": "Телефон",
     "priority": "Кезектілік",
@@ -98,8 +102,8 @@
   },
   "patients": {
     "title": "Пациенттер",
-    "searchPlaceholder": "АТӨ немесе полис нөмірі бойынша іздеу",
-    "searchPlaceholderShort": "АТӨ немесе полис бойынша іздеу...",
+    "searchPlaceholder": "АТӨ немесе ЖСН бойынша іздеу",
+    "searchPlaceholderShort": "АТӨ немесе ЖСН бойынша іздеу...",
     "error": "Жүктеу қатесі",
     "empty": "Пациенттер әлі жоқ. Алғашқы пациентті Тіркеу бетінде тіркеңіз.",
     "policy": "Полис:",
@@ -127,6 +131,9 @@
     "errorLoading": "Жүктеу қатесі",
     "errorCall": "Шақыру қатесі",
     "errorComplete": "Аяқтау қатесі",
+    "errorSavePatient": "Сақтау қатесі",
+    "fillPatientTitle": "Пациент деректерін толтыру",
+    "fillNamePlaceholder": "Т.А.Ә.",
     "refresh": "Жаңарту"
   },
   "orders": {
@@ -142,9 +149,9 @@
   "orderEntry": {
     "title": "Зерттеу тағайындау",
     "subtitle": "Форманы толтырыңыз — тапсырыс рентгенологтың кезегінде пайда болады",
-    "patientPrefilled": "Пациент алдын ала толтырылған: {{name}} (полис {{policy}})",
+    "patientPrefilled": "Пациент алдын ала толтырылған: {{name}} (ЖСН {{policy}})",
     "patientRequired": "Пациент *",
-    "patientSearch": "АТӨ немесе полис бойынша іздеу...",
+    "patientSearch": "АТӨ немесе ЖСН бойынша іздеу...",
     "found": "Табылды: {{count}}",
     "selectPatient": "Пациентті таңдаңыз",
     "modality": "Модальділік *",

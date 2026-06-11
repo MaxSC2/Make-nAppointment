@@ -33,6 +33,8 @@ export interface TicketDetail extends TicketOut {
   cabinet: CabinetOut
   priority?: 'normal' | 'urgent' | 'stat' | null
   sourceTicketId?: string
+  service_type_name?: string
+  modality?: string
 }
 
 export interface TicketEventOut {
@@ -81,6 +83,9 @@ export interface RisTicketOut {
   cabinet_name: string
   full_name: string
   policy_number: string
+  service_type_name?: string
+  order_id?: string | null
+  study_uid?: string | null
   created_at: string
   called_at: string | null
   completed_at: string | null

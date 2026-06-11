@@ -28,7 +28,7 @@
     "created": "Created",
     "doctor": "Doctor",
     "cabinet": "Room",
-    "policy": "Policy",
+    "policy": "IIN",
     "phone": "Phone"
   },
   "nav": {
@@ -65,7 +65,11 @@
     "complete": "Complete",
     "emergency": "EMERGENCY",
     "urgent": "Urgent",
-    "planned": "Scheduled"
+    "planned": "Planned",
+    "serviceType": "Service type",
+    "view": "View",
+    "protocol": "Report",
+    "fillPatient": "Fill"
   },
   "stats": {
     "total": "Total",
@@ -80,7 +84,7 @@
     "title": "Patient registration",
     "patientName": "Patient full name",
     "patientNamePlaceholder": "Ivanov Ivan Ivanovich",
-    "policyNumber": "Policy number",
+    "policyNumber": "IIN",
     "cabinet": "Room",
     "phone": "Phone",
     "priority": "Priority",
@@ -98,8 +102,8 @@
   },
   "patients": {
     "title": "Patients",
-    "searchPlaceholder": "Search by full name or policy number",
-    "searchPlaceholderShort": "Search by name or policy...",
+    "searchPlaceholder": "Search by full name or IIN",
+    "searchPlaceholderShort": "Search by name or IIN...",
     "error": "Load error",
     "empty": "No patients yet. Register the first patient on the Registration page.",
     "policy": "Policy:",
@@ -126,7 +130,10 @@
     "cabinetTitle": "Doctor's office",
     "errorLoading": "Load error",
     "errorCall": "Call error",
-    "errorComplete": "Complete error",
+    "errorComplete": "Completion error",
+    "errorSavePatient": "Save error",
+    "fillPatientTitle": "Fill patient data",
+    "fillNamePlaceholder": "Full name",
     "refresh": "Refresh"
   },
   "orders": {
@@ -142,9 +149,9 @@
   "orderEntry": {
     "title": "Order a study",
     "subtitle": "Fill out the form — the order will appear in the radiologist's queue",
-    "patientPrefilled": "Patient pre-filled: {{name}} (policy {{policy}})",
+    "patientPrefilled": "Patient pre-filled: {{name}} (IIN {{policy}})",
     "patientRequired": "Patient *",
-    "patientSearch": "Search by name or policy...",
+    "patientSearch": "Search by name or IIN...",
     "found": "Found: {{count}}",
     "selectPatient": "Select patient",
     "modality": "Modality *",

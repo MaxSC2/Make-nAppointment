@@ -89,8 +89,6 @@ export default function LoginPage() {
             <div className="space-y-1 text-xs text-gray-500">
               <div>admin / admin123</div>
               <div>doctor_t / doctor123</div>
-              <div>registrar_t / reg123</div>
-              <div>technician_t / tech123</div>
             </div>
           </div>
         </div>

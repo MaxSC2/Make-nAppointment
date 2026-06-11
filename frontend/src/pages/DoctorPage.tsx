@@ -1,18 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCabinets } from '../hooks/useQueue'
 import type { TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
 import QueueTable from '../components/QueueTable'
 import { useTranslation } from 'react-i18next'
+import { playCallSound } from '../utils/sound'
 
 export default function DoctorPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { cabinets } = useCabinets()
   const [cabinetCode, setCabinetCode] = useState('1')
   const [tickets, setTickets] = useState<TicketDetail[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [fillTicket, setFillTicket] = useState<TicketDetail | null>(null)
+  const [fillName, setFillName] = useState('')
+  const [fillPolicy, setFillPolicy] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -38,6 +45,7 @@ export default function DoctorPage() {
   const handleCall = useCallback(async (ticket: TicketDetail) => {
     try {
       await queueApi.callTicket(ticket.sourceTicketId!)
+      playCallSound()
       await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : t('doctor.errorCall'))
@@ -46,12 +54,36 @@ export default function DoctorPage() {
 
   const handleComplete = useCallback(async (ticket: TicketDetail) => {
     try {
-      await queueApi.completeTicket(ticket.sourceTicketId!)
-      await refresh()
+      const result = await queueApi.completeTicket(ticket.sourceTicketId!)
+      if (result.order_id) {
+        navigate(`/protocol/${result.order_id}`)
+      } else {
+        await refresh()
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t('doctor.errorComplete'))
     }
-  }, [refresh, t])
+  }, [refresh, t, navigate])
+
+  const handleFillPatient = useCallback((ticket: TicketDetail) => {
+    setFillTicket(ticket)
+    setFillName(ticket.patient.full_name || '')
+    setFillPolicy(ticket.patient.policy_number || '')
+  }, [])
+
+  const handleSavePatient = useCallback(async () => {
+    if (!fillTicket?.sourceTicketId || !fillName.trim()) return
+    setSaving(true)
+    try {
+      await queueApi.updateTicketPatient(fillTicket.sourceTicketId, fillName.trim(), fillPolicy.trim())
+      setFillTicket(null)
+      await refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('doctor.errorSavePatient'))
+    } finally {
+      setSaving(false)
+    }
+  }, [fillTicket, fillName, fillPolicy, refresh, t])
 
   return (
     <div>
@@ -97,8 +129,52 @@ export default function DoctorPage() {
           tickets={tickets}
           onCall={handleCall}
           onComplete={handleComplete}
+          onFillPatient={handleFillPatient}
           showActions
         />
+      )}
+
+      {fillTicket && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setFillTicket(null)}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4">{t('doctor.fillPatientTitle')}</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.patient')}</label>
+                <input
+                  value={fillName}
+                  onChange={e => setFillName(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  placeholder={t('doctor.fillNamePlaceholder')}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('common.policy')}</label>
+                <input
+                  value={fillPolicy}
+                  onChange={e => setFillPolicy(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                  placeholder="0000 000000 0000"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setFillTicket(null)}
+                className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleSavePatient}
+                disabled={saving || !fillName.trim()}
+                className="px-4 py-2 text-sm text-white bg-amber-500 rounded-md hover:bg-amber-600 disabled:opacity-50"
+              >
+                {saving ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

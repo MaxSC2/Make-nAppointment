@@ -1361,4 +1361,26 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.7 — методология:** Saga-подобный паттерн (commit + retry/compensation) для межсервисных вызовов
 - **П.4 — инструменты:** понимание разницы setInterval vs recursive setTimeout для async polling
 
+---
+
+## 10.06.2026 (22:00–23:30) — Фикс React key warning в QueueTable + регистрация нового талона через SmartQ
+
+### Что сделал:
+1. **Починил React key collision в QueueTable:**
+   - `risTicketToDetail` в `api/queue.ts:16` парсил `ticket_number` как `parseInt(t.ticket_number.replace(/\D/g, ''), 10) || 0`, превращая "К001", "Р001", "М001" все в `id: 1` → React ругался "Encountered two children with the same key" (46+ ошибок в консоли)
+   - Фикс: `QueueTable.tsx:42` — `key={ticket.sourceTicketId ?? ticket.id}` — использует UUID из SmartQ, который гарантированно уникален
+
+2. **Проверил интеграцию вживую через браузер:**
+   - Зарегистрировал талон "Иванов Иван Иванович" (полис POL-SMARTQ-001) — талон создан, SmartQ вернул уникальный UUID
+   - Очередь показывает 41 талон (40 + новый), React key warning исчез
+   - Все 6 сервисов работают: PostgreSQL ✅, SmartQ :3000 ✅, RIS :8000 ✅, Vite :5173 ✅
+
+### Какие файлы изменил:
+- `frontend/src/components/QueueTable.tsx` — key={ticket.sourceTicketId ?? ticket.id}
+- `PRACTICE_LOG.md` — эта запись
+
+### Что это дало для отчёта:
+- **П.4 — базовые инструменты:** React key uniqueness — классическая React-ловушка, диагностирована по console.error
+- **П.9 — качество:** 46+ предупреждений устранены, консоль браузера чистая
+
 

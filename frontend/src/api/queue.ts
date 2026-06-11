@@ -1,5 +1,5 @@
 import type { CabinetOut, TicketCreateRequest, TicketDetail, RisRoomOut, RisTicketOut } from '../types/queue'
-import { risGet, risPost } from './client'
+import { risGet, risPatchBody, risPost } from './client'
 
 function risRoomToCabinet(r: RisRoomOut): CabinetOut {
   return {
@@ -18,13 +18,14 @@ function risTicketToDetail(t: RisTicketOut): TicketDetail {
     status: t.status,
     cabinet_id: t.cabinet_id,
     patient_id: '',
-    order_id: null,
-    study_uid: null,
+    order_id: t.order_id ?? null,
+    study_uid: t.study_uid ?? null,
     called_at: t.called_at,
     completed_at: t.completed_at,
     created_at: t.created_at,
     priority: (t.priority === 'routine' ? 'normal' : t.priority) as 'normal' | 'urgent' | 'stat' | null,
     sourceTicketId: t.id,
+    service_type_name: t.service_type_name,
     patient: {
       id: '',
       full_name: t.full_name,
@@ -73,4 +74,11 @@ export function callTicket(ticketId: string) {
 
 export function completeTicket(ticketId: string) {
   return risPost<RisTicketOut>(`/queue/tickets/${ticketId}/complete`).then(risTicketToDetail)
+}
+
+export function updateTicketPatient(ticketId: string, fullName: string, policyNumber: string) {
+  return risPatchBody<RisTicketOut>(`/queue/tickets/${ticketId}/patient`, {
+    full_name: fullName,
+    policy_number: policyNumber,
+  }).then(risTicketToDetail)
 }

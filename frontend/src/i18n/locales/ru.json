@@ -28,7 +28,7 @@
     "created": "Создан",
     "doctor": "Врач",
     "cabinet": "Кабинет",
-    "policy": "Полис",
+    "policy": "ИИН",
     "phone": "Телефон"
   },
   "nav": {
@@ -65,7 +65,11 @@
     "complete": "Завершить",
     "emergency": "ЭКСТРЕННЫЙ",
     "urgent": "Срочный",
-    "planned": "Плановый"
+    "planned": "Плановый",
+    "serviceType": "Тип услуги",
+    "view": "Просмотр",
+    "protocol": "Протокол",
+    "fillPatient": "Заполнить"
   },
   "stats": {
     "total": "Всего",
@@ -80,7 +84,7 @@
     "title": "Регистрация пациента",
     "patientName": "ФИО пациента",
     "patientNamePlaceholder": "Иванов Иван Иванович",
-    "policyNumber": "Номер полиса",
+    "policyNumber": "ИИН",
     "cabinet": "Кабинет",
     "phone": "Телефон",
     "priority": "Приоритет",
@@ -98,8 +102,8 @@
   },
   "patients": {
     "title": "Пациенты",
-    "searchPlaceholder": "Поиск по ФИО или номеру полиса",
-    "searchPlaceholderShort": "Поиск по ФИО или полису...",
+    "searchPlaceholder": "Поиск по ФИО или ИИН",
+    "searchPlaceholderShort": "Поиск по ФИО или ИИН...",
     "error": "Ошибка загрузки",
     "empty": "Пациентов пока нет. Зарегистрируйте первого пациента на странице Регистрации.",
     "policy": "Полис:",
@@ -127,6 +131,9 @@
     "errorLoading": "Ошибка загрузки",
     "errorCall": "Ошибка вызова",
     "errorComplete": "Ошибка завершения",
+    "errorSavePatient": "Ошибка сохранения",
+    "fillPatientTitle": "Заполнить данные пациента",
+    "fillNamePlaceholder": "ФИО пациента",
     "refresh": "Обновить"
   },
   "orders": {
@@ -142,9 +149,9 @@
   "orderEntry": {
     "title": "Назначение исследования",
     "subtitle": "Заполните форму — заказ появится в очереди у рентгенолога",
-    "patientPrefilled": "Пациент предзаполнен: {{name}} (полис {{policy}})",
+    "patientPrefilled": "Пациент предзаполнен: {{name}} (ИИН {{policy}})",
     "patientRequired": "Пациент *",
-    "patientSearch": "Поиск по ФИО или полису...",
+    "patientSearch": "Поиск по ФИО или ИИН...",
     "found": "Найдено: {{count}}",
     "selectPatient": "Выберите пациента",
     "modality": "Модальность *",

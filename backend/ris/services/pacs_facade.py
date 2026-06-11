@@ -480,34 +480,15 @@ async def get_instance_preview(instance_id: str, window_width: int | None = None
 async def get_instance_dicom_file(instance_id: str) -> tuple[bytes, str]:
     """Сырой DICOM-файл инстанса (для DWV-просмотрщика).
 
-    Возвращает (bytes, content_type). Требует JWT — иначе был бы обход через
-    прямой запрос в Orthanc.
-    
-    Если файл без DICOM-преамбулы (128 байт + 'DICM'), добавляем её
-    через pydicom — DWV требует preamble для декодирования.
+    Возвращает (bytes, content_type). Если у файла нет DICOM-преамбулы (128+NUL+DICM),
+    добавляет её вручную. Никакого pydicom — сырые байты из Orthanc без перекодировки.
     """
-    import io
-    from pydicom.filereader import dcmread
-    from pydicom.filewriter import dcmwrite
-
     raw = await _orthanc_get_bytes(f"instances/{instance_id}/file")
 
-    try:
-        ds = dcmread(io.BytesIO(raw), force=True)
-        if not hasattr(ds, 'file_meta') or not ds.file_meta:
-            ds.file_meta = Dataset()
-        ds.file_meta.MediaStorageSOPClassUID = getattr(ds, 'SOPClassUID', '1.2.840.10008.5.1.4.1.1.2')
-        ds.file_meta.MediaStorageSOPInstanceUID = getattr(ds, 'SOPInstanceUID', '1.2.840.0')
-        ds.file_meta.TransferSyntaxUID = getattr(ds.file_meta, 'TransferSyntaxUID', None) or '1.2.840.10008.1.2.1'
-        ds.file_meta.ImplementationClassUID = '1.2.40.0.13.1.1'
-        ds.is_little_endian = True
-        ds.is_implicit_VR = False
-        buf = io.BytesIO()
-        dcmwrite(buf, ds, write_like_original=False)
-        return buf.getvalue(), "application/dicom"
-    except Exception:
-        logger.warning("Не удалось обработать DICOM для %s", instance_id)
-        return raw, "application/dicom"
+    if raw[:4] != b'\x00' * 4 or len(raw) < 132 or raw[128:132] != b'DICM':
+        raw = b'\x00' * 128 + b'DICM' + raw
+
+    return raw, "application/dicom"
 
 
 async def get_instance_dicom_tags(instance_id: str) -> dict:
