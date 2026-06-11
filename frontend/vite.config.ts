@@ -15,15 +15,15 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/elqueue/, ''),
       },
       '/ris': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         rewrite: (path) => path.replace(/^\/ris/, ''),
       },
       '/api/v1': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: false,
       },
       '/dicom': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
       },
     },
