@@ -29,6 +29,7 @@ function risTicketToDetail(t: RisTicketOut): TicketDetail {
     patient: {
       id: '',
       full_name: t.full_name,
+      iin: t.iin || null,
       policy_number: t.policy_number,
       birth_date: null,
       phone: null,
@@ -52,6 +53,7 @@ export function registerTicket(body: TicketCreateRequest) {
   const mappedPriority = body.priority === 'normal' ? 'routine' : body.priority || 'routine'
   return risPost<RisTicketOut>('/queue/tickets', {
     full_name: body.full_name,
+    iin: body.iin || undefined,
     policy_number: body.policy_number,
     modality: body.cabinet_code,
     priority: mappedPriority,
@@ -76,9 +78,10 @@ export function completeTicket(ticketId: string) {
   return risPost<RisTicketOut>(`/queue/tickets/${ticketId}/complete`).then(risTicketToDetail)
 }
 
-export function updateTicketPatient(ticketId: string, fullName: string, policyNumber: string) {
+export function updateTicketPatient(ticketId: string, fullName: string, policyNumber: string, iin?: string) {
   return risPatchBody<RisTicketOut>(`/queue/tickets/${ticketId}/patient`, {
     full_name: fullName,
+    iin: iin || undefined,
     policy_number: policyNumber,
   }).then(risTicketToDetail)
 }

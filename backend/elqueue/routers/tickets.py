@@ -189,6 +189,7 @@ async def register_ticket(
     if patient is None:
         patient = Patient(
             full_name=body.full_name,
+            iin=body.iin,
             policy_number=body.policy_number,
             birth_date=body.birth_date,
             phone=body.phone,

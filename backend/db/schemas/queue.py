@@ -31,6 +31,7 @@ class PatientOut(BaseModel):
 
     id: uuid.UUID
     full_name: str
+    iin: str | None = None
     policy_number: str
     birth_date: datetime | None
     phone: str | None
@@ -41,6 +42,7 @@ class TicketCreateRequest(BaseModel):
     """Запрос на регистрацию пациента в очереди."""
 
     full_name: str = Field(min_length=1, max_length=255)
+    iin: str | None = Field(default=None, max_length=12, description="ИИН (12 цифр)")
     policy_number: str = Field(min_length=1, max_length=64)
     cabinet_code: str = Field(default="101", description="Код кабинета (101, 102, …)")
     phone: str | None = None

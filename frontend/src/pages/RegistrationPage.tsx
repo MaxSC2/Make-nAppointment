@@ -11,6 +11,7 @@ export default function RegistrationPage() {
   const [form, setForm] = useState<TicketCreateRequest>({
     full_name: '',
     policy_number: '',
+    iin: '',
     cabinet_code: 'CT',
     phone: '',
     priority: 'normal',
@@ -27,7 +28,7 @@ export default function RegistrationPage() {
     try {
       const ticket = await queueApi.registerTicket(form)
       setResult(ticket)
-      setForm({ full_name: '', policy_number: '', cabinet_code: 'CT', phone: '', priority: 'normal' })
+      setForm({ full_name: '', policy_number: '', iin: '', cabinet_code: 'CT', phone: '', priority: 'normal' })
     } catch (err) {
       setError(err instanceof Error ? err.message : t('common.error'))
     } finally {
@@ -67,6 +68,18 @@ export default function RegistrationPage() {
             onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
             className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="0000 000000 0000"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">ИИН</label>
+          <input
+            type="text"
+            maxLength={12}
+            value={form.iin ?? ''}
+            onChange={(e) => setForm({ ...form, iin: e.target.value })}
+            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            placeholder="000000000000"
           />
         </div>
 

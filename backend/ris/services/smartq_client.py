@@ -239,11 +239,13 @@ class SmartQClient:
         service_type_id: int,
         priority: int = 3,
         room_id: int | None = None,
+        iin: str | None = None,
     ) -> dict:
         """POST /tickets/kiosk — создать талон (без авторизации).
 
         Args:
             room_id: ID кабинета SmartQ (чтобы талон сразу привязался к кабинету)
+            iin: ИИН пациента (передаётся для информации, SmartQ может не хранить)
         """
         body = {
             "fullName": full_name,
@@ -253,6 +255,8 @@ class SmartQClient:
         }
         if room_id is not None:
             body["roomId"] = room_id
+        if iin is not None:
+            body["iin"] = iin  # SmartQ проигнорирует если нет такого поля
         return await _request("POST", "/tickets/kiosk", json=body, auth=False)
 
     async def call_ticket(self, ticket_id: str) -> dict:

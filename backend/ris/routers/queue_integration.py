@@ -95,6 +95,7 @@ class TicketOut(BaseModel):
     cabinet_id: int = Field(default=0)
     cabinet_name: str = Field(default="")
     full_name: str = Field(default="", description="ФИО пациента")
+    iin: str | None = Field(default=None, description="ИИН (12 цифр)")
     policy_number: str = Field(default="")
     service_type_name: str = Field(default="", description="КТ, МРТ, Рентгенография...")
     order_id: str | None = Field(default=None, description="ID заказа в нашей БД")
@@ -123,6 +124,7 @@ class ServiceTypeOut(BaseModel):
 class CreateTicketRequest(BaseModel):
     """Запрос на создание талона (от нашего фронта к нашему РИС)."""
     full_name: str = Field(..., min_length=1, max_length=255)
+    iin: str | None = Field(default=None, max_length=12, description="ИИН (12 цифр)")
     policy_number: str = Field(..., min_length=1, max_length=64)
     modality: str = Field(..., description="CT, MR, DX, US")
     priority: str = Field(default="routine", description="routine | urgent | stat")
@@ -182,6 +184,7 @@ async def _smartq_ticket_to_ours(smartq_t: dict, services_cache: dict | None = N
         cabinet_id=cabinet_id,
         cabinet_name=cabinet_name,
         full_name=smartq_t.get("fullName", "") or smartq_t.get("patientName", ""),
+        iin=smartq_t.get("iin", None) or smartq_t.get("IIN", None),
         policy_number=smartq_t.get("policyNumber", ""),
         created_at=smartq_t.get("createdAt", ""),
         called_at=smartq_t.get("calledAt"),
@@ -428,11 +431,11 @@ async def _enrich_with_orders(
     patient_ids = [r.patient_id for r in rows]
     patient_lookup = {}
     if patient_ids:
-        pstmt = select(Patient.id, Patient.full_name, Patient.policy_number).where(
+        pstmt = select(Patient.id, Patient.full_name, Patient.policy_number, Patient.iin).where(
             Patient.id.in_(patient_ids),
         )
         for pr in (await db.execute(pstmt)).all():
-            patient_lookup[pr.id] = (pr.full_name, pr.policy_number)
+            patient_lookup[pr.id] = (pr.full_name, pr.policy_number, pr.iin)
     lookup = {r.source_ticket_id: (r.id, r.study_uid, r.patient_id) for r in rows}
     for t in tickets:
         if t.id in lookup:
@@ -440,11 +443,13 @@ async def _enrich_with_orders(
             t.study_uid = lookup[t.id][1]
             pid = lookup[t.id][2]
             if pid in patient_lookup:
-                pname, ppolicy = patient_lookup[pid]
+                pname, ppolicy, piin = patient_lookup[pid]
                 if pname and not t.full_name:
                     t.full_name = pname
                 if ppolicy and not t.policy_number:
                     t.policy_number = ppolicy
+                if piin and not t.iin:
+                    t.iin = piin
     return tickets
 
 
@@ -513,6 +518,7 @@ async def create_ticket(
         service_type_id=service_type_id,
         priority=priority,
         room_id=room_id,
+        iin=body.iin,
     )
 
     services_cache = {s.get("id"): s.get("name", "") for s in services}
@@ -604,6 +610,7 @@ async def call_ticket(
         
         patient = Patient(
             full_name=full_name,
+            iin=smartq_ticket.get("iin") or smartq_ticket.get("IIN"),
             policy_number=policy,
         )
         db.add(patient)
@@ -719,6 +726,7 @@ async def complete_ticket(
 class UpdatePatientRequest(BaseModel):
     """Запрос на обновление данных пациента в талоне."""
     full_name: str = Field(..., min_length=1, max_length=255)
+    iin: str | None = Field(default=None, max_length=12, description="ИИН (12 цифр)")
     policy_number: str = Field(..., min_length=1, max_length=64)
 
 
@@ -763,6 +771,8 @@ async def update_ticket_patient(
     patient = await db.get(Patient, order.patient_id)
     if patient:
         patient.full_name = body.full_name
+        if body.iin is not None:
+            patient.iin = body.iin
         patient.policy_number = body.policy_number
         await db.commit()
 
@@ -784,6 +794,7 @@ async def _find_or_create_patient(db: AsyncSession, smartq_t: dict) -> Patient:
 
     patient = Patient(
         full_name=full_name or f"Пациент {smartq_t.get('number', 'unknown')}",
+        iin=smartq_t.get("iin") or smartq_t.get("IIN"),
         policy_number=policy or f"UNK-{smartq_t.get('id', '')[:8]}",
     )
     db.add(patient)

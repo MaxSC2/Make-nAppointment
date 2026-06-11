@@ -76,6 +76,7 @@ class Patient(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     full_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    iin: Mapped[str | None] = mapped_column(String(12), unique=True, index=True, comment="ИИН (12 цифр)")
     # Полис ОМС / СНИЛС / иной идентификатор
     policy_number: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     birth_date: Mapped[datetime | None] = mapped_column(DateTime)

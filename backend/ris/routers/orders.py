@@ -571,7 +571,7 @@ async def _send_metadata_to_orthanc(
     """
     ds = Dataset()
     ds.PatientName = patient.full_name
-    ds.PatientID = str(patient.id)
+    ds.PatientID = patient.iin or str(patient.id)  # ИИН как PatientID, фолбэк на UUID
     ds.StudyDescription = order.study_description or "Routine"
     ds.Modality = order.modality
     ds.StudyInstanceUID = study_uid

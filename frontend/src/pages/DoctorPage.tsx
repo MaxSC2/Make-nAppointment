@@ -19,6 +19,7 @@ export default function DoctorPage() {
   const [fillTicket, setFillTicket] = useState<TicketDetail | null>(null)
   const [fillName, setFillName] = useState('')
   const [fillPolicy, setFillPolicy] = useState('')
+  const [fillIin, setFillIin] = useState('')
   const [saving, setSaving] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -69,13 +70,14 @@ export default function DoctorPage() {
     setFillTicket(ticket)
     setFillName(ticket.patient.full_name || '')
     setFillPolicy(ticket.patient.policy_number || '')
+    setFillIin(ticket.patient.iin || '')
   }, [])
 
   const handleSavePatient = useCallback(async () => {
     if (!fillTicket?.sourceTicketId || !fillName.trim()) return
     setSaving(true)
     try {
-      await queueApi.updateTicketPatient(fillTicket.sourceTicketId, fillName.trim(), fillPolicy.trim())
+      await queueApi.updateTicketPatient(fillTicket.sourceTicketId, fillName.trim(), fillPolicy.trim(), fillIin.trim())
       setFillTicket(null)
       await refresh()
     } catch (e) {
@@ -83,7 +85,7 @@ export default function DoctorPage() {
     } finally {
       setSaving(false)
     }
-  }, [fillTicket, fillName, fillPolicy, refresh, t])
+  }, [fillTicket, fillName, fillPolicy, fillIin, refresh, t])
 
   return (
     <div>
@@ -155,6 +157,16 @@ export default function DoctorPage() {
                   onChange={e => setFillPolicy(e.target.value)}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                   placeholder="0000 000000 0000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">ИИН</label>
+                <input
+                  value={fillIin}
+                  onChange={e => setFillIin(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono"
+                  placeholder="000000000000"
+                  maxLength={12}
                 />
               </div>
             </div>

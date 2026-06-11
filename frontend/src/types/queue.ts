@@ -9,6 +9,7 @@ export interface CabinetOut {
 export interface PatientOut {
   id: string
   full_name: string
+  iin?: string | null
   policy_number: string
   birth_date: string | null
   phone: string | null
@@ -48,6 +49,7 @@ export interface TicketEventOut {
 
 export interface TicketCreateRequest {
   full_name: string
+  iin?: string | null
   policy_number: string
   cabinet_code: string
   phone?: string | null
@@ -82,6 +84,7 @@ export interface RisTicketOut {
   cabinet_id: number
   cabinet_name: string
   full_name: string
+  iin?: string | null
   policy_number: string
   service_type_name?: string
   order_id?: string | null
