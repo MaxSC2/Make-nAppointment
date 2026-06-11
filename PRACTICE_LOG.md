@@ -1619,3 +1619,43 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.1 — рабочие процессы:** доработка интерфейса под реального врача (ИИН вместо Полиса)
 - **П.3 — роли:** PatientCardPage + StudiesPage — ключевые для врача-радиолога
 - **П.9 — качество:** исправлены i18n-баги, TSC 0 ошибок
+
+---
+
+## 12.06.2026 — Viewer fix + Monitoring review + Architecture split
+
+### Что сделал:
+
+1. **ViewerPage + DwvViewer fixes:**
+   - `h-screen` возвращён (ViewerPage — standalone, не внутри Layout)
+   - `key={studyUid}` — force remount при смене исследования через PACS Search
+   - Canvas centering: обёртка `items-center justify-center` + контейнер `w-full h-full`
+   - Футер с метаданными теперь внизу, не плавает по центру
+   - Контраст после рисования — **баг DWV 0.36**, документирован
+
+2. **Architecture — разделение роутинга:**
+   - PublicLayout — чистый контейнер для `/login`
+   - Layout — только для dashboard (sidebar + header)
+   - Серая полоса справа — диагностирована, похоже на баг браузера/viewport
+
+3. **OrderEntryPage — i18n + dark mode + поиск по ИИН**
+
+4. **RegistrationPage — убрал дублирующееся поле ИИН**
+
+5. **`navigate(-1)`** — PatientCardPage и ProtocolPage возвращают куда пришли
+
+6. **MonitoringPage — ревью:** уже полностью i18n + dark mode, менять нечего
+
+7. **PRODUCTION_VISION.md + PRACTICE_LOG_RULES.md** — созданы ранее
+
+### Результат:
+- ✅ TSC 0 ошибок
+- ✅ Viewer: переключение исследований через PACS Search
+- ✅ Routing: PublicLayout + DashboardLayout разделены
+- ✅ Все страницы: i18n, dark mode, SVG иконки
+- ⚠️ Серая полоса — не CSS (viewport-баг)
+- ⚠️ DWV contrast-after-draw — библиотечный баг 0.36
+
+### Что это дало для отчёта:
+- **П.6 — жизненный цикл:** архитектурный рефакторинг роутинга
+- **П.9 — качество:** диагностика и документирование багов (DWV, viewport)
