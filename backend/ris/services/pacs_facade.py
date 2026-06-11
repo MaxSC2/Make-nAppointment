@@ -23,7 +23,28 @@ import asyncio
 import logging
 import time
 import uuid
-from typing import Any
+
+logger = logging.getLogger("ris.pacs_facade")
+
+
+def _fix_dicom_name(raw: str | None) -> str | None:
+    """Fix common DICOM encoding issues: ISO-8859-5 Cyrillic → UTF-8."""
+    if not raw:
+        return raw
+    # If already valid UTF-8 with Cyrillic, return as-is
+    try:
+        raw.encode('latin-1').decode('latin-1')
+    except UnicodeEncodeError:
+        return raw  # already not Latin-1, assume OK
+    # Re-encode as Latin-1 bytes, then decode as ISO 8859-5 (Cyrillic)
+    try:
+        name = raw.encode('latin-1').decode('iso-8859-5')
+    except (UnicodeDecodeError, UnicodeEncodeError):
+        return raw
+    # Verify it contains Cyrillic characters
+    if any('\u0400' <= c <= '\u04FF' for c in name):
+        return name
+    return rawfrom typing import Any
 
 import httpx
 from sqlalchemy import select
@@ -101,6 +122,72 @@ async def _orthanc_get_bytes(path: str, params: dict[str, str] | None = None) ->
                 status_code=502,
             )
         return r.content
+
+
+async def _orthanc_delete(path: str) -> None:
+    """DELETE к Orthanc (для удаления study/series/instance)."""
+    async with _orthanc_semaphore:
+        client = _get_orthanc_client()
+        url = f"{settings.orthanc_url}/{path.lstrip('/')}"
+        try:
+            r = await client.delete(url)
+        except httpx.RequestError as e:
+            raise PACSError(f"Orthanc недоступен: {e}", status_code=503) from e
+        if r.status_code not in (200, 204):
+            raise PACSError(
+                f"Orthanc не смог удалить {path}: HTTP {r.status_code} {r.text[:200]}",
+                status_code=502,
+            )
+
+
+async def count_study_instances(orthanc_id: str) -> int:
+    """Подсчитать общее кол-во инстансов в исследовании (по всем сериям)."""
+    series = await _orthanc_get_json(f"studies/{orthanc_id}/series")
+    total = 0
+    for s in series:
+        instances = await _orthanc_get_json(f"series/{s['ID']}/instances")
+        total += len(instances)
+    return total
+
+
+async def list_single_slice_studies() -> list[dict]:
+    """Найти исследования, где ровно 1 инстанс (тестовые/сломанные загрузки).
+
+    Возвращает [{orthanc_id, study_uid, patient_name, study_date, modality, last_update}].
+    """
+    studies = await _orthanc_get_json("studies")
+    out: list[dict] = []
+    for sid in studies:
+        try:
+            inst_count = await count_study_instances(sid)
+        except PACSError:
+            continue
+        if inst_count != 1:
+            continue
+        # Раскрываем метаданные
+        try:
+            meta = await _orthanc_get_json(f"studies/{sid}")
+        except PACSError:
+            continue
+        tags = meta.get("MainDicomTags", {}) or {}
+        patient_tags = meta.get("PatientMainDicomTags", {}) or {}
+        out.append({
+            "orthanc_id": sid,
+            "study_uid": tags.get("StudyInstanceUID", ""),
+            "patient_name": _fix_dicom_name(patient_tags.get("PatientName", "")),
+            "study_description": tags.get("StudyDescription", ""),
+            "study_date": tags.get("StudyDate", ""),
+            "modality": tags.get("Modality", ""),
+            "last_update": meta.get("LastUpdate", ""),
+        })
+    out.sort(key=lambda x: x.get("last_update", ""), reverse=True)
+    return out
+
+
+async def delete_orthanc_study(orthanc_id: str) -> None:
+    """Удалить исследование из Orthanc полностью (со всеми сериями и инстансами)."""
+    await _orthanc_delete(f"studies/{orthanc_id}")
+    invalidate_study_uid_cache()
 
 
 # ======================== КЭШ МАППИНГА study_uid → orthanc_id ========================
@@ -192,7 +279,7 @@ def _build_study_summary(orthanc_study: dict) -> dict:
         "study_description": tags.get("StudyDescription"),
         "modality": tags.get("Modality"),
         "patient_id_dicom": tags.get("PatientID") or patient_tags.get("PatientID"),
-        "patient_name_dicom": patient_tags.get("PatientName") or tags.get("PatientName"),
+        "patient_name_dicom": _fix_dicom_name(patient_tags.get("PatientName") or tags.get("PatientName")),
         "patient_birth_date": patient_tags.get("PatientBirthDate"),
         "accession_number": tags.get("AccessionNumber"),
         "is_stable": orthanc_study.get("IsStable", False),

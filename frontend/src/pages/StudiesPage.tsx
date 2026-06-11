@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getStudiesList, linkStudy } from '../api/ris'
+import { deleteOrthancStudy, getStudiesList, linkStudy, listSingleSliceStudies, type SingleSliceStudy } from '../api/ris'
 import type { StudyListItem } from '../types/ris'
 import { useTranslation } from 'react-i18next'
+import { ViewerIcon, ProtocolIcon } from '../components/Icons'
 
 const MODALITY_FILTERS = [
   { value: '', key: 'studies.allModalities' },
@@ -217,7 +218,7 @@ function StudiesTable({
                       className="px-2 py-1 text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 rounded hover:bg-teal-200 dark:hover:bg-teal-900/50"
                       title={t('studies.view')}
                     >
-                      🖼
+                      <ViewerIcon />
                     </Link>
                     {s.ris_order_id ? (
                       <Link
@@ -225,7 +226,7 @@ function StudiesTable({
                         className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50"
                         title={t('studies.protocol')}
                       >
-                        📋
+                        <ProtocolIcon />
                       </Link>
                     ) : (
                       <button

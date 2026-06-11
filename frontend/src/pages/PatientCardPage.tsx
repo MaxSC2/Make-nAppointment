@@ -4,6 +4,7 @@ import { getPatient, getPatientStudies } from '../api/ris'
 import type { PatientOut } from '../types/queue'
 import type { PatientStudy } from '../types/ris'
 import { useTranslation } from 'react-i18next'
+import { EditIcon, ViewerIcon, ProtocolIcon } from '../components/Icons'
 
 function calcAge(birthDate: string | null): number | null {
   if (!birthDate) return null
@@ -123,7 +124,7 @@ export default function PatientCardPage() {
                 onClick={() => setEditing(true)}
                 className="text-xs text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 px-2 py-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
               >
-                ✎
+                <EditIcon />
               </button>
             </div>
 
@@ -336,7 +337,7 @@ function StudyCard({
             className="px-2.5 py-1.5 bg-teal-600 text-white text-xs rounded hover:bg-teal-700"
             title={t('patientCard.open')}
           >
-            🖼
+            <ViewerIcon />
           </button>
           {study.order_id && (
             <button
@@ -344,7 +345,7 @@ function StudyCard({
               className="px-2.5 py-1.5 text-xs border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-400 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
               title={t('patientCard.protocol')}
             >
-              📋
+              <ProtocolIcon />
             </button>
           )}
         </div>
