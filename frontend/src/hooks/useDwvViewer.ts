@@ -196,18 +196,41 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
         clearLoadTimeout()
         const ev = event as { data?: { message?: string } | string }
         const data = ev.data
-        const message = typeof data === 'string'
+        const raw = typeof data === 'string'
           ? data
-          : data?.message ?? 'Ошибка загрузки DICOM'
+          : data?.message ?? ''
+        const message = raw.includes('multi-volume')
+          ? 'Формат исследования не поддерживается 3D-просмотром (множественные объёмы)'
+          : raw || 'Ошибка загрузки DICOM'
         setError(message)
         setLoading(false)
         onErrorRef.current?.(message)
       })
 
+      // DWV v0.36 has uncaught exceptions from buildData in worker onmessage handler.
+      // These bypass the App 'error' event. Catch them via global error listener.
+      const onGlobalError = (e: ErrorEvent) => {
+        const msg = e.message ?? ''
+        if (msg.includes('Cannot create image for multi-volume')) {
+          e.preventDefault()
+          clearLoadTimeout()
+          const friendly = 'Формат исследования не поддерживается 3D-просмотром (множественные объёмы)'
+          setError(friendly)
+          setLoading(false)
+          onErrorRef.current?.(friendly)
+        }
+      }
+      window.addEventListener('error', onGlobalError)
+
       app.addEventListener('positionchange', () => {
         // DWV v0.36 positionchange doesn't have reliable frame index
         // Counter is tracked manually via wheel/keyboard events
       })
+
+      // Cleanup global error listener on unmount
+      const cleanupGlobalError = () => window.removeEventListener('error', onGlobalError)
+      // We'll store it to call in the return
+      ;(app as unknown as Record<string, unknown>).__globalErrorCleanup = cleanupGlobalError
     }
 
     tryInit()
@@ -225,8 +248,9 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
     return () => {
       clearLoadTimeout()
       container.removeEventListener('wheel', onWheel)
-      const app = appRef.current as dwv.App
+      const app = appRef.current as dwv.App & { __globalErrorCleanup?: () => void }
       if (app) {
+        app.__globalErrorCleanup?.()
         try { app.reset() } catch { console.error('DwvViewer: failed to reset') }
       }
       appRef.current = null
@@ -320,6 +344,7 @@ export function useDwvViewer(studyUid: string, onError?: (msg: string) => void):
 
   const setSeries = useCallback((seriesUid: string) => {
     if (seriesUid === activeSeriesUidRef.current) return
+    try { appRef.current?.reset() } catch { /* ignore */ }
     setActiveSeriesUid(seriesUid)
     activeSeriesUidRef.current = seriesUid
     setLoaded(false)

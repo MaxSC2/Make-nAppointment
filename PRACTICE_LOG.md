@@ -1383,4 +1383,59 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 - **П.4 — базовые инструменты:** React key uniqueness — классическая React-ловушка, диагностирована по console.error
 - **П.9 — качество:** 46+ предупреждений устранены, консоль браузера чистая
 
+---
+
+## 11.06.2026 — ИИН: тесты, поиск, DoctorPage refresh race fix, коммит
+
+### Что сделал:
+1. **Добавил миграцию 0004 на тестовую БД** — ликвидировал разрыв между рабочей БД и `pacs_ris_test`
+
+2. **Починил падающие тесты:**
+   - `NameError: kw is not defined` в моке `create_ticket` — лямбды не принимали `**kwargs`
+   - `OrderStatus.PLANNED` → `SCHEDULED` в `update_ticket_patient` (статус не существовал в Enum)
+   - Поиск пациентов по ИИН не работал — добавил `Patient.iin.ilike()` в `list_patients`
+   - Ответы `/api/v1/patients` не содержали `iin` — добавил `PatientOut` с полем `iin`
+
+3. **Написал 8 тестов на ИИН** (`backend/tests/test_iin.py`):
+   - Создание пациента с ИИН через очередь
+   - Список пациентов возвращает IIN
+   - Детальная карточка содержит ИИН
+   - Поиск по ИИН
+   - Пустой поиск по несуществующему ИИН
+   - DICOM PatientID = ИИН при создании заказа
+   - Обновление ИИН у пациента
+   - Пациент без ИИН возвращает null
+
+4. **Починил DoctorPage — кнопка «Обновить» зависала на `...`**:
+   - Причина: `setInterval(refresh, 10000)` — race condition, `loading` не сбрасывался
+   - Фикс: заменил `setInterval` на рекурсивный `setTimeout` в `useEffect` (тот же паттерн что в `useQueue.ts`)
+   - Теперь следующий poll стартует только после завершения предыдущего fetch
+
+5. **Смержил `designer-theme` в `main`** (через `designer-fix` ветку):
+   - Разрешены конфликты в 7 файлах
+   - Сохранена логика ИИН, serviceType column, sourceTicketId key, i18next `{{var}}`
+
+6. **Закоммитил** `8171d2d` — "fix: IIN tests + search + DoctorPage refresh race"
+
+### Результат:
+- **115/115 тестов пройдены** (107 старых + 8 новых на ИИН) ✅
+- **TypeScript 0 ошибок** (`npx tsc --noEmit` pass) ✅
+- **DoctorPage** — кнопка Refresh больше не зависает (recursive setTimeout вместо setInterval) ✅
+- **ИИН** — полный цикл: модель → миграция → бэкенд/поиск → тесты
+- Коммит `8171d2d` в main: 8 файлов, +186/-19 строк
+
+### Какие файлы изменил:
+- `backend/tests/test_iin.py` (новый) — 8 тестов на ИИН
+- `backend/ris/routers/queue_integration.py` — **kwargs в моке
+- `backend/ris/routers/studies.py` — поиск по ИИН, IIN в response
+- `backend/tests/conftest.py` — фикстура seed_patient_with_iin
+- `backend/tests/test_auth.py`, `test_patients.py`, `test_tickets.py` — фиксы
+- `frontend/src/pages/DoctorPage.tsx` — setInterval → recursive setTimeout
+
+### Что это дало для отчёта:
+- **П.4 — базовые инструменты:** async polling антипаттерн (setInterval) vs recursive setTimeout, pytest для регрессии
+- **П.7 — методология:** Test-Driven — сначала тесты падали, потом починил код
+- **П.9 — качество:** 0 ошибок TypeScript, 115/115 тестов, DoctorPage без race condition
+- **П.6 — жизненный цикл:** от бага (кнопка ...) → анализ (setInterval race) → фикс → тесты
+
 
