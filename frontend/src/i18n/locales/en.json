@@ -170,7 +170,7 @@
     "inProgress": "In progress",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "newOrder": "+ New order",
+    "newOrder": "New order",
     "searchPlaceholder": "Search by name, ID, description...",
     "sortBy": "Sort by:",
     "sortNewest": "Newest first",

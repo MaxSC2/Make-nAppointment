@@ -170,7 +170,7 @@
     "inProgress": "В работе",
     "completed": "Выполнены",
     "cancelled": "Отменены",
-    "newOrder": "+ Новый заказ",
+    "newOrder": "Новый заказ",
     "searchPlaceholder": "Поиск по ФИО, ID, описанию...",
     "sortBy": "Сортировка:",
     "sortNewest": "Свежие сверху",

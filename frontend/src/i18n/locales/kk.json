@@ -170,7 +170,7 @@
     "inProgress": "Орындалуда",
     "completed": "Орындалды",
     "cancelled": "Болдырылмады",
-    "newOrder": "+ Жаңа тапсырыс",
+    "newOrder": "Жаңа тапсырыс",
     "searchPlaceholder": "Аты, ID, сипаттама бойынша іздеу...",
     "sortBy": "Сұрыптау:",
     "sortNewest": "Жаңалары жоғарыда",
