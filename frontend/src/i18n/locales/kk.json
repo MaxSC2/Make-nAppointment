@@ -302,6 +302,7 @@
   },
   "statusBadge": {
     "waiting": "Күтуде",
+    "scheduled": "Жоспарланған",
     "inProgress": "Орындалуда",
     "completed": "Аяқталды",
     "cancelled": "Болдырылмады",

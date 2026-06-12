@@ -304,6 +304,7 @@
   },
   "statusBadge": {
     "waiting": "Waiting",
+    "scheduled": "Scheduled",
     "inProgress": "In progress",
     "completed": "Completed",
     "cancelled": "Cancelled",

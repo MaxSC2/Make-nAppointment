@@ -304,6 +304,7 @@
   },
   "statusBadge": {
     "waiting": "Ожидание",
+    "scheduled": "Запланирован",
     "inProgress": "В работе",
     "completed": "Завершён",
     "cancelled": "Отменён",
