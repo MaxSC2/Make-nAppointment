@@ -1,6 +1,6 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { setToken as setClientToken, authLogin, authMe } from '../api/client'
+import { setToken as setClientToken, setRefreshToken as setClientRefreshToken, authLogin, authMe } from '../api/client'
 import type { UserOut } from '../types/auth'
 
 const STORAGE_ACCESS = 'mp_access_token'
@@ -37,6 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAccessToken(access)
       setClientToken(access)
+    }
+    if (refresh) {
+      setClientRefreshToken(refresh)
     }
     if (u) {
       try { setUser(JSON.parse(u)) } catch { console.error('Auth: corrupted user in localStorage'); localStorage.removeItem(STORAGE_USER) }
@@ -77,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const pair = await authLogin(username, password)
     setAccessToken(pair.access_token)
     setClientToken(pair.access_token)
+    setClientRefreshToken(pair.refresh_token)
     localStorage.setItem(STORAGE_ACCESS, pair.access_token)
     localStorage.setItem(STORAGE_REFRESH, pair.refresh_token)
     const me = await fetch('/ris/api/auth/me', {
@@ -93,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(null)
     setUser(null)
     setClientToken(null)
+    setClientRefreshToken(null)
     localStorage.removeItem(STORAGE_ACCESS)
     localStorage.removeItem(STORAGE_REFRESH)
     localStorage.removeItem(STORAGE_USER)
