@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useCabinets } from '../hooks/useQueue'
 import type { TicketCreateRequest, TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
+import { getPatients } from '../api/ris'
 import StatusBadge from '../components/StatusBadge'
 import { useTranslation } from 'react-i18next'
 
@@ -19,6 +20,26 @@ export default function RegistrationPage() {
   const [result, setResult] = useState<TicketDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [existingPatient, setExistingPatient] = useState<string | null>(null)
+
+  const checkIIN = useCallback(async (iin: string) => {
+    if (iin.length !== 12) { setExistingPatient(null); return }
+    try {
+      const patients = await getPatients(iin)
+      const match = patients.find(p => p.iin === iin)
+      if (match) {
+        setExistingPatient(match.full_name)
+        setForm(f => ({
+          ...f,
+          iin,
+          full_name: match.full_name || f.full_name,
+          phone: match.phone || f.phone,
+        }))
+      } else {
+        setExistingPatient(null)
+      }
+    } catch { /* search failed, ignore */ }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,10 +88,19 @@ export default function RegistrationPage() {
             required
             maxLength={12}
             value={form.iin ?? ''}
-            onChange={(e) => setForm({ ...form, iin: e.target.value })}
+            onChange={(e) => {
+              const v = e.target.value
+              setForm({ ...form, iin: v })
+              checkIIN(v)
+            }}
             className="w-full border border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-md px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="000000000000"
           />
+          {existingPatient && (
+            <p className="mt-1 text-xs text-teal-600 dark:text-teal-400">
+              ✓ {t('registration.existingPatient')}: {existingPatient}
+            </p>
+          )}
         </div>
 
         <div>
