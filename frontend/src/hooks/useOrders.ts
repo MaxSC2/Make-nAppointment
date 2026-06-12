@@ -1,21 +1,44 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { OrderOut } from '../types/ris'
 import * as risApi from '../api/ris'
+import type { GetOrdersParams } from '../api/ris'
 
-export function useOrders(status?: string) {
+export interface OrdersFilters extends GetOrdersParams {
+  page: number
+  perPage: number
+}
+
+export interface OrdersResult {
+  items: OrderOut[]
+  total: number
+  hasMore: boolean
+}
+
+export function useOrders(filters: Partial<OrdersFilters> = {}) {
   const [orders, setOrders] = useState<OrderOut[]>([])
+  const [total, setTotal] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+
+  const { page, perPage, ...apiParams } = filters
+  const offset = ((page ?? 1) - 1) * (perPage ?? 50)
 
   const fetchOrders = useCallback(async () => {
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
     try {
-      const data = await risApi.getOrders(status)
+      const data = await risApi.getOrders({
+        ...apiParams,
+        limit: perPage ?? 50,
+        offset,
+      })
       if (!controller.signal.aborted) {
-        setOrders(data)
+        setOrders(data.items)
+        setTotal(data.total)
+        setHasMore(data.has_more)
         setError(null)
       }
     } catch (e) {
@@ -27,12 +50,12 @@ export function useOrders(status?: string) {
         setLoading(false)
       }
     }
-  }, [status])
+  }, [JSON.stringify(apiParams), perPage, offset])
 
   useEffect(() => {
     fetchOrders()
     return () => abortRef.current?.abort()
   }, [fetchOrders])
 
-  return { orders, loading, error, refetch: fetchOrders }
+  return { orders, total, hasMore, loading, error, refetch: fetchOrders }
 }

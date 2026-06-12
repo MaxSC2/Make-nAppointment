@@ -10,13 +10,39 @@ export interface OrderListResponse {
   has_more: boolean
 }
 
-export async function getOrders(status?: string, patientId?: string) {
-  const params = new URLSearchParams()
-  if (status) params.set('status_filter', status)
-  if (patientId) params.set('patient_id', patientId)
-  const qs = params.toString()
-  const data = await risGet<OrderListResponse>(`/orders${qs ? '?' + qs : ''}`)
-  return data.items
+export interface GetOrdersParams {
+  status?: string
+  modality?: string
+  priority?: string
+  patientId?: string
+  search?: string
+  limit?: number
+  offset?: number
+  sortBy?: 'created_at' | 'scheduled_for' | 'completed_at' | 'priority'
+  sortDir?: 'asc' | 'desc'
+  onlyMine?: boolean
+  dateFrom?: string
+  dateTo?: string
+}
+
+export async function getOrders(params: GetOrdersParams | string = {}) {
+  const p: GetOrdersParams = typeof params === 'string' ? { status: params } : params
+  const qs = new URLSearchParams()
+  if (p.status) qs.set('status_filter', p.status)
+  if (p.modality) qs.set('modality', p.modality)
+  if (p.priority) qs.set('priority', p.priority)
+  if (p.patientId) qs.set('patient_id', p.patientId)
+  if (p.search) qs.set('search', p.search)
+  if (p.limit) qs.set('limit', String(p.limit))
+  if (p.offset) qs.set('offset', String(p.offset))
+  if (p.sortBy && p.sortBy !== 'created_at') qs.set('sort_by', p.sortBy)
+  if (p.sortDir && p.sortDir !== 'desc') qs.set('sort_dir', p.sortDir)
+  if (p.onlyMine) qs.set('only_mine', 'true')
+  if (p.dateFrom) qs.set('date_from', p.dateFrom)
+  if (p.dateTo) qs.set('date_to', p.dateTo)
+  const q = qs.toString()
+  const data = await risGet<OrderListResponse>(`/orders${q ? '?' + q : ''}`)
+  return data
 }
 
 export function getOrder(orderId: string) {

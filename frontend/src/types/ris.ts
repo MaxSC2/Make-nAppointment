@@ -1,15 +1,22 @@
 export interface OrderOut {
   id: string
   patient_id: string
+  patient_name?: string | null
   modality: string
   study_uid: string
   study_description: string | null
   referring_physician: string | null
   status: string
   priority: string
+  cabinet_id?: number
+  cabinet_name?: string | null
+  service_type_name?: string | null
   scheduled_for: string | null
   started_at: string | null
   completed_at: string | null
+  cancellation_reason?: string | null
+  created_by_id?: string
+  created_by_username?: string | null
   created_at: string
   updated_at: string
 }
