@@ -500,6 +500,10 @@ _MODALITY_TO_SERVICE_NAME = {
     "XA": "Ангиография",
 }
 
+# Reverse: SmartQ service name → modality code
+_SERVICE_NAME_TO_MODALITY = {v.lower(): k for k, v in _MODALITY_TO_SERVICE_NAME.items()}
+_SERVICE_NAME_TO_MODALITY["consultation"] = "CT"  # fallback
+
 
 @router.post("/tickets", response_model=TicketOut, status_code=201, summary="Создать талон (kiosk)")
 async def create_ticket(
@@ -594,61 +598,35 @@ async def call_ticket(
     smartq_ticket = await _safe_smartq_call("get_ticket", ticket_id)
     if not smartq_ticket:
         raise HTTPException(status_code=502, detail="SmartQ: ticket не найден после call")
-    # Если get_ticket вернул waiting (например, мок), берём статус из call (он актуальнее)
     if smartq_ticket.get("status") in ("waiting", None) and smartq_result.get("status"):
         smartq_ticket = {**smartq_ticket, "status": smartq_result["status"]}
 
-    # Ищем пациента по fullName+policyNumber
+    # Try to find patient: first from our DB (Order created via fill patient), then from SmartQ
     patient: Patient | None = None
     full_name = smartq_ticket.get("fullName", "").strip()
     policy = smartq_ticket.get("policyNumber", "").strip()
     
-    # Если fullName пусто, пробуем альтернативные поля SmartQ
-    if not full_name:
-        full_name = smartq_ticket.get("patientName", "").strip()
-    if not full_name:
-        full_name = smartq_ticket.get("name", "").strip()
+    # Проверяем: был ли пациент уже заполнен врачом (через update_ticket_patient)
+    filled_order_stmt = select(Order).where(Order.source_ticket_id == ticket_id)
+    filled_order = (await db.execute(filled_order_stmt)).scalar_one_or_none()
+    if filled_order and filled_order.patient_id:
+        patient = await db.get(Patient, filled_order.patient_id)
     
-    # Если policy пусто или не валидный, генерируем
-    if not policy:
-        policy = f"UNK-{ticket_id[:8]}"
-    
-    if full_name and policy:
-        pstmt = select(Patient).where(
-            Patient.full_name == full_name,
-            Patient.policy_number == policy,
-        )
-        patient = (await db.execute(pstmt)).scalar_one_or_none()
-
-    # Если пациент не найден — создаём
     if patient is None:
-        # Если fullName ВСЕ ЕЩЕ пусто, генерируем имя по полису
-        if not full_name:
-            full_name = f"Patient {policy}"
-        
-        patient = Patient(
-            full_name=full_name,
-            iin=smartq_ticket.get("iin") or smartq_ticket.get("IIN"),
-            policy_number=policy,
+        # Без заполнения карточки нельзя вызвать — требуем заполнить через PATCH /patient
+        raise HTTPException(
+            status_code=400,
+            detail="Сначала заполните данные пациента (ФИО, ИИН) через кнопку «Заполнить»",
         )
-        db.add(patient)
-        await db.flush()
-        logger.info(f"Created new patient: {full_name} ({policy})")
 
-    # Находим modality по serviceTypeId
+    # Находим modality по serviceTypeId — используем reverse mapping
     services = await _safe_smartq_call("get_service_types")
     modality_code = "CT"
     for s in services:
         if s.get("id") == smartq_ticket.get("serviceTypeId"):
             name = s.get("name", "").lower()
-            if "мрт" in name or "mr" in name:
-                modality_code = "MR"
-            elif "рентген" in name:
-                modality_code = "DX"
-            elif "уз" in name:
-                modality_code = "US"
-            elif "ангио" in name:
-                modality_code = "XA"
+            modality_code = _SERVICE_NAME_TO_MODALITY.get(name, "CT")
+            break
             break
 
     modality = (await db.execute(
