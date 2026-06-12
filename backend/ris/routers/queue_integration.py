@@ -759,40 +759,46 @@ async def update_ticket_patient(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_role(RoleCode.DOCTOR, RoleCode.TECHNICIAN, RoleCode.ADMIN)),
 ) -> TicketOut:
-    """PATCH /api/queue/tickets/{id}/patient — врач заполняет ФИО и ИИН.
-
-    Ищет Order по source_ticket_id, обновляет связанного Patient.
-    Если Order нет — создаём.
-    Доступ: doctor, technician, admin.
-    """
+    """PATCH /api/queue/tickets/{id}/patient — врач заполняет ФИО и ИИН."""
     stmt = select(Order).where(Order.source_ticket_id == ticket_id)
     order = (await db.execute(stmt)).scalar_one_or_none()
 
+    # Find or create patient — prefer IIN match
+    patient: Patient | None = None
+    if body.iin:
+        pstmt = select(Patient).where(Patient.iin == body.iin)
+        patient = (await db.execute(pstmt)).scalar_one_or_none()
+    if patient is None:
+        patient = await _find_or_create_patient(db, {"fullName": body.full_name, "policyNumber": body.policy_number, "iin": body.iin})
+
     if order is None:
         smartq_ticket = await _safe_smartq_call("get_ticket", ticket_id)
-        if not smartq_ticket:
-            raise HTTPException(status_code=502, detail="SmartQ: ticket не найден")
+        modality = "CT"  # default
+        if smartq_ticket and smartq_ticket.get("serviceType"):
+            svc_name = smartq_ticket["serviceType"].get("name", "").lower()
+            for mod, name in _MODALITY_TO_SERVICE_NAME.items():
+                if name.lower() == svc_name:
+                    modality = mod
+                    break
         order = Order(
             id=uuid.uuid4().hex[:8],
-            patient_id=(await _find_or_create_patient(db, smartq_ticket)).id,
-            modality="CT",
+            patient_id=patient.id,
+            modality=modality,
             study_uid=f"1.2.840.smartq.{ticket_id[:8]}",
-            study_description=f"Заполнено врачом (талон {smartq_ticket.get('number', '')})",
+            study_description=f"Талон {smartq_ticket.get('number', ticket_id) if smartq_ticket else ticket_id}",
             status=OrderStatus.SCHEDULED.value,
             source_ticket_id=ticket_id,
-            source_ticket_number=smartq_ticket.get("number"),
+            source_ticket_number=smartq_ticket.get("number") if smartq_ticket else None,
             source_system="smartq",
         )
         db.add(order)
         await db.flush()
 
-    patient = await db.get(Patient, order.patient_id)
-    if patient:
-        patient.full_name = body.full_name
-        if body.iin is not None:
-            patient.iin = body.iin
-        patient.policy_number = body.policy_number
-        await db.commit()
+    patient.full_name = body.full_name
+    if body.iin is not None:
+        patient.iin = body.iin
+    patient.policy_number = body.policy_number
+    await db.commit()
 
     return await get_ticket(ticket_id, user, db)
 
