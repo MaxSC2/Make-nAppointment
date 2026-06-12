@@ -1659,3 +1659,90 @@ tests/ ... (все) ... 64 passed, 6 warnings in 28.15s
 ### Что это дало для отчёта:
 - **П.6 — жизненный цикл:** архитектурный рефакторинг роутинга
 - **П.9 — качество:** диагностика и документирование багов (DWV, viewport)
+
+
+---
+
+## 12.06.2026 (продолжение) - Sidebar UX + IIN + DICOM Cleanup + OrdersPage rework
+
+### Что сделано:
+
+1. **Sidebar UX (коммит 039ef58):**
+   - Pin-кнопка на десктопе (Скрыть/Закрепить панель)
+   - Click-outside на десктопе (закрывает временно открытую панель)
+   - Smooth overlay animation (transition-opacity duration-300)
+   - Текст кнопки динамический (Скрыть/Закрепить)
+   - Sidebar на мобиле: выезжает с overlay
+   - На десктопе: Меню кнопка скрыта когда sidebar pinned
+
+2. **IIN-колонка (коммит 039ef58):**
+   - Бэкенд: patient_id в TicketOut + fallback-lookup по имени/полису/ИИН
+   - Фронт: QueueTable показывает реальный iin, для пустых — — (italic grey)
+   - Бэкенд миграция 0004 (iin колонка в patients)
+   - 8 backend тестов на IIN
+
+3. **DICOM Cleanup UI (в main):**
+   - Кнопка 🧹 Очистка на странице /studies
+   - Backend: GET /api/v1/studies/cleanup/single-slice + DELETE /api/v1/studies/by-orthanc/{id}
+   - Модалка со списком + чекбоксы + Select All
+   - Подтверждение удаления через window.confirm
+   - Доступ только admin
+   - 65+ single-slice исследований для очистки
+
+4. **Auto-refresh JWT (коммит 4e1bc02):**
+   - client.ts: tryRefresh() при 401, повтор запроса с новым токеном
+   - Promise dedup через isRefreshing (защита от race)
+   - AuthContext: setRefreshToken синхронизация
+
+5. **StatusBadge fix (коммит 3797ecf):**
+   - Бэкенд возвращал scheduled (не planned) — был английским
+   - Добавлены переводы scheduled/in_progress для ru/en/kk
+
+6. **OrdersPage REWORK (коммит 2219479):**
+   - Поиск по ФИО/ID/описанию (debounce 300мс)
+   - Фильтры: статус + модальность (CT/MR/DX/US)
+   - Сортировка: Newest/Oldest/Priority
+   - Фильтр Только мои (только для doctor/admin/technician)
+   - Группировка по статусу
+   - Пагинация: 10/20/50/100 на странице
+   - Пустое состояние с кнопкой Создать заказ
+   - OrderCard редизайн: цветные badge, кликабельный пациент, Создал: @username,
+     причина отмены, кнопки с подписями (Снимок/Протокол/Пациент/Вызвать)
+   - 30+ новых i18n ключей в 3 локалях
+   - Bug fix: ++ в кнопке (был лишний плюс из иконки+текста)
+
+7. **start-all.bat (коммит 419cc9d):**
+   - Ghost-detection на :8000 (если залочен, фолбэк на :8001)
+   - Открывает 10 страниц в Chrome
+   - vite.config.ts: auto-detect RIS порт (127.0.0.1:8000 → 26.150.162.207:8000 → 127.0.0.1:8001)
+
+8. **SmartQ integration fix:**
+   - В .env добавлен SMARTQ_ENABLED=true
+   - Раньше использовался mock (M001, M002), теперь реальные талоны
+   - В SmartQ 67+ билетов, в RIS подтягиваются
+
+9. **README.md обновлён (коммиты 308714a + bf08f70):**
+   - npx next dev → npm run dev (Vite, не Next.js)
+   - Порт 3000 → 5173
+   - Реальные тестовые аккаунты: admin/admin123, doctor_t/doctor123
+   - Тесты 115/115 PASS
+   - Раздел Быстрый старт со ссылкой на start-all.bat
+   - Полный changelog + API таблица
+
+### За сегодня закоммичено и запушено:
+- 4e1bc02 fix: auto-refresh access_token через refresh_token при 401
+- 308714a docs: README.md — точные команды, актуальные тестовые аккаунты, changelog
+- 3797ecf fix: StatusBadge — добавил перевод scheduled
+- bf08f70 docs: README.md — секция SmartQ с SMARTQ_ENABLED
+- 2219479 feat(orders): поиск, фильтры, сортировка, пагинация, группировка по статусу
+- ebab405 fix(orders): импорт Icons из components, скрыть Без имени
+- 419cc9d feat: авто-детект RIS порта + start-all.bat открывает все страницы
+
+Все запушено в origin/main, ahead=0.
+
+### Текущий статус (на 12.06.2026 10:53):
+- Frontend: 4 файла доработаны (Sidebar, Layout, OrderCard, OrdersPage)
+- Backend: 1 endpoint добавлен (cleanup), 1 fix (patient_id в TicketOut)
+- Tests: 115/115 PASS
+- TS: 0 errors
+- 7 коммитов за сегодня, все запушены
