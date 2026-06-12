@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useOrders } from '../hooks/useOrders'
 import OrderCard from '../components/OrderCard'
 import { useAuth } from '../hooks/useAuth'
-import { PlusIcon } from './Icons'
+import { PlusIcon } from '../components/Icons'
 
 const ChevronLeftIcon = () => (
   <svg className="w-3.5 h-3.5 inline" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

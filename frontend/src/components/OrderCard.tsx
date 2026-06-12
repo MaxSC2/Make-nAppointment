@@ -63,13 +63,13 @@ export default function OrderCard({ order, onClick, onCall, showCreatedBy, compa
         )}
       </div>
 
-      {order.patient_id && (
+      {order.patient_id && order.patient_name && (
         <button
           onClick={e => { e.stopPropagation(); navigate(`/patients/${order.patient_id}`) }}
           className="text-xs text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 truncate text-left"
-          title={order.patient_name || ''}
+          title={order.patient_name}
         >
-          👤 {order.patient_name || t('orderCard.noName')}
+          👤 {order.patient_name}
         </button>
       )}
 
