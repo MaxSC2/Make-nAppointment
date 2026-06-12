@@ -5,8 +5,8 @@ import LanguageSwitcher from '../components/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('admin')
-  const [password, setPassword] = useState('admin123')
+  const [username, setUsername] = useState('doctor_t')
+  const [password, setPassword] = useState('doctor123')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()

@@ -70,7 +70,9 @@ async function request(base: string, path: string, init?: RequestInit, _isRetry 
     'Content-Type': 'application/json',
     ...(init?.headers as Record<string, string>),
   }
-  if (authToken) {
+  // Don't send stale auth on login/refresh endpoints
+  const isAuthEndpoint = path === '/auth/login' || path === '/auth/refresh'
+  if (authToken && !isAuthEndpoint) {
     headers['Authorization'] = `Bearer ${authToken}`
   }
 
