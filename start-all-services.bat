@@ -23,7 +23,7 @@ if not exist "frontend" (
 REM 1. Очистка портов
 echo [1/5] Очистка портов...
 powershell -Command "
-$ports = @(8000, 8005, 5173, 3000, 8042);
+$ports = @(8000, 8005, 5173, 5174, 3000, 8042);
 foreach ($port in $ports) {
     $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue;
     if ($conn) {
@@ -75,13 +75,17 @@ REM В. FastAPI Queue (elqueue fallback)
 start "Queue :8005" cmd /c "cd backend && python -m uvicorn elqueue.main:app --port 8005 --host 0.0.0.0 --reload"
 echo   [+] Queue :8005/docs
 
-REM Г. SmartQ Backend (NestJS)
+REM Д. SmartQ Backend (NestJS)
 start "SmartQ :3000" cmd /c "cd ..\smartq-back && npm run start:dev"
-echo   [+] SmartQ :3000/api/docs
+echo   [+] SmartQ Backend :3000/api/docs
 
-REM Д. Vite Frontend
-start "Vite :5173" cmd /c "cd frontend && npm run dev"
-echo   [+] Vite :5173
+REM Е. SmartQ Frontend (React)
+start "SmartQ FE :5174" cmd /c "cd ..\yutkar-frontend && npm run dev"
+echo   [+] SmartQ Frontend :5174
+
+REM Ж. Vite Frontend (RIS)
+start "RIS FE :5173" cmd /c "cd frontend && npm run dev"
+echo   [+] RIS Frontend :5173
 
 echo.
 echo ============================================================
@@ -100,8 +104,8 @@ echo ============================================================
 
 REM Открыть страницы в Chrome
 timeout /t 5 /nobreak > nul
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
-echo   [+] Chrome открыт (5173, SmartQ API, RIS API)
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:5174" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
+echo   [+] Chrome (RIS, SmartQ, SmartQ API, RIS API)
 
 pause > nul
 
@@ -111,9 +115,10 @@ taskkill /f /im Orthanc.exe > nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq RIS :8000" > nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq Queue :8005" > nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq SmartQ :3000" > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq Vite :5173" > nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq SmartQ FE*" > nul 2>&1
+taskkill /f /fi "WINDOWTITLE eq RIS FE*" > nul 2>&1
 powershell -Command "
-$ports = @(8000, 8005, 5173, 3000);
+$ports = @(8000, 8005, 5173, 5174, 3000);
 foreach ($port in $ports) {
     $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue;
     if ($conn) { Stop-Process -Id $conn[0].OwningProcess -Force; }
