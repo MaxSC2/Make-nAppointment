@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCabinets } from '../hooks/useQueue'
 import type { TicketDetail } from '../types/queue'
 import * as queueApi from '../api/queue'
+import { getPatients } from '../api/ris'
 import QueueTable from '../components/QueueTable'
 import { useTranslation } from 'react-i18next'
 import { playCallSound } from '../utils/sound'
@@ -21,6 +22,22 @@ export default function DoctorPage() {
   const [fillPolicy, setFillPolicy] = useState('')
   const [fillIin, setFillIin] = useState('')
   const [saving, setSaving] = useState(false)
+  const [iinFound, setIinFound] = useState('')
+
+  const checkIIN = useCallback(async (iin: string) => {
+    if (iin.length !== 12) { setIinFound(''); return }
+    try {
+      const patients = await getPatients(iin)
+      const match = patients.find(p => p.iin === iin)
+      if (match) {
+        setIinFound(match.full_name)
+        setFillName(match.full_name || fillName)
+        setFillPolicy(match.policy_number || fillPolicy)
+      } else {
+        setIinFound('')
+      }
+    } catch { /* ignore */ }
+  }, [fillName, fillPolicy])
 
   const refresh = useCallback(async () => {
     setLoading(true)
@@ -161,11 +178,14 @@ export default function DoctorPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">ИИН</label>
                 <input
                   value={fillIin}
-                  onChange={e => setFillIin(e.target.value)}
+                  onChange={e => { setFillIin(e.target.value); checkIIN(e.target.value) }}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono"
                   placeholder="000000000000"
                   maxLength={12}
                 />
+                {iinFound && (
+                  <p className="mt-1 text-xs text-teal-600">✓ {t('registration.existingPatient')}: {iinFound}</p>
+                )}
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
