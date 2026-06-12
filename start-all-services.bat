@@ -22,19 +22,7 @@ foreach ($p in $ports) {
 Start-Sleep 2
 "
 
-REM 2. Миграции
-echo [2/5] Миграции RIS...
-cd /d "%ROOT%\backend"
-python -m alembic upgrade head > nul 2>&1
-cd /d "%ROOT%"
-
-echo [3/5] Миграции SmartQ...
-cd /d "%ROOT%\..\smartq-back"
-call npx prisma migrate deploy > nul 2>&1
-cd /d "%ROOT%"
-
-REM 3. Запуск сервисов (в отдельных окнах)
-echo [4/5] Запуск сервисов...
+echo [2/4] Запуск сервисов...
 
 start "Orthanc PACS" cmd /c "cd /d %ROOT%\backend\orthanc && Orthanc.exe orthanc.json"
 echo   [+] Orthanc :8042
@@ -59,8 +47,8 @@ timeout /t 2 /nobreak > nul
 start "RIS Frontend" cmd /c "cd /d %ROOT%\frontend && npm run dev"
 echo   [+] RIS Frontend :5173
 
-REM 4. Ждём и открываем Chrome
-echo [5/5] Жду запуска сервисов...
+REM 3. Ждём и открываем Chrome
+echo [3/4] Жду запуска сервисов...
 timeout /t 12 /nobreak > nul
 
 start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:5174" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
