@@ -97,9 +97,16 @@ echo   Orthanc: http://localhost:8042
 echo.
 echo   Нажми любую клавишу — ОСТАНОВИТЬ всё
 echo ============================================================
+
+REM Открыть страницы в Chrome
+timeout /t 5 /nobreak > nul
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
+echo   [+] Chrome открыт (5173, SmartQ API, RIS API)
+
 pause > nul
 
 echo Остановка...
+taskkill /f /im chrome.exe > nul 2>&1
 taskkill /f /im Orthanc.exe > nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq RIS :8000" > nul 2>&1
 taskkill /f /fi "WINDOWTITLE eq Queue :8005" > nul 2>&1
