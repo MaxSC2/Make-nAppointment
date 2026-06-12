@@ -107,7 +107,17 @@ npm run dev
 cd ../smartq-back
 npm install && npx prisma migrate deploy && npm run start:dev
 ```
-Порт :3000. В `backend/.env` установить `SMARTQ_ENABLED=true`.
+Порт :3000. В `backend/.env` установить:
+```env
+SMARTQ_ENABLED=true
+SMARTQ_URL=http://localhost:3000
+SMARTQ_USERNAME=admin
+SMARTQ_PASSWORD=admin123
+```
+
+**Без `SMARTQ_ENABLED=true`** RIS использует встроенный mock (2 талона M001, M002) — это для разработки без SmartQ.
+
+**С `SMARTQ_ENABLED=true`** RIS подтягивает все талоны из SmartQ (включая статус, очередь, вызов, завершение).
 
 ### Тестовые аккаунты (seed)
 | Логин | Пароль | Роль | Доступ |
