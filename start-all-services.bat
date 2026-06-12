@@ -68,11 +68,11 @@ if exist "backend\orthanc\Orthanc.exe" (
 )
 
 REM Б. FastAPI RIS
-start "RIS :8000" cmd /c "cd backend && uvicorn ris.main:app --port 8000 --host 0.0.0.0 --reload"
+start "RIS :8000" cmd /c "cd backend && python -m uvicorn ris.main:app --port 8000 --host 0.0.0.0 --reload"
 echo   [+] RIS :8000/docs
 
 REM В. FastAPI Queue (elqueue fallback)
-start "Queue :8005" cmd /c "cd backend && uvicorn elqueue.main:app --port 8005 --host 0.0.0.0 --reload"
+start "Queue :8005" cmd /c "cd backend && python -m uvicorn elqueue.main:app --port 8005 --host 0.0.0.0 --reload"
 echo   [+] Queue :8005/docs
 
 REM Г. SmartQ Backend (NestJS)
