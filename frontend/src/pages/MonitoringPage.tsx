@@ -165,7 +165,7 @@ export default function MonitoringPage() {
         <StatCard
           label={t('monitoring.avgProcessing')}
           value={summary.avg_completion_minutes_week > 0
-            ? t('monitoring.avgMinutes', { time: summary.avg_completion_minutes_week })
+            ? t('monitoring.avgSeconds', { time: Math.round(summary.avg_completion_minutes_week * 60) })
             : '—'}
           hint={t('monitoring.avgDescription')}
           color="slate"

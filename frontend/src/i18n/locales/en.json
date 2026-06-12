@@ -81,7 +81,7 @@
     "inProgress": "In progress",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "forCabinet": "Statistics for room \"{name}\"",
+    "forCabinet": "Statistics for room \"{{name}}\"",
     "forAll": "Statistics for all rooms"
   },
   "registration": {
@@ -208,7 +208,8 @@
     "protocolsSigned": "Reports signed",
     "protocolsToday": "today",
     "avgProcessing": "Average processing time",
-    "avgMinutes": "{time} min",
+    "avgMinutes": "{{time}} min",
+    "avgSeconds": "{{time}} sec",
     "avgDescription": "from creation to completion, this week",
     "completionRate": "Completion rate",
     "completionOf": "of",

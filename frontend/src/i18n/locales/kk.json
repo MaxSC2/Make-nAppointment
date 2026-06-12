@@ -81,7 +81,7 @@
     "inProgress": "Орындалуда",
     "completed": "Аяқталды",
     "cancelled": "Болдырылмады",
-    "forCabinet": "\"{name}\" кабинетінің статистикасы",
+    "forCabinet": "\"{{name}}\" кабинетінің статистикасы",
     "forAll": "Барлық кабинеттердің статистикасы"
   },
   "registration": {
@@ -206,7 +206,8 @@
     "protocolsSigned": "Қол қойылған хаттамалар",
     "protocolsToday": "бүгін",
     "avgProcessing": "Орташа өңдеу уақыты",
-    "avgMinutes": "{time} мин",
+    "avgMinutes": "{{time}} мин",
+    "avgSeconds": "{{time}} сек",
     "avgDescription": "жасаудан аяқтауға дейін, апта ішінде",
     "completionRate": "Аяқталу көрсеткіші",
     "completionOf": "ішінен",

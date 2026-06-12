@@ -81,7 +81,7 @@
     "inProgress": "В работе",
     "completed": "Завершено",
     "cancelled": "Отменено",
-    "forCabinet": "Статистика по кабинету \"{name}\"",
+    "forCabinet": "Статистика по кабинету \"{{name}}\"",
     "forAll": "Статистика по всем кабинетам"
   },
   "registration": {
@@ -208,7 +208,8 @@
     "protocolsSigned": "Подписано протоколов",
     "protocolsToday": "за сегодня",
     "avgProcessing": "Среднее время обработки",
-    "avgMinutes": "{time} мин",
+    "avgMinutes": "{{time}} мин",
+    "avgSeconds": "{{time}} сек",
     "avgDescription": "от создания до завершения, за неделю",
     "completionRate": "Завершаемость",
     "completionOf": "из",
