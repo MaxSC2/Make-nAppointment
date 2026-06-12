@@ -1,129 +1,95 @@
 @echo off
 chcp 65001 > nul
-REM ============================================================
-    REM  Универсальный оркестратор запуска MedPlatform
-    REM  RIS (:8000), Queue (:8005), Vite (:5173),
-    REM  Orthanc (:8042), SmartQ Backend (:3000), SmartQ Frontend (:5174)
-REM ============================================================
+setlocal enabledelayedexpansion
+title MedPlatform — All Services
+cd /d "%~dp0"
+set "ROOT=%CD%"
 
 echo.
 echo ============================================================
-echo   MEDPLATFORM RIS + SmartQ — автозапуск
+echo   MEDPLATFORM RIS + SmartQ — запуск всех сервисов
 echo ============================================================
 echo.
 
-REM Проверка корневой папки
-if not exist "frontend" (
-    echo   ОШИБКА: Запуск из корня проекта C:\Projects\ARCHIVE\MedPlatform!
-    echo   Текущая: %CD%
-    pause
-    exit /b 1
-)
-
-REM 1. Очистка портов
+REM 1. Чистка портов
 echo [1/5] Очистка портов...
-powershell -Command "
-$ports = @(8000, 8005, 5173, 5174, 3000, 8042);
-foreach ($port in $ports) {
-    $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue;
-    if ($conn) {
-        Write-Host \"  Порт $port занят (PID $($conn[0].OwningProcess)). Освобождаю...\" -ForegroundColor Yellow;
-        Stop-Process -Id $conn[0].OwningProcess -Force -ErrorAction SilentlyContinue;
-    }
+powershell -NoProfile -Command "
+$ports = @(8000, 8005, 5173, 3000, 8042);
+foreach ($p in $ports) {
+    $c = Get-NetTCPConnection -LocalPort $p -EA 0;
+    if ($c) { Stop-Process -Id $c[0].OwningProcess -Force -EA 0; Write-Host \"  Port $p freed\" }
 }
 Start-Sleep 2
 "
 
-REM 2. PostgreSQL
-echo [2/5] Проверка PostgreSQL...
-where docker > nul 2>&1
-if errorlevel 1 (
-    echo   Docker не найден. Считаем что PostgreSQL уже на :5432.
-) else (
-    cd backend
-    docker compose up -d postgres 2>nul
-    echo   PostgreSQL готов.
-    cd ..
-)
-
-REM 3. Миграции
-echo [3/5] Миграции RIS...
-cd backend
+REM 2. Миграции
+echo [2/5] Миграции RIS...
+cd /d "%ROOT%\backend"
 python -m alembic upgrade head > nul 2>&1
-cd ..
+cd /d "%ROOT%"
 
-REM 4. SmartQ миграции (Prisma)
-echo [4/5] Миграции SmartQ...
-cd ..\smartq-back
-npx prisma migrate deploy > nul 2>&1
-cd ..\MedPlatform
+echo [3/5] Миграции SmartQ...
+cd /d "%ROOT%\..\smartq-back"
+call npx prisma migrate deploy > nul 2>&1
+cd /d "%ROOT%"
 
-REM 5. Запуск сервисов
-echo [5/5] Запуск сервисов...
+REM 3. Запуск сервисов (в отдельных окнах)
+echo [4/5] Запуск сервисов...
 
-REM А. Orthanc PACS
-if exist "backend\orthanc\Orthanc.exe" (
-    start "Orthanc PACS" cmd /c "cd backend\orthanc && Orthanc.exe orthanc.json"
-    echo   [+] Orthanc :8042
-)
+start "Orthanc PACS" cmd /c "cd /d %ROOT%\backend\orthanc && Orthanc.exe orthanc.json"
+echo   [+] Orthanc :8042
+timeout /t 1 /nobreak > nul
 
-REM Б. FastAPI RIS
-start "RIS :8000" cmd /c "cd backend && python -m uvicorn ris.main:app --port 8000 --host 0.0.0.0 --reload"
-echo   [+] RIS :8000/docs
+start "RIS :8000" cmd /c "cd /d %ROOT%\backend && python -m uvicorn ris.main:app --host 0.0.0.0 --port 8000 --reload"
+echo   [+] RIS :8000
+timeout /t 2 /nobreak > nul
 
-REM В. FastAPI Queue (elqueue fallback)
-start "Queue :8005" cmd /c "cd backend && python -m uvicorn elqueue.main:app --port 8005 --host 0.0.0.0 --reload"
-echo   [+] Queue :8005/docs
+start "Queue :8005" cmd /c "cd /d %ROOT%\backend && python -m uvicorn elqueue.main:app --host 0.0.0.0 --port 8005 --reload"
+echo   [+] Queue :8005
+timeout /t 2 /nobreak > nul
 
-REM Д. SmartQ Backend (NestJS)
-start "SmartQ :3000" cmd /c "cd ..\smartq-back && npm run start:dev"
-echo   [+] SmartQ Backend :3000/api/docs
+start "SmartQ Backend" cmd /c "cd /d %ROOT%\..\smartq-back && npm run start:dev"
+echo   [+] SmartQ Backend :3000
+timeout /t 5 /nobreak > nul
 
-REM Е. SmartQ Frontend (React)
-start "SmartQ FE :5174" cmd /c "cd ..\yutkar-frontend && npm run dev"
+start "SmartQ Frontend" cmd /c "cd /d %ROOT%\..\yutkar-frontend && npm run dev"
 echo   [+] SmartQ Frontend :5174
+timeout /t 2 /nobreak > nul
 
-REM Ж. Vite Frontend (RIS)
-start "RIS FE :5173" cmd /c "cd frontend && npm run dev"
+start "RIS Frontend" cmd /c "cd /d %ROOT%\frontend && npm run dev"
 echo   [+] RIS Frontend :5173
 
+REM 4. Ждём и открываем Chrome
+echo [5/5] Жду запуска сервисов...
+timeout /t 12 /nobreak > nul
+
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:5174" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
+echo   [+] Chrome открыт
+
 echo.
 echo ============================================================
-echo   ГОТОВО! (через ~10 сек сервисы поднимутся)
-echo ============================================================
-echo   Вход:    http://localhost:5173/login
-echo   Логин:   admin / admin123
-echo.
-echo   SmartQ:  http://localhost:3000/api/docs
-echo   RIS:     http://localhost:8000/docs
-echo   Queue:   http://localhost:8005/docs
-echo   Orthanc: http://localhost:8042
+echo   ГОТОВО!
+echo   RIS:      http://localhost:5173
+echo   SmartQ:   http://localhost:5174
+echo   SmartQ API: http://localhost:3000/api/docs
+echo   RIS API:  http://localhost:8000/docs
 echo.
 echo   Нажми любую клавишу — ОСТАНОВИТЬ всё
 echo ============================================================
-
-REM Открыть страницы в Chrome
-timeout /t 5 /nobreak > nul
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" --new-window "http://localhost:5173" "http://localhost:5174" "http://localhost:3000/api/docs" "http://localhost:8000/docs"
-echo   [+] Chrome (RIS, SmartQ, SmartQ API, RIS API)
-
 pause > nul
 
 echo Остановка...
 taskkill /f /im chrome.exe > nul 2>&1
 taskkill /f /im Orthanc.exe > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq RIS :8000" > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq Queue :8005" > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq SmartQ :3000" > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq SmartQ FE*" > nul 2>&1
-taskkill /f /fi "WINDOWTITLE eq RIS FE*" > nul 2>&1
-powershell -Command "
-$ports = @(8000, 8005, 5173, 5174, 3000);
-foreach ($port in $ports) {
-    $conn = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue;
-    if ($conn) { Stop-Process -Id $conn[0].OwningProcess -Force; }
+powershell -NoProfile -Command "
+$titles = @('RIS :8000','Queue :8005','SmartQ Backend','SmartQ Frontend','RIS Frontend');
+Get-Process | Where-Object { $_.MainWindowTitle -match ($titles -join '|') } | Stop-Process -Force;
+$ports = @(8000,8005,5173,5174,3000);
+foreach ($p in $ports) {
+    $c = Get-NetTCPConnection -LocalPort $p -EA 0;
+    if ($c) { Stop-Process -Id $c[0].OwningProcess -Force }
 }
-Start-Sleep 1
+Start-Sleep 2
 "
 echo Всё остановлено.
-timeout /t 2 > nul
+timeout /t 3 /nobreak > nul
